@@ -8,37 +8,37 @@ import java.util.ArrayList;
  * Created by gpeng on 2/10/17.
  */
 public class Peptide {
-    private int id;
+    private String id;
     private String sequence;
-    private int charge;
-    private double mz;
-    private double score;
-    private double abundance;
+    private Integer charge;
+    private Double mz;
+    private Double score;
+    private Double abundance;
     private ArrayList<Modification> modifications;
 
 
-    public int getId() {return id;}
+    public String getId() {return id;}
     public int getLength() {return sequence.length();}
     public String getSequence() {return  sequence; }
-    public int getCharge() { return charge;}
-    public double getMz() { return mz;}
-    public double getScore() { return score;}
-    public double getAbundance() { return  abundance;}
+    public Integer getCharge() { return charge;}
+    public Double getMz() { return mz;}
+    public Double getScore() { return score;}
+    public Double getAbundance() { return  abundance;}
     public int getNumModi() { return modifications.size();}
     public ArrayList<Modification> getModifications() { return  modifications;}
 
     public void addModification(Modification modi){
-        modifications.add(modi);
+        this.modifications.add(modi);
     }
 
-    public Peptide(int id, String sequence, int charge, double mz, double score, double abundance){
+    public Peptide(String id, String sequence, int charge, double mz, double score, double abundance){
         this.id = id;
         this.sequence = sequence.toUpperCase();
         this.charge = charge;
         this.mz = mz;
         this.score = score;
         this.abundance = abundance;
-        modifications = new ArrayList<>();
+        this.modifications = new ArrayList<>();
     }
 
     public boolean isModified() {
