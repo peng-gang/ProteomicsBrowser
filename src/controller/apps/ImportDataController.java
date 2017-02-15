@@ -36,6 +36,12 @@ public class ImportDataController implements Initializable {
     @FXML private void getPtDataFile(ActionEvent event){
         Stage stage = (Stage) btnPtDataFile.getScene().getWindow();
         FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Proteomics Data");
+        fileChooser.setInitialDirectory(new File(System.getProperty("user.home")));
+        fileChooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("Proteomics Data", "*.csv")
+        );
+
         ptFile = fileChooser.showOpenDialog(stage);
         if(ptFile != null){
             txtPtDataFile.setText(String.valueOf(ptFile.getAbsoluteFile()));
@@ -45,6 +51,11 @@ public class ImportDataController implements Initializable {
     @FXML private void getSpDataFile(ActionEvent event){
         Stage stage = (Stage) btnSpDataFile.getScene().getWindow();
         FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Sample Data");
+        fileChooser.setInitialDirectory(new File(System.getProperty("user.home")));
+        fileChooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("Sample Data", "*.csv")
+        );
         spFile = fileChooser.showOpenDialog(stage);
         if(spFile != null){
             txtSpDataFile.setText(String.valueOf(spFile.getAbsoluteFile()));

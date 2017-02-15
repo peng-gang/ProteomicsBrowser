@@ -41,6 +41,24 @@ public class Sample {
         proteinData.put(proteinId, value);
     }
 
+    public void increaseProteinData(String proteinId, double value){
+        if(proteinData.get(proteinId)==null){
+            proteinData.put(proteinId, value);
+        } else {
+            proteinData.put(proteinId, proteinData.get(proteinId) + value);
+        }
+    }
+
+    public void addPeptide(String proteinName, String proteinSeq, Peptide pep){
+        if(proteins.get(proteinName) == null){
+            Protein tmp = new Protein(proteinName, proteinSeq);
+            tmp.addPeptide(pep);
+            this.addProtein(tmp);
+        } else {
+            proteins.get(proteinName).addPeptide(pep);
+        }
+    }
+
     public Double getNumInfo(String name){
         return numInfo.get(name);
     }

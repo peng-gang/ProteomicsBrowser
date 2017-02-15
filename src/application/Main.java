@@ -35,6 +35,7 @@ public class Main extends Application {
 
     @Override
     public void init() throws Exception {
+        //System.out.println(com.sun.javafx.runtime.VersionInfo.getRuntimeVersion());
         System.out.println("Proteomics Init!");
         super.init();
     }

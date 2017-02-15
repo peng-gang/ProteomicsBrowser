@@ -1,25 +1,17 @@
 package controller.data;
 
-import data.Peptide;
-import data.PeptideInfo;
-import javafx.beans.property.ReadOnlyObjectWrapper;
-import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.SpinnerValueFactory;
-import javafx.scene.control.Tab;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.util.Callback;
 
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.ResourceBundle;
 
 /**
@@ -49,8 +41,9 @@ public class ProteomicsDataController implements Initializable {
     }
 
     public void show(){
-        System.out.println("Show Table");
+        System.out.println("Show Proteomics Data dataTable");
 
+        tbvProteomicsData.setEditable(false);
         ObservableList<ObservableList> data = FXCollections.observableArrayList();
 
         for(int i=0; i<proteomicsRawName.size(); i++){

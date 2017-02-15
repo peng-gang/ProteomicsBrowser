@@ -30,8 +30,9 @@ public class Peptide {
     public void addModification(Modification modi){
         this.modifications.add(modi);
     }
+    public void setModification(ArrayList<Modification> modi) { this.modifications = modi; }
 
-    public Peptide(String id, String sequence, int charge, double mz, double score, double abundance){
+    public Peptide(String id, String sequence, Integer charge, Double mz, Double score, Double abundance){
         this.id = id;
         this.sequence = sequence.toUpperCase();
         this.charge = charge;
@@ -39,6 +40,16 @@ public class Peptide {
         this.score = score;
         this.abundance = abundance;
         this.modifications = new ArrayList<>();
+    }
+
+    public Peptide(String id, String sequence, Integer charge, Double mz, Double score, Double abundance, ArrayList<Modification> modifications){
+        this.id = id;
+        this.sequence = sequence.toUpperCase();
+        this.charge = charge;
+        this.mz = mz;
+        this.score = score;
+        this.abundance = abundance;
+        this.modifications = modifications;
     }
 
     public boolean isModified() {

@@ -60,6 +60,18 @@ public class SampleGroup {
         }
     }
 
+    public void increaseProteinData(String sample, String proteinId, double value){
+        if(samples.get(sample) == null){
+            Sample tmp = new Sample(sample);
+            tmp.increaseProteinData(proteinId, value);
+            samples.put(sample, tmp);
+            this.proteinId.add(proteinId);
+        } else {
+            samples.get(sample).increaseProteinData(proteinId, value);
+            this.proteinId.add(proteinId);
+        }
+    }
+
     public void addProteinData(String sample, String proteinId, double value){
         if(samples.get(sample) == null){
             Sample tmp = new Sample(sample);
@@ -84,10 +96,22 @@ public class SampleGroup {
         }
     }
 
+    public void addPeptide(String sample, String proteinName, String proteinSequence, Peptide pep){
+        if(samples.get(sample) == null){
+            Sample tmp = new Sample(sample);
+            tmp.addPeptide(proteinName, proteinSequence, pep);
+            samples.put(sample, tmp);
+            this.proteinName.add(proteinName);
+        } else {
+            samples.get(sample).addPeptide(proteinName, proteinSequence, pep);
+            this.proteinName.add(proteinName);
+        }
+    }
+
 
     //get data functions
     public Set<String> getSampleId(){
-        return(samples.keySet());
+        return samples.keySet();
     }
 
     public HashSet<String> getNumInfoName(){

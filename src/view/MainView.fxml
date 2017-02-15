@@ -19,14 +19,15 @@
               <MenuItem fx:id="menuClose" mnemonicParsing="false" onAction="#close" text="Close" />
             </items>
           </Menu>
-          <Menu mnemonicParsing="false" text="Edit">
+          <Menu fx:id="menuAnalyze" mnemonicParsing="false" text="Analyze" visible="false">
             <items>
-              <MenuItem mnemonicParsing="false" text="Delete" />
+              <MenuItem fx:id="menuTTest" mnemonicParsing="false" onAction="#tTest" text="T-Test" />
+                  <MenuItem fx:id="menuBoxPlot" mnemonicParsing="false" text="BoxPlot" />
             </items>
           </Menu>
           <Menu mnemonicParsing="false" text="Help">
             <items>
-              <MenuItem mnemonicParsing="false" text="About" />
+              <MenuItem fx:id="menuAbout" mnemonicParsing="false" text="About" />
             </items>
           </Menu>
         </menus>
