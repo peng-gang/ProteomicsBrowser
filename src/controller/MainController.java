@@ -2,10 +2,11 @@ package controller;
 
 import controller.apps.ImportDataController;
 import controller.data.ProteomicsDataController;
-import data.Peptide;
-import data.PeptideInfo;
-import data.SampleGroup;
-import data.SampleInfo;
+import controller.data.SamplePepDataController;
+import controller.data.SampleProteinDataController;
+import controller.dataselect.TTestDataSelectController;
+import controller.result.PValueTableController;
+import data.*;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -21,16 +22,15 @@ import javafx.scene.control.*;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
+import javafx.scene.input.SwipeEvent;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import org.apache.commons.math3.stat.inference.TestUtils;
 
 import java.io.*;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.ResourceBundle;
-import java.util.SplittableRandom;
-import java.util.StringJoiner;
+import java.util.*;
 
 public class MainController implements Initializable{
 
@@ -41,6 +41,8 @@ public class MainController implements Initializable{
     @FXML private MenuItem menuNewProj;
     @FXML private MenuItem menuImportData;
     @FXML private MenuItem menuClose;
+    //Analyze
+    @FXML private Menu menuAnalyze;
 
 
     //TreeView
@@ -50,6 +52,11 @@ public class MainController implements Initializable{
     @FXML private TabPane tabPane;
     @FXML private Tab tabProteomicsData;
 
+    private Tab tabSamplePepData = null;
+    private Tab tabSampleProteinData = null;
+    private Tab tabBrowser = null;
+
+    private SingleSelectionModel<Tab> selectionModel;
 
     private TreeItem<String> treeRoot;
 
@@ -60,8 +67,15 @@ public class MainController implements Initializable{
 
     //Controller
     ProteomicsDataController proteomicsDataController;
+    SamplePepDataController samplePepDataController;
+    SampleProteinDataController sampleProteinDataController;
 
     ///Data
+    //DB
+    private String proteinDBFile = "src/protein.info.csv";
+    private TreeMap<String, String> proteinSeq;
+
+
     //proteomics data
     private ArrayList<ArrayList<String>> proteomicsRaw;
     private ArrayList<String> proteomicsRawName;
@@ -142,14 +156,186 @@ public class MainController implements Initializable{
         initTreeView();
         loadData();
         initProteomicsDataTab();
+        //initSamplePepDataTab();
+        //initSampleProteinDataTab();
+    }
 
+    @FXML private void tTest(ActionEvent event){
+        System.out.println("t-test");
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("../view/dataselect/TTestDataSelect.fxml"));
+        Parent root = null;
+        try {
+            root = loader.load();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Stage tTestDataSelectStage = new Stage();
+        tTestDataSelectStage.setTitle("Data Select (T-Test)");
+        tTestDataSelectStage.setScene(new Scene(root, 400, 300));
+
+        tTestDataSelectStage.initModality(Modality.WINDOW_MODAL);
+        tTestDataSelectStage.initOwner(menuBar.getScene().getWindow());
+
+        TTestDataSelectController controller = loader.getController();
+        controller.set(sampleGroup);
+        String tabSel = tabPane.getSelectionModel().getSelectedItem().getText();
+        if(tabSel.equals("Peptide")){
+            controller.init("Peptide");
+        } else if(tabSel.equals("Protein")){
+            controller.init("Protein");
+        } else {
+            System.err.println("Wrong Tab");
+        }
+
+        tTestDataSelectStage.showAndWait();
+
+        Double low = controller.getLow();
+        Double high = controller.getHigh();
+        String groupId= controller.getGroupId();
+        String dataId = controller.getDataId();
+
+
+        //T-test
+        ArrayList<String> sampleId = new ArrayList<>(sampleGroup.getSampleId());
+        ArrayList<String> g1 = new ArrayList<>();
+        ArrayList<String> g2 = new ArrayList<>();
+        if(low == null){
+            String g1Str = sampleGroup.getStrInfo(sampleId.get(0), groupId);
+            for(String sp : sampleId){
+                if(sampleGroup.getStrInfo(sp, groupId).equals(g1Str)){
+                    g1.add(sp);
+                } else {
+                    g2.add(sp);
+                }
+            }
+        } else {
+            for(String sp: sampleId){
+                if(sampleGroup.getNumInfo(sp, groupId) < low){
+                    g1.add(sp);
+                }
+
+                if(sampleGroup.getNumInfo(sp, groupId) > high){
+                    g2.add(sp);
+                }
+            }
+        }
+
+        ArrayList<String> testId = new ArrayList<>();
+        ArrayList<Double> pv = new ArrayList<>();
+        if(dataId.equals("ALL")){
+            double[] t1 = new double[g1.size()];
+            double[] t2 = new double[g2.size()];
+
+            if(tabSel.equals("Peptide")){
+                for(String pepId : sampleGroup.getPepId()){
+                    testId.add(pepId);
+                    for(int i=0; i<g1.size(); i++){
+                        t1[i] = sampleGroup.getPepData(g1.get(i), pepId);
+                    }
+
+                    for(int i=0; i<g2.size(); i++){
+                        t2[i] = sampleGroup.getPepData(g2.get(i), pepId);
+                    }
+
+                    double pvalue = TestUtils.tTest(t1, t2);
+                    pv.add(pvalue);
+                }
+            } else {
+                for(String proteinId : sampleGroup.getProteinId()){
+                    testId.add(proteinId);
+                    for(int i=0; i<g1.size();i++){
+                        t1[i] = sampleGroup.getProteinData(g1.get(i), proteinId);
+                    }
+
+                    for(int i =0; i<g2.size();i++){
+                        t2[i] = sampleGroup.getProteinData(g2.get(i), proteinId);
+                    }
+
+                    double pvalue = TestUtils.tTest(t1, t2);
+                    pv.add(pvalue);
+                }
+            }
+        } else {
+            double[] t1 = new double[g1.size()];
+            double[] t2 = new double[g2.size()];
+
+            testId.add(dataId);
+            if(tabSel.equals("Peptide")){
+                for(int i=0; i<g1.size(); i++){
+                    t1[i] = sampleGroup.getPepData(g1.get(i), dataId);
+                }
+
+                for(int i=0; i<g2.size(); i++){
+                    t2[i] = sampleGroup.getPepData(g2.get(i), dataId);
+                }
+            } else if(tabSel.equals("Protein")){
+                for(int i=0; i<g1.size(); i++){
+                    t1[i] = sampleGroup.getProteinData(g1.get(i), dataId);
+                }
+
+                for(int i=0; i<g2.size(); i++){
+                    t2[i] = sampleGroup.getProteinData(g2.get(i), dataId);
+                }
+            } else {
+                System.err.println("Wrong Tab");
+            }
+
+            double pvalue = TestUtils.tTest(t1, t2);
+            pv.add(pvalue);
+        }
+
+
+        //show result
+        FXMLLoader loader2 = new FXMLLoader(getClass().getResource("../view/result/PValueTable.fxml"));
+        Parent root2 = null;
+        try {
+            root2 = loader2.load();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Stage pvStage = new Stage();
+        pvStage.setTitle("P Value of T-Test");
+        pvStage.setScene(new Scene(root2, 300, 400));
+
+        pvStage.initModality(Modality.WINDOW_MODAL);
+        pvStage.initOwner(menuBar.getScene().getWindow());
+
+        PValueTableController controller2 = loader2.getController();
+        controller2.set(testId, pv);
+        controller2.init();
+        pvStage.showAndWait();
+    }
+
+    @FXML private void boxPlot(ActionEvent event){
 
     }
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         System.out.println("MainController Initialization");
+        selectionModel = tabPane.getSelectionModel();
         //initTreeView();
+
+        tabPane.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Tab>() {
+            @Override
+            public void changed(ObservableValue<? extends Tab> observable, Tab oldValue, Tab newValue) {
+                String selectedValue = newValue.getText();
+                switch (selectedValue){
+                    case "Proteomics":
+                        menuAnalyze.setVisible(false);
+                        break;
+                    case "Peptide":
+                        menuAnalyze.setVisible(true);
+                        break;
+                    case "Protein":
+                        menuAnalyze.setVisible(true);
+                        break;
+                    default:
+                        System.err.println("Cannot find " + selectedValue);
+                        break;
+                }
+            }
+        });
     }
 
     //Initialization functions
@@ -158,8 +344,8 @@ public class MainController implements Initializable{
         //Data
         TreeItem<String> data = new TreeItem<>("Data");
         TreeItem<String> proteomicsData = new TreeItem<>("Proteomics Data");
-        TreeItem<String> samplePepData = new TreeItem<>("Samples and Peptide");
-        TreeItem<String> sampleProteinData = new TreeItem<>("Samples and Protein");
+        TreeItem<String> samplePepData = new TreeItem<>("Peptide Data");
+        TreeItem<String> sampleProteinData = new TreeItem<>("Protein Data");
         data.getChildren().addAll(proteomicsData, samplePepData, sampleProteinData);
 
 
@@ -170,25 +356,52 @@ public class MainController implements Initializable{
         treeRoot.getChildren().addAll(data, bw);
 
 
-
         treeView.getSelectionModel().selectedItemProperty().addListener(new ChangeListener() {
             @Override
             public void changed(ObservableValue observable, Object oldValue, Object newValue) {
                 TreeItem<String> selectedItem = (TreeItem<String>) newValue;
 
-                if(selectedItem.getValue().equals("Proteomics Data")){
-                    System.out.println("lala");
+                String selectedValue = selectedItem.getValue();
+
+                switch (selectedValue){
+                    case "Proteomics Data":
+                        System.out.println("Select Proteomics Data Tab");
+                        selectionModel.select(tabProteomicsData);
+                        break;
+                    case "Peptide Data":
+                        System.out.println("Select Peptide Data");
+                        if(tabSamplePepData == null){
+                            initSamplePepDataTab();
+                            tabPane.getTabs().add(tabSamplePepData);
+                        }
+                        selectionModel.select(tabSamplePepData);
+                        menuAnalyze.setVisible(true);
+                        break;
+                    case "Protein Data":
+                        System.out.println("Select Protein Data");
+                        if(tabSampleProteinData == null){
+                            initSampleProteinDataTab();
+                            tabPane.getTabs().add(tabSampleProteinData);
+                        }
+                        selectionModel.select(tabSampleProteinData);
+                        menuAnalyze.setVisible(true);
+                        break;
+                    default:
+                        System.err.println("Wrong Selected tree item");
+                        break;
                 }
             }
         });
     }
 
+
+
     private void initProteomicsDataTab(){
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("../view/data/ProteomicsData.fxml"));
             tabProteomicsData.setContent(loader.load());
+            tabProteomicsData.setText("Proteomics");
             proteomicsDataController = loader.getController();
-            System.out.println(proteomicsDataController);
             proteomicsDataController.setProteomicsData(proteomicsRawName, proteomicsRawType,  proteomicsRaw);
             proteomicsDataController.show();
 
@@ -197,10 +410,59 @@ public class MainController implements Initializable{
         }
     }
 
+    private void initSamplePepDataTab(){
+        tabSamplePepData = new Tab();
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("../view/data/SamplePepData.fxml"));
+        try {
+            tabSamplePepData.setContent(loader.load());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        tabSamplePepData.setText("Peptide");
+        samplePepDataController = loader.getController();
+        samplePepDataController.setData(sampleGroup);
+        samplePepDataController.show();
+    }
+
+    private void initSampleProteinDataTab(){
+        tabSampleProteinData = new Tab();
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("../view/data/SampleProteinData.fxml"));
+        try {
+            tabSampleProteinData.setContent(loader.load());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        tabSampleProteinData.setText("Protein");
+        sampleProteinDataController = loader.getController();
+        sampleProteinDataController.setData(sampleGroup);
+        sampleProteinDataController.show();
+
+    }
+
     private void loadData(){
         readSampleDataFile();
         readProteomicsDataFile();
+        loadProteinSeqDB();
         arrangeData();
+    }
+
+    private void loadProteinSeqDB(){
+        proteinSeq = new TreeMap<>();
+        File dbFile = new File(proteinDBFile);
+        BufferedReader bufferedReader;
+        try {
+            bufferedReader = new BufferedReader(new FileReader(dbFile));
+
+            String fline;
+            while((fline = bufferedReader.readLine()) != null){
+                String[] vslines = fline.split(",");
+                proteinSeq.put(vslines[0], vslines[1]);
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void readProteomicsDataFile() {
@@ -399,9 +661,62 @@ public class MainController implements Initializable{
 
 
         for(int i=0; i<proteomicsRaw.get(0).size(); i++){
+            String id = proteomicsRaw.get(indexId).get(i);
+            String sequence = proteomicsRaw.get(indexSequence).get(i);
+            Integer charge = tryIntegerParse(proteomicsRaw.get(indexCharge).get(i));
+            Double mz = tryDoubleParse(proteomicsRaw.get(indexMz).get(i));
+            Double score = tryDoubleParse(proteomicsRaw.get(indexScore).get(i));
+            String protein = proteomicsRaw.get(indexProtein).get(i);
+            String modificationStr = proteomicsRaw.get(indexModification).get(i);
+            ArrayList<Modification> modifications = new ArrayList<>();
+            if(!modificationStr.isEmpty()){
+                String[] modiTmp = modificationStr.split(";");
+                for(int j=0; j<modiTmp.length; j++){
+                    Modification tmp = new Modification(modiTmp[j]);
+                    modifications.add(tmp);
+                }
+            }
 
+            for(int j=0; j<sampleId.size(); j++){
+                Double abTmp = tryDoubleParse(proteomicsRaw.get(indexAbundance.get(j)).get(i));
+                String spId = sampleId.get(j);
+                Peptide ptTmp = new Peptide(id, sequence, charge, mz, score, abTmp, modifications);
+
+                sampleGroup.addPepData(spId, id, abTmp);
+                sampleGroup.addPeptide(spId, protein, proteinSeq.get(protein), ptTmp);
+                sampleGroup.increaseProteinData(spId, protein, abTmp);
+            }
         }
 
+        for(int i=0; i<sampleId.size();i++){
+            for(int j=0; j<sampleInfoName.size(); j++){
+                if(sampleInfoName.get(j).toLowerCase().equals("sampleid")){
+                    continue;
+                }
+                if(sampleInfoType.get(j).equals("Double")){
+                    sampleGroup.addNumInfo(sampleId.get(i), sampleInfoName.get(j), tryDoubleParse(sampleInfo.get(j).get(i)));
+                } else {
+                    sampleGroup.addStrInfo(sampleId.get(i), sampleInfoName.get(j), sampleInfo.get(j).get(i));
+                }
+            }
+        }
+    }
+
+
+    public static Integer tryIntegerParse(String text) {
+        try {
+            return Integer.parseInt(text);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    public static Double tryDoubleParse(String text){
+        try {
+            return Double.parseDouble(text);
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
 }
