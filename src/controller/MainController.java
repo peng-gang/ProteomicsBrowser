@@ -1,10 +1,13 @@
 package controller;
 
 import controller.apps.ImportDataController;
+import controller.browser.PBrowserController;
 import controller.data.ProteomicsDataController;
 import controller.data.SamplePepDataController;
 import controller.data.SampleProteinDataController;
+import controller.dataselect.CorScatterDataSelectController;
 import controller.dataselect.TTestDataSelectController;
+import controller.result.CorScatterController;
 import controller.result.PValueTableController;
 import data.*;
 import javafx.beans.value.ChangeListener;
@@ -66,13 +69,14 @@ public class MainController implements Initializable{
 
 
     //Controller
-    ProteomicsDataController proteomicsDataController;
-    SamplePepDataController samplePepDataController;
-    SampleProteinDataController sampleProteinDataController;
+    private ProteomicsDataController proteomicsDataController;
+    private SamplePepDataController samplePepDataController;
+    private SampleProteinDataController sampleProteinDataController;
+    private PBrowserController pBrowserController;
 
     ///Data
     //DB
-    private String proteinDBFile = "src/protein.info.csv";
+    //private String proteinDBFile = "src/protein.info.csv";
     private TreeMap<String, String> proteinSeq;
 
 
@@ -102,7 +106,7 @@ public class MainController implements Initializable{
         System.out.println("new project");
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("New ProteomicsBrowser Project");
-        fileChooser.setInitialDirectory(new File(System.getProperty("user.home")));
+        fileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
         fileChooser.getExtensionFilters().add(
                 new FileChooser.ExtensionFilter("ProteomicsBrowser Proj", "*.pbproj")
         );
@@ -146,6 +150,8 @@ public class MainController implements Initializable{
         ptFile = controller.getPtFile();
         spFile = controller.getSpFile();
 
+        String type = controller.getType();
+        System.out.println(type);
         System.out.println(ptFile);
         System.out.println(spFile);
 
@@ -154,10 +160,75 @@ public class MainController implements Initializable{
         }
 
         initTreeView();
-        loadData();
+        loadData(type);
         initProteomicsDataTab();
         //initSamplePepDataTab();
         //initSampleProteinDataTab();
+    }
+
+    @FXML private void correlation(ActionEvent event){
+        System.out.println("correlation");
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("../view/dataselect/CorScatterDataSelect.fxml"));
+        Parent root = null;
+        try {
+            root = loader.load();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Stage corScatterDataSelectStage = new Stage();
+        corScatterDataSelectStage.setTitle("Data Select (Correlation)");
+        corScatterDataSelectStage.setScene(new Scene(root, 400, 300));
+
+        corScatterDataSelectStage.initModality(Modality.WINDOW_MODAL);
+        corScatterDataSelectStage.initOwner(menuBar.getScene().getWindow());
+
+        CorScatterDataSelectController controller = loader.getController();
+        controller.set(sampleGroup);
+
+        String tabSel = tabPane.getSelectionModel().getSelectedItem().getText();
+        if(tabSel.equals("Peptide")){
+            controller.init("Peptide");
+        } else if(tabSel.equals("Protein")){
+            controller.init("Protein");
+        } else {
+            System.err.println("Wrong Tab");
+        }
+
+        corScatterDataSelectStage.showAndWait();
+
+        String dataId1 = controller.getData1Id();
+        String dataId2 = controller.getData2Id();
+
+        ArrayList<Double> d1;
+        ArrayList<Double> d2;
+
+        if(tabSel.equals("Peptide")){
+            d1 = sampleGroup.getPepData(dataId1);
+            d2 = sampleGroup.getPepData(dataId2);
+        } else {
+            d1 = sampleGroup.getProteinData(dataId1);
+            d2 = sampleGroup.getProteinData(dataId2);
+        }
+
+
+        FXMLLoader loader2 = new FXMLLoader(getClass().getResource("../view/result/CorScatter.fxml"));
+        Parent root2 = null;
+        try {
+            root2 = loader2.load();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Stage scStage = new Stage();
+        scStage.setTitle("Correlation Scatter Plot");
+        scStage.setScene(new Scene(root2, 600, 400));
+
+        scStage.initModality(Modality.WINDOW_MODAL);
+        scStage.initOwner(menuBar.getScene().getWindow());
+
+        CorScatterController controller2 = loader2.getController();
+        controller2.set(dataId1, dataId2, d1, d2);
+        controller2.init();
+        scStage.showAndWait();
     }
 
     @FXML private void tTest(ActionEvent event){
@@ -193,7 +264,6 @@ public class MainController implements Initializable{
         Double high = controller.getHigh();
         String groupId= controller.getGroupId();
         String dataId = controller.getDataId();
-
 
         //T-test
         ArrayList<String> sampleId = new ArrayList<>(sampleGroup.getSampleId());
@@ -330,6 +400,9 @@ public class MainController implements Initializable{
                     case "Protein":
                         menuAnalyze.setVisible(true);
                         break;
+                    case "Browser":
+                        menuAnalyze.setVisible(false);
+                        break;
                     default:
                         System.err.println("Cannot find " + selectedValue);
                         break;
@@ -386,8 +459,17 @@ public class MainController implements Initializable{
                         selectionModel.select(tabSampleProteinData);
                         menuAnalyze.setVisible(true);
                         break;
+                    case "Browser":
+                        System.out.println("Select Browser");
+                        if(tabBrowser == null){
+                            initBrowserTab();
+                            tabPane.getTabs().add(tabBrowser);
+                        }
+                        selectionModel.select(tabBrowser);
+                        menuAnalyze.setVisible(false);
+                        break;
                     default:
-                        System.err.println("Wrong Selected tree item");
+                        System.err.println("Wrong Selected tree item " + selectedValue);
                         break;
                 }
             }
@@ -439,15 +521,30 @@ public class MainController implements Initializable{
 
     }
 
-    private void loadData(){
+    private void initBrowserTab(){
+        tabBrowser = new Tab();
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("../view/browser/PBrowser.fxml"));
+        try {
+            tabBrowser.setContent(loader.load());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        tabBrowser.setText("Browser");
+        pBrowserController = loader.getController();
+        pBrowserController.setData(sampleGroup);
+        pBrowserController.show();
+    }
+
+    private void loadData(String type){
         readSampleDataFile();
         readProteomicsDataFile();
-        loadProteinSeqDB();
+        loadProteinSeqDB(type);
         arrangeData();
     }
 
-    private void loadProteinSeqDB(){
+    private void loadProteinSeqDB(String type){
         proteinSeq = new TreeMap<>();
+        String proteinDBFile = "db/" + type + "/protein.info.csv";
         File dbFile = new File(proteinDBFile);
         BufferedReader bufferedReader;
         try {

@@ -22,7 +22,8 @@
           <Menu fx:id="menuAnalyze" mnemonicParsing="false" text="Analyze" visible="false">
             <items>
               <MenuItem fx:id="menuTTest" mnemonicParsing="false" onAction="#tTest" text="T-Test" />
-                  <MenuItem fx:id="menuBoxPlot" mnemonicParsing="false" text="BoxPlot" />
+                  <MenuItem fx:id="menuBoxPlot" mnemonicParsing="false" onAction="#boxPlot" text="BoxPlot" />
+                  <MenuItem fx:id="menuCorrelation" mnemonicParsing="false" onAction="#correlation" text="Correlation" />
             </items>
           </Menu>
           <Menu mnemonicParsing="false" text="Help">
@@ -32,7 +33,7 @@
           </Menu>
         </menus>
       </MenuBar>
-      <SplitPane dividerPositions="0.18773466833541927" layoutY="29.0" prefHeight="160.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="28.0">
+      <SplitPane dividerPositions="0.15" layoutY="29.0" prefHeight="160.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="28.0">
         <items>
             <TreeView fx:id="treeView" prefHeight="1170.0" prefWidth="296.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
             <TabPane fx:id="tabPane" prefHeight="1170.0" prefWidth="1294.0" tabClosingPolicy="UNAVAILABLE" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">

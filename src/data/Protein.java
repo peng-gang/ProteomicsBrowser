@@ -1,6 +1,8 @@
 package data;
 
 import java.util.ArrayList;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 /**
@@ -15,15 +17,16 @@ public class Protein {
     private ArrayList<Integer> pepStart;
     private ArrayList<Integer> pepEnd;
     private TreeSet<Modification.ModificationType> modiTypeAll;
-    private TreeSet<Integer> modiPos;
+    private TreeMap<Integer, PosModiInfo> modiInfo;
 
     public String getName() { return  name;}
     public String getSequence() { return sequence;}
+    public int getLength() {return sequence.length(); }
     public ArrayList<Peptide> getPeptides() { return peptides; }
     public ArrayList<Integer> getPepStart() { return  pepStart; }
     public ArrayList<Integer> getPepEnd() { return pepEnd; }
     public TreeSet<Modification.ModificationType> getModiTypeAll() { return modiTypeAll; }
-    public TreeSet<Integer> getModiPos() { return  modiPos; }
+    public Set<Integer> getModiPos() { return  modiInfo.keySet(); }
 
 
 
@@ -34,7 +37,7 @@ public class Protein {
         pepStart = new ArrayList<>();
         pepEnd = new ArrayList<>();
         modiTypeAll = new TreeSet<>();
-        modiPos = new TreeSet<>();
+        modiInfo = new TreeMap<>();
     }
 
     public boolean addPeptide(Peptide pep){
@@ -56,8 +59,15 @@ public class Protein {
                 if(pep.isModified()){
                     for(Modification m : pep.getModifications()){
                         modiTypeAll.add(m.getType());
-                        for(int p : m.getPos()){
-                            modiPos.add(p);
+                        for(int i = 0; i < m.getPos().size(); i++){
+                            int modiPos = m.getPos().get(i) + indexF;
+                            PosModiInfo tmp = modiInfo.get(modiPos);
+                            if(tmp == null){
+                                PosModiInfo posModiInfo = new PosModiInfo(m.getType(), m.getPercent().get(i));
+                                modiInfo.put(modiPos, posModiInfo);
+                            } else {
+                                tmp.addModi(m.getType(), m.getPercent().get(i));
+                            }
                         }
                     }
                 }

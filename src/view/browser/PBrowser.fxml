@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.canvas.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.scene.control.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+
+<HBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="1100.0" prefWidth="1300.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.browser.PBrowserController">
+   <children>
+      <VBox prefHeight="1100.0" prefWidth="350.0" spacing="10.0">
+         <children>
+            <VBox spacing="5.0">
+               <children>
+                  <Label text="Figure Options">
+                     <font>
+                        <Font name="Arial" size="24.0" />
+                     </font>
+                     <VBox.margin>
+                        <Insets left="10.0" />
+                     </VBox.margin>
+                  </Label>
+                  <VBox prefHeight="87.0" prefWidth="300.0">
+                     <children>
+                        <Label text="Zoom:">
+                           <font>
+                              <Font size="18.0" />
+                           </font>
+                           <VBox.margin>
+                              <Insets left="20.0" />
+                           </VBox.margin>
+                        </Label>
+                        <Slider fx:id="sliderZoom">
+                           <VBox.margin>
+                              <Insets left="20.0" right="20.0" />
+                           </VBox.margin></Slider>
+                     </children>
+                  </VBox>
+                  <VBox prefHeight="200.0" prefWidth="100.0">
+                     <children>
+                        <Label text="Modification To Show">
+                           <font>
+                              <Font size="18.0" />
+                           </font>
+                           <VBox.margin>
+                              <Insets left="20.0" />
+                           </VBox.margin>
+                        </Label>
+                        <AnchorPane prefHeight="200.0" prefWidth="200.0">
+                           <children>
+                              <CheckBox fx:id="cbOxidation" layoutX="160.0" layoutY="80.0" mnemonicParsing="false" text="Oxidation" />
+                              <CheckBox fx:id="cbAcetylation" layoutX="20.0" layoutY="20.0" mnemonicParsing="false" text="Acetylation" />
+                              <CheckBox fx:id="cbCarbamidomethylation" layoutX="160.0" layoutY="20.0" mnemonicParsing="false" text="Carbamidomethylation" />
+                              <CheckBox fx:id="cbPhosphorylation" layoutX="20.0" layoutY="80.0" mnemonicParsing="false" text="Phosphorylation" />
+                           </children>
+                        </AnchorPane>
+                     </children>
+                  </VBox>
+                  <VBox prefHeight="100.0" prefWidth="100.0">
+                     <children>
+                        <Label text="Position With Modification">
+                           <font>
+                              <Font size="18.0" />
+                           </font>
+                           <VBox.margin>
+                              <Insets left="20.0" />
+                           </VBox.margin>
+                        </Label>
+                        <ComboBox fx:id="combModiPos" disable="true" prefWidth="150.0">
+                           <VBox.margin>
+                              <Insets left="20.0" />
+                           </VBox.margin>
+                        </ComboBox>
+                     </children>
+                  </VBox>
+               </children>
+            </VBox>
+            <VBox prefHeight="200.0" prefWidth="100.0">
+               <children>
+                  <Label text="Selection Option">
+                     <font>
+                        <Font size="24.0" />
+                     </font>
+                     <VBox.margin>
+                        <Insets left="10.0" />
+                     </VBox.margin>
+                  </Label>
+                  <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0" spacing="5.0">
+                     <children>
+                        <Label text="Sample">
+                           <font>
+                              <Font size="18.0" />
+                           </font>
+                        </Label>
+                        <ComboBox fx:id="combSample" prefWidth="150.0" />
+                     </children>
+                     <VBox.margin>
+                        <Insets left="20.0" />
+                     </VBox.margin>
+                  </HBox>
+                  <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0" spacing="5.0">
+                     <children>
+                        <Label text="Protein">
+                           <font>
+                              <Font size="18.0" />
+                           </font>
+                        </Label>
+                        <ComboBox fx:id="combProtein" prefWidth="150.0" />
+                     </children>
+                     <VBox.margin>
+                        <Insets left="20.0" />
+                     </VBox.margin>
+                  </HBox>
+               </children>
+            </VBox>
+         </children>
+         <HBox.margin>
+            <Insets top="10.0" />
+         </HBox.margin>
+      </VBox>
+      <VBox prefHeight="1100.0" prefWidth="950.0" spacing="20.0">
+         <children>
+            <HBox prefHeight="620.0" prefWidth="950.0">
+               <children>
+                  <VBox>
+                     <children>
+                        <Canvas fx:id="canvas" height="600.0" width="800.0" />
+                        <ScrollBar fx:id="sbarCanvas" prefHeight="20.0" prefWidth="800.0" />
+                     </children>
+                  </VBox>
+                  <VBox fx:id="vbLegend" alignment="CENTER" prefHeight="520.0" prefWidth="150.0" />
+               </children>
+            </HBox>
+            <HBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="950.0" spacing="100.0">
+               <children>
+                  <TextField fx:id="txtPep" prefHeight="300.0" prefWidth="350.0" />
+                  <TextField fx:id="txtPos" prefHeight="330.0" prefWidth="350.0" />
+               </children>
+            </HBox>
+         </children>
+         <HBox.margin>
+            <Insets top="10.0" />
+         </HBox.margin>
+      </VBox>
+   </children>
+</HBox>

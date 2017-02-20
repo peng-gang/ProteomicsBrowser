@@ -35,13 +35,13 @@ public class TTestDataSelectController implements Initializable{
     public String getGroupId() { return combGroup.getValue(); }
     public String getDataId() { return combData.getValue(); }
     public Double getLow() {
-        if(rslinder.isDisabled())
+        if(!rslinder.isVisible())
             return null;
         else
             return rslinder.getLowValue();
     }
     public Double getHigh() {
-        if(rslinder.isDisabled())
+        if(!rslinder.isVisible())
             return null;
         else
             return rslinder.getHighValue();
@@ -88,7 +88,7 @@ public class TTestDataSelectController implements Initializable{
                     Double st = val.get(num/3);
                     Double ed = val.get(num*2/3);
 
-                    rslinder.setDisable(false);
+                    rslinder.setVisible(true);
                     rslinder.setMax(max);
                     rslinder.setMin(min);
 
@@ -96,7 +96,7 @@ public class TTestDataSelectController implements Initializable{
                     rslinder.setLowValue(st);
 
                 } else {
-                    rslinder.setDisable(true);
+                    rslinder.setVisible(false);
                 }
             }
         });
@@ -107,7 +107,7 @@ public class TTestDataSelectController implements Initializable{
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         rslinder = new RangeSlider();
-        rslinder.setDisable(true);
+        rslinder.setVisible(false);
         rslinder.setShowTickMarks(true);
         rslinder.setShowTickLabels(true);
         vbGroup.getChildren().addAll(rslinder);

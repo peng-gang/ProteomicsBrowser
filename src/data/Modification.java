@@ -33,13 +33,19 @@ public class Modification {
         String infoTmp = tmp[1].substring(0, (tmp[1].length()-1));
         String[] info = infoTmp.split(":");
 
+        System.out.println(modi);
+
         pos = new ArrayList<>();
         percent = new ArrayList<>();
         for(int i=0; i<info.length; i++){
             String[] pp = info[i].split("\\(");
-            pos.add(Integer.parseInt(pp[0])-1);
+
             String pc = pp[1].substring(0, (pp[1].length()-1));
-            percent.add(Double.parseDouble(pc));
+            double dPc = Double.parseDouble(pc);
+            if(dPc > 1){
+                pos.add(Integer.parseInt(pp[0])-1);
+                percent.add(Double.parseDouble(pc));
+            }
         }
 
         switch (typeTmp){
