@@ -1,9 +1,6 @@
 package data;
 
-import java.util.ArrayList;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * protein or gene information
@@ -27,6 +24,33 @@ public class Protein {
     public ArrayList<Integer> getPepEnd() { return pepEnd; }
     public TreeSet<Modification.ModificationType> getModiTypeAll() { return modiTypeAll; }
     public Set<Integer> getModiPos() { return  modiInfo.keySet(); }
+    public TreeMap<Integer, PosModiInfo> getModiInfo() { return  modiInfo; }
+
+
+    public ArrayList<Integer> getModiPos(Modification.ModificationType mt) {
+        ArrayList<Integer> rlt = new ArrayList<>();
+        for(Map.Entry<Integer, PosModiInfo> entry : modiInfo.entrySet()){
+            Integer key = entry.getKey();
+            PosModiInfo value = entry.getValue();
+            if(value.modiExist(mt)){
+                rlt.add(key);
+            }
+        }
+        return rlt;
+    }
+
+
+    public ArrayList<Integer> getModiPos(ArrayList<Modification.ModificationType> mts) {
+        ArrayList<Integer> rlt = new ArrayList<>();
+        for(Map.Entry<Integer, PosModiInfo> entry : modiInfo.entrySet()){
+            Integer key = entry.getKey();
+            PosModiInfo value = entry.getValue();
+            if(value.modiExist(mts)){
+                rlt.add(key);
+            }
+        }
+        return rlt;
+    }
 
 
 

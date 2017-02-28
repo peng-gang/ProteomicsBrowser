@@ -15,6 +15,8 @@ public class PosModiInfo {
         modifications = new TreeMap<>();
     }
 
+    public TreeMap<Modification.ModificationType, ArrayList<Double>> getModifications() { return  modifications; }
+
     public PosModiInfo(Modification.ModificationType mt, double percent){
         modifications = new TreeMap<>();
         ArrayList<Double> tmp = new ArrayList<>();

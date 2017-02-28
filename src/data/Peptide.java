@@ -55,4 +55,28 @@ public class Peptide {
     public boolean isModified() {
         return modifications.size() > 0;
     }
+
+    public String toString(){
+        String rlt;
+        rlt = "ID: " + id + "\n";
+        rlt = rlt + "Charge: " + charge + "\n";
+        rlt = rlt + "mz: " + mz + "\n";
+        rlt = rlt + "Score: " + score + "\n";
+        rlt = rlt + "Abundance: " + abundance + "\n";
+        if(modifications.size()==0){
+            rlt += "Modification: None\n";
+        } else {
+            rlt += "Modification: \n";
+            for(Modification md : modifications){
+                rlt += "\t" + md.getType() + ": ";
+                rlt += md.getPos().get(0) + "(" + md.getPercent().get(0) + ")";
+                for(int i=1; i<md.getPos().size();i++){
+                    rlt += ";" + md.getPos().get(i) + "(" + md.getPercent().get(i) + ")";
+                }
+                rlt += "\n";
+            }
+        }
+
+        return rlt;
+    }
 }

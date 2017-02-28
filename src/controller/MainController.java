@@ -44,6 +44,9 @@ public class MainController implements Initializable{
     @FXML private MenuItem menuNewProj;
     @FXML private MenuItem menuImportData;
     @FXML private MenuItem menuClose;
+    @FXML private MenuItem menuOpenProj;
+    @FXML private MenuItem menuSaveProj;
+
     //Analyze
     @FXML private Menu menuAnalyze;
 
@@ -126,10 +129,20 @@ public class MainController implements Initializable{
             }
         }
 
-        menuImportData.setDisable(false);
+
         treeRoot = new TreeItem<>(projName);
 
         treeView.setRoot(treeRoot);
+        menuImportData.setDisable(false);
+        menuSaveProj.setDisable(false);
+    }
+
+    @FXML private void openProj(ActionEvent event){
+
+    }
+
+    @FXML private void saveProj(ActionEvent event){
+
     }
 
     @FXML private void importData(ActionEvent event) throws IOException {
@@ -164,6 +177,7 @@ public class MainController implements Initializable{
         initProteomicsDataTab();
         //initSamplePepDataTab();
         //initSampleProteinDataTab();
+        menuImportData.setDisable(true);
     }
 
     @FXML private void correlation(ActionEvent event){
@@ -383,6 +397,7 @@ public class MainController implements Initializable{
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         System.out.println("MainController Initialization");
+
         selectionModel = tabPane.getSelectionModel();
         //initTreeView();
 

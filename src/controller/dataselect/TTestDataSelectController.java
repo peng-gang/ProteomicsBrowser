@@ -6,10 +6,8 @@ import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.Slider;
-import javafx.scene.control.SpinnerValueFactory;
+import javafx.geometry.Pos;
+import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
@@ -28,9 +26,13 @@ public class TTestDataSelectController implements Initializable{
     @FXML private ComboBox<String> combGroup;
     @FXML private ComboBox<String> combData;
     @FXML private Button btnSubmit;
-    @FXML private VBox vbGroup;
+    @FXML private HBox hbSlider;
 
     private RangeSlider rslinder;
+    private Label lbLow;
+    private Label lbHigh;
+
+    private  ArrayList<Double> val;
 
     public String getGroupId() { return combGroup.getValue(); }
     public String getDataId() { return combData.getValue(); }
@@ -79,7 +81,7 @@ public class TTestDataSelectController implements Initializable{
             @Override
             public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
                 if(numInfoName.contains(newValue)){
-                    ArrayList<Double> val = new ArrayList<>(sampleGroup.getNumInfo(newValue));
+                    val = new ArrayList<>(sampleGroup.getNumInfo(newValue));
                     Collections.sort(val);
                     int num = val.size();
                     Double min = val.get(0);
@@ -95,9 +97,40 @@ public class TTestDataSelectController implements Initializable{
                     rslinder.setHighValue(ed);
                     rslinder.setLowValue(st);
 
+                    Integer numLow = num/3;
+                    Integer numHigh = numLow;
+                    lbLow.setText(numLow.toString());
+                    lbHigh.setText(numHigh.toString());
+
                 } else {
                     rslinder.setVisible(false);
                 }
+            }
+        });
+
+        rslinder.lowValueProperty().addListener(new ChangeListener<Number>() {
+            @Override
+            public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+                Integer num = 0;
+                for(Double tmp : val){
+                    if(tmp < newValue.doubleValue()){
+                        num++;
+                    }
+                }
+                lbLow.setText(num.toString());
+            }
+        });
+
+        rslinder.highValueProperty().addListener(new ChangeListener<Number>() {
+            @Override
+            public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+                Integer num = 0;
+                for(Double tmp : val){
+                    if(tmp > newValue.doubleValue()){
+                        num++;
+                    }
+                }
+                lbHigh.setText(num.toString());
             }
         });
 
@@ -110,6 +143,13 @@ public class TTestDataSelectController implements Initializable{
         rslinder.setVisible(false);
         rslinder.setShowTickMarks(true);
         rslinder.setShowTickLabels(true);
-        vbGroup.getChildren().addAll(rslinder);
+
+        lbLow = new Label();
+        lbLow.setAlignment(Pos.CENTER_RIGHT);
+        lbLow.setPrefWidth(40);
+        lbHigh = new Label();
+        lbHigh.setAlignment(Pos.CENTER_LEFT);
+        lbHigh.setPrefWidth(40);
+        hbSlider.getChildren().addAll(lbLow, rslinder, lbHigh);
     }
 }

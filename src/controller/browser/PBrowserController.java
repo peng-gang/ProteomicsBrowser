@@ -1,9 +1,6 @@
 package controller.browser;
 
-import data.Modification;
-import data.Peptide;
-import data.Protein;
-import data.SampleGroup;
+import data.*;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
@@ -20,23 +17,21 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.ResourceBundle;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by gpeng on 2/14/17.
  */
 public class PBrowserController implements Initializable {
+    // controllers in view
     @FXML private Canvas canvas;
     @FXML private Slider sliderZoom;
     @FXML private CheckBox cbAcetylation;
     @FXML private CheckBox cbCarbamidomethylation;
     @FXML private CheckBox cbPhosphorylation;
     @FXML private CheckBox cbOxidation;
-    @FXML private TextField txtPos;
-    @FXML private TextField txtPep;
+    @FXML private Label lblPep;
+    @FXML private Label lblPos;
     @FXML private ComboBox<String> combSample;
     @FXML private ComboBox<String> combProtein;
     @FXML private ScrollBar sbarCanvas;
@@ -59,7 +54,12 @@ public class PBrowserController implements Initializable {
     private Label lbOxidation1;
     private Label lbOxidation2;
 
+    private GraphicsContext gc;
 
+
+
+
+    // data
     private SampleGroup sampleGroup;
     private ArrayList<String> sampleId;
     private ArrayList<String> proteinId;
@@ -67,8 +67,6 @@ public class PBrowserController implements Initializable {
     private String selectedSample = null;
     private String selectedProtein = null;
     private Protein protein = null;
-
-    private GraphicsContext gc;
 
     private double scaleX = 1;
     private double scaleY = 1;
@@ -90,6 +88,9 @@ public class PBrowserController implements Initializable {
     private int maxY;
     private ArrayList<PepPos> arrangePep;
 
+    //selected modifications to show
+    private ArrayList<Modification.ModificationType> modiSelected;
+
 
 
     public void setData(SampleGroup sampleGroup){
@@ -101,6 +102,11 @@ public class PBrowserController implements Initializable {
     public void show(){
         combSample.getItems().addAll(sampleId);
         combProtein.getItems().addAll(proteinId);
+
+        modiSelected.add(Modification.ModificationType.Acetylation);
+        modiSelected.add(Modification.ModificationType.Carbamidomethylation);
+        modiSelected.add(Modification.ModificationType.Oxidation);
+        modiSelected.add(Modification.ModificationType.Phosphorylation);
 
         combSample.valueProperty().addListener(new ChangeListener<String>() {
             @Override
@@ -116,6 +122,10 @@ public class PBrowserController implements Initializable {
                     sliderZoom.setMin(sc);
                     sliderZoom.setValue(1);
                     orderPep();
+                    //too many modification to show in a canvas
+                    if(maxY * (pixPerPep + 2*pixPepGap) > (canvasHeight-bottomPix-pixXLabel)){
+                        scaleY = (canvasHeight-bottomPix-pixXLabel)/((pixPerPep + 2*pixPepGap)*maxY);
+                    }
                     initSBar(0);
                     draw();
                 }
@@ -136,6 +146,9 @@ public class PBrowserController implements Initializable {
                     sliderZoom.setMin(sc);
                     sliderZoom.setValue(1);
                     orderPep();
+                    if(maxY * (pixPerPep + 2*pixPepGap) > (canvasHeight-bottomPix-pixXLabel)){
+                        scaleY = (canvasHeight-bottomPix-pixXLabel)/((pixPerPep + 2*pixPepGap)*maxY);
+                    }
                     initSBar(0);
                     draw();
                 }
@@ -159,9 +172,20 @@ public class PBrowserController implements Initializable {
             }
         });
 
+
         cbAcetylation.selectedProperty().addListener(new ChangeListener<Boolean>() {
             @Override
             public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+                if(modiSelected.contains(Modification.ModificationType.Acetylation)){
+                    if(!cbAcetylation.isSelected()){
+                        modiSelected.remove(Modification.ModificationType.Acetylation);
+                    }
+                } else {
+                    if(cbAcetylation.isSelected()){
+                        modiSelected.add(Modification.ModificationType.Acetylation);
+                    }
+                }
+                updateCombModiPos();
                 draw();
             }
         });
@@ -169,6 +193,16 @@ public class PBrowserController implements Initializable {
         cbCarbamidomethylation.selectedProperty().addListener(new ChangeListener<Boolean>() {
             @Override
             public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+                if(modiSelected.contains(Modification.ModificationType.Carbamidomethylation)){
+                    if(!cbCarbamidomethylation.isSelected()){
+                        modiSelected.remove(Modification.ModificationType.Carbamidomethylation);
+                    }
+                } else {
+                    if(cbCarbamidomethylation.isSelected()){
+                        modiSelected.add(Modification.ModificationType.Carbamidomethylation);
+                    }
+                }
+                updateCombModiPos();
                 draw();
             }
         });
@@ -176,6 +210,16 @@ public class PBrowserController implements Initializable {
         cbOxidation.selectedProperty().addListener(new ChangeListener<Boolean>() {
             @Override
             public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+                if(modiSelected.contains(Modification.ModificationType.Oxidation)){
+                    if(!cbOxidation.isSelected()){
+                        modiSelected.remove(Modification.ModificationType.Oxidation);
+                    }
+                } else {
+                    if(cbOxidation.isSelected()){
+                        modiSelected.add(Modification.ModificationType.Oxidation);
+                    }
+                }
+                updateCombModiPos();
                 draw();
             }
         });
@@ -183,6 +227,16 @@ public class PBrowserController implements Initializable {
         cbPhosphorylation.selectedProperty().addListener(new ChangeListener<Boolean>() {
             @Override
             public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+                if(modiSelected.contains(Modification.ModificationType.Phosphorylation)){
+                    if(!cbPhosphorylation.isSelected()){
+                        modiSelected.remove(Modification.ModificationType.Phosphorylation);
+                    }
+                } else {
+                    if(cbPhosphorylation.isSelected()){
+                        modiSelected.add(Modification.ModificationType.Phosphorylation);
+                    }
+                }
+                updateCombModiPos();
                 draw();
             }
         });
@@ -191,18 +245,33 @@ public class PBrowserController implements Initializable {
         combModiPos.valueProperty().addListener(new ChangeListener<Integer>() {
             @Override
             public void changed(ObservableValue<? extends Integer> observable, Integer oldValue, Integer newValue) {
-                int centerPos = newValue;
-                double st = centerPos * pixPerLocus * scaleX - canvas.getWidth() / 2.0;
-                if(st < 0){
-                    st = 0;
+                if(newValue != null){
+                    int centerPos = newValue;
+                    double st = centerPos * pixPerLocus * scaleX - canvas.getWidth() / 2.0;
+                    if(st < 0){
+                        st = 0;
+                    }
+                    if(st > sbarCanvas.getMax()){
+                        st = sbarCanvas.getMax();
+                    }
+                    sbarCanvas.setValue(st);
+                    draw();
                 }
-                if(st > sbarCanvas.getMax()){
-                    st = sbarCanvas.getMax();
-                }
-                sbarCanvas.setValue(st);
-                draw();
             }
         });
+    }
+
+    private void updateCombModiPos(){
+        combModiPos.getSelectionModel().clearSelection();
+        combModiPos.setValue(null);
+        combModiPos.getItems().clear();
+
+        combModiPos.getItems().addAll(protein.getModiPos(modiSelected));
+        if(combModiPos.getItems().size() > 0){
+            combModiPos.setDisable(false);
+        } else {
+            combModiPos.setDisable(true);
+        }
     }
 
     private void legend(){
@@ -260,9 +329,9 @@ public class PBrowserController implements Initializable {
 
         for(PepPos pp : arrangePep){
             double tlX = leftPix + pp.getStart()*pixPerLocus*scaleX + 0.5;
-            double tlY = canvasHeight - pixXLabel - bottomPix - (pp.getY() + 1) * (pixPerPep  + pixPepGap * 2) + 1;
+            double tlY = canvasHeight - pixXLabel - bottomPix - (pp.getY() + 1) * (pixPerPep  + pixPepGap * 2) * scaleY + 1;
             double w = pixPerLocus * pp.getPep().getLength()*scaleX - 0.5;
-            double h = pixPerPep;
+            double h = pixPerPep * scaleY;
 
             tlX = tlX - st;
             double rX = tlX + w;
@@ -283,9 +352,9 @@ public class PBrowserController implements Initializable {
                         if(modi.getType() == Modification.ModificationType.Acetylation){
                             for(int i=0; i<modi.getPos().size(); i++){
                                 double leftX = leftPix + (modi.getPos().get(i) + pp.getStart()) * pixPerLocus * scaleX + 0.5;
-                                double topY = tlY + (1.0-modi.getPercent().get(i)/100.0) * pixPerPep;
+                                double topY = tlY + (1.0-modi.getPercent().get(i)/100.0) * pixPerPep * scaleY;
                                 double width = pixPerLocus * scaleX - 0.5;
-                                double height = pixPerPep * modi.getPercent().get(i)/100.0;
+                                double height = scaleY * pixPerPep * modi.getPercent().get(i)/100.0;
 
                                 leftX = leftX - st;
                                 double rightX = leftX + width;
@@ -305,9 +374,9 @@ public class PBrowserController implements Initializable {
                         if(modi.getType() == Modification.ModificationType.Carbamidomethylation){
                             for(int i=0; i<modi.getPos().size(); i++){
                                 double leftX = leftPix + (modi.getPos().get(i) + pp.getStart()) * pixPerLocus * scaleX + 0.5;
-                                double topY = tlY + (1.0-modi.getPercent().get(i)/100.0) * pixPerPep;
+                                double topY = tlY + (1.0-modi.getPercent().get(i)/100.0) * pixPerPep * scaleY;
                                 double width = pixPerLocus * scaleX - 0.5;
-                                double height = pixPerPep * modi.getPercent().get(i)/100.0;
+                                double height = scaleY * pixPerPep * modi.getPercent().get(i)/100.0;
 
                                 leftX = leftX - st;
                                 double rightX = leftX + width;
@@ -327,9 +396,9 @@ public class PBrowserController implements Initializable {
                         if(modi.getType() == Modification.ModificationType.Phosphorylation){
                             for(int i=0; i<modi.getPos().size(); i++){
                                 double leftX = leftPix + (modi.getPos().get(i) + pp.getStart()) * pixPerLocus * scaleX + 0.5;
-                                double topY = tlY + (1.0-modi.getPercent().get(i)/100.0) * pixPerPep;
+                                double topY = tlY + (1.0-modi.getPercent().get(i)/100.0) * pixPerPep * scaleY;
                                 double width = pixPerLocus * scaleX - 0.5;
-                                double height = pixPerPep * modi.getPercent().get(i)/100.0;
+                                double height = scaleY * pixPerPep * modi.getPercent().get(i)/100.0;
 
                                 leftX = leftX - st;
                                 double rightX = leftX + width;
@@ -349,9 +418,9 @@ public class PBrowserController implements Initializable {
                         if(modi.getType() == Modification.ModificationType.Oxidation){
                             for(int i=0; i<modi.getPos().size(); i++){
                                 double leftX = leftPix + (modi.getPos().get(i) + pp.getStart()) * pixPerLocus * scaleX + 0.5;
-                                double topY = tlY + (1.0-modi.getPercent().get(i)/100.0) * pixPerPep;
+                                double topY = tlY + (1.0-modi.getPercent().get(i)/100.0) * pixPerPep * scaleY;
                                 double width = pixPerLocus * scaleX - 0.5;
-                                double height = pixPerPep * modi.getPercent().get(i)/100.0;
+                                double height = scaleY * pixPerPep * modi.getPercent().get(i)/100.0;
 
                                 leftX = leftX - st;
                                 double rightX = leftX + width;
@@ -386,7 +455,7 @@ public class PBrowserController implements Initializable {
             double leftX = leftPix + (i + 0.3) * pixPerLocus * scaleX - st;
             double topY =  canvasHeight - pixXLabel - bottomPix + pixPerLocus * 2;
             if(modiPos.contains(i)){
-                gc.setFill(Color.BLUE);
+                gc.setFill(Color.CRIMSON);
             } else {
                 gc.setFill(Color.BLACK);
             }
@@ -399,9 +468,8 @@ public class PBrowserController implements Initializable {
     }
 
     private void orderPep(){
-
         //Arrange the position
-        arrangePep = new ArrayList();
+        arrangePep.clear();
         ArrayList<Integer> start = protein.getPepStart();
         ArrayList<Integer> end = protein.getPepEnd();
         ArrayList<Peptide> peps = protein.getPeptides();
@@ -446,6 +514,10 @@ public class PBrowserController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         System.out.println("Init Browser");
+
+        arrangePep = new ArrayList();
+        modiSelected = new ArrayList<>();
+
         cbAcetylation.setSelected(true);
         cbCarbamidomethylation.setSelected(true);
         cbOxidation.setSelected(true);
@@ -481,7 +553,8 @@ public class PBrowserController implements Initializable {
         lbCarbamidomethylation1.setStyle("-fx-background-color: forestgreen");
         lbCarbamidomethylation1.setPrefWidth(10);
         lbCarbamidomethylation1.setPrefHeight(10);
-        lbCarbamidomethylation2 = new Label("Carbamidomethylation");
+        //lbCarbamidomethylation2 = new Label("Carbamidomethylation");
+        lbCarbamidomethylation2 = new Label("Carbamidom");
         hbCarbamidomethylation.getChildren().addAll(lbCarbamidomethylation1, lbCarbamidomethylation2);
 
         hbPhosphorylation = new HBox();
@@ -510,14 +583,62 @@ public class PBrowserController implements Initializable {
             public void handle(MouseEvent event) {
                 double x = event.getX();
                 double y = event.getY();
-                txtPep.setText("Pos x " + x);
-                txtPos.setText("Pos y " + y);
+
+
+                // start from 0
+                int idxX = (int) ((x + sbarCanvas.getValue()) /(pixPerLocus*scaleX)) - 1;
+                int idxY = (int) ((canvasHeight - pixXLabel - bottomPix - y - 1) / ((pixPerPep + pixPepGap * 2) * scaleY));
+
+                for(PepPos tmp : arrangePep){
+                    if(tmp.contains(idxX, idxY)){
+                        lblPep.setText(tmp.getPep().toString());
+                        break;
+                    }
+                }
+
+                PosModiInfo posModiInfo = protein.getModiInfo().get(idxX);
+                if(posModiInfo == null){
+                    lblPos.setText("No Modification at this position");
+                } else {
+                    int numTotal = 0;
+                    for(PepPos tmp : arrangePep){
+                        if(tmp.contains(idxX)){
+                            numTotal++;
+                        }
+                    }
+
+                    String txtShow = "Total peptides: " + numTotal + "\n";
+
+                    TreeMap<Modification.ModificationType, ArrayList<Double>> modis =  posModiInfo.getModifications();
+                    Set set = modis.entrySet();
+                    Iterator it = set.iterator();
+                    while(it.hasNext()){
+                        Map.Entry me = (Map.Entry) it.next();
+                        Modification.ModificationType mt = (Modification.ModificationType) me.getKey();
+                        ArrayList<Double> pc = (ArrayList<Double>) me.getValue();
+                        txtShow += mt + ": " + pc.size() + "\n";
+                        txtShow += pc.get(0);
+                        for(int i = 1; i < pc.size(); i++){
+                            txtShow += ";" + pc.get(i);
+                        }
+                        txtShow += "\n";
+                    }
+
+                    lblPos.setText(txtShow);
+
+                }
+
+                //txtPep.setText("Pos x " + x + ": " + idxX);
+                //txtPos.setText("Pos y " + y + ": " + idxY);
             }
         });
+
+
 
     }
 
     public class PepPos implements Comparable<PepPos>{
+        // start, end, and y are all from 0
         private int start;
         private int end;
         private int y;
@@ -536,6 +657,20 @@ public class PBrowserController implements Initializable {
         public int getStart() {return start;}
         public int getEnd() {return end;}
         public Peptide getPep() {return pep;}
+
+        public boolean contains(int x){
+            if(start <= x && end >= x){
+                return true;
+            }
+            return  false;
+        }
+
+        public boolean contains(int x, int y){
+            if(this.y == y && start <= x && end >= x){
+                return true;
+            }
+            return  false;
+        }
 
         @Override
         public int compareTo(PepPos o) {
