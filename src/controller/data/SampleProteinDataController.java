@@ -10,6 +10,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.util.Callback;
+import project.PublicInfo;
 
 import java.net.URL;
 import java.util.ArrayList;
@@ -23,11 +24,16 @@ public class SampleProteinDataController implements Initializable {
 
     private SampleGroup sampleGroup;
 
+    private PublicInfo.ScaleType scaleType;
+
     public void show() {
         System.out.println("Show Sample and Peptide Data dataTable");
 
         tbvSampleProteinData.setEditable(false);
+        tbvSampleProteinData.getItems().clear();
+        tbvSampleProteinData.getColumns().clear();
         ObservableList<ObservableList> data = FXCollections.observableArrayList();
+
 
         final int idxSampleId = 0;
         TableColumn colSampleId = new TableColumn("Sample ID");
@@ -93,7 +99,26 @@ public class SampleProteinDataController implements Initializable {
             }
 
             for(int j=0; j<proteinId.size(); j++){
-                row.add((sampleGroup.getProteinData(sampleIdTmp, proteinId.get(j))).toString());
+                Double tmp = sampleGroup.getProteinData(sampleIdTmp, proteinId.get(j));
+                switch (scaleType){
+                    case Log2:
+                        if(tmp <=0) {
+                            tmp = 0.0;
+                        } else {
+                            tmp = Math.log(tmp)/Math.log(2.0);
+                        }
+                        break;
+                    case Log10:
+                        if(tmp<=0){
+                            tmp = 0.0;
+                        } else {
+                            tmp = Math.log10(tmp);
+                        }
+                        break;
+                    default:
+                        break;
+                }
+                row.add(String.format("%.2f", tmp));
             }
             data.add(row);
         }
@@ -108,6 +133,12 @@ public class SampleProteinDataController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        scaleType = PublicInfo.ScaleType.Regular;
         System.out.println("Init Sample Protein Data Controller");
+    }
+
+    public void setScaleType(PublicInfo.ScaleType scaleType){
+        this.scaleType = scaleType;
+        show();
     }
 }

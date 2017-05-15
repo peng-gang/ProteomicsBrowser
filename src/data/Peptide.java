@@ -16,6 +16,8 @@ public class Peptide {
     private Double abundance;
     private ArrayList<Modification> modifications;
 
+    private Integer abundanceRange = -1;
+
 
     public String getId() {return id;}
     public int getLength() {return sequence.length();}
@@ -79,4 +81,16 @@ public class Peptide {
 
         return rlt;
     }
+
+    public void setAbundanceRange(ArrayList<Double> cutoff){
+        for(int i=0;i<cutoff.size();i++){
+            if(abundance < cutoff.get(i)){
+                abundanceRange = i;
+                return;
+            }
+        }
+        abundanceRange = cutoff.size();
+    }
+
+    public int getAbundanceRange(){return abundanceRange;}
 }

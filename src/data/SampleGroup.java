@@ -1,8 +1,11 @@
 package data;
 
+import project.PublicInfo;
+
 import java.util.*;
 
 /**
+ * sample groups storing sample information including numeric, string information and peptide and protein data for each sample
  * Created by gpeng on 2/13/17.
  */
 public class SampleGroup {
@@ -13,6 +16,19 @@ public class SampleGroup {
     private HashSet<String> proteinId; //for abundance value
     private HashSet<String> proteinName; //for modification
 
+    private PublicInfo.ProteinIntegrationType proteinIntegrationType;
+    private PublicInfo.ProteinStatus proteinStatus;
+
+    private boolean flagRawAbundance = false;
+    private boolean flagRawMedian = false;
+
+    private boolean flagiBAQ = false;
+    private boolean flagiBAQMedianNorm = false;
+
+
+    private boolean flagAbundanceRange = false;
+
+
     public SampleGroup(){
         samples = new TreeMap<>();
         numInfoName = new HashSet<>();
@@ -20,6 +36,9 @@ public class SampleGroup {
         pepId = new HashSet<>();
         proteinId = new HashSet<>();
         proteinName = new HashSet<>();
+
+        proteinIntegrationType = PublicInfo.ProteinIntegrationType.Raw;
+        proteinStatus = PublicInfo.ProteinStatus.Unnormalized;
     }
 
 
@@ -105,6 +124,59 @@ public class SampleGroup {
         } else {
             samples.get(sample).addPeptide(proteinName, proteinSequence, pep);
             this.proteinName.add(proteinName);
+        }
+    }
+
+    public void setProteinIntegrationType(PublicInfo.ProteinIntegrationType proteinIntegrationType){
+        this.proteinIntegrationType = proteinIntegrationType;
+    }
+
+    public void setProteinStatus(PublicInfo.ProteinStatus proteinStatus){
+        this.proteinStatus = proteinStatus;
+    }
+
+    public void updateProtein(){
+        switch (proteinIntegrationType){
+            case Raw:
+                switch (proteinStatus){
+                    case Unnormalized:
+                        if(!flagRawAbundance){
+                            rawAbundance();
+                            flagRawAbundance = true;
+                        }
+                        // raw data
+                        return;
+                    case Median:
+                        //median normalized raw data
+                        if(!flagRawMedian){
+                            rawAbundanceMedianNorm();
+                            flagRawMedian = true;
+                        }
+                        return;
+                    default:
+                        return;
+                }
+            case iBAQ:
+                switch (proteinStatus) {
+                    case Unnormalized:
+                        if(!flagiBAQ){
+                            iBAQ();
+                            flagiBAQ = true;
+                        }
+
+                        return;
+                    case Median:
+                        if(!flagiBAQMedianNorm){
+                            iBAQMedianNorm();
+                            flagiBAQMedianNorm = true;
+                        }
+
+                        return;
+                    default:
+                        return;
+                }
+            default:
+                return;
         }
     }
 
@@ -202,14 +274,16 @@ public class SampleGroup {
 
         ArrayList<Double> rlt = new ArrayList<>();
         for(String spName : samples.keySet()){
-            rlt.add(samples.get(spName).getProteinData(proteinId));
+            //rlt.add(samples.get(spName).getProteinData(proteinId));
+            rlt.add(samples.get(spName).getProteinData(proteinId,proteinIntegrationType, proteinStatus));
         }
         return rlt;
     }
 
     public Double getProteinData(String sample, String proteinId){
         if(samples.keySet().contains(sample)){
-            return samples.get(sample).getProteinData(proteinId);
+            //return samples.get(sample).getProteinData(proteinId);
+            return samples.get(sample).getProteinData(proteinId,proteinIntegrationType, proteinStatus);
         } else {
             return null;
         }
@@ -242,6 +316,103 @@ public class SampleGroup {
         } else {
             return null;
         }
+    }
+
+
+    /**
+     * iBAQ for each sample
+     */
+    public void iBAQ(){
+        for(Map.Entry<String, Sample> entry : samples.entrySet()){
+            entry.getValue().iBAQ();
+        }
+    }
+
+    /**
+     * raw abundance for each sample
+     */
+    public void rawAbundance(){
+        for(Map.Entry<String, Sample> entry : samples.entrySet()){
+            entry.getValue().rawAbundance();
+        }
+    }
+
+
+    public void rawAbundanceMedianNorm(){
+        ArrayList<Double> medianEach = new ArrayList<>();
+        ArrayList<Double> dataAll = new ArrayList<>();
+        for(Map.Entry<String, Sample> entry : samples.entrySet()){
+            ArrayList<Double> tmp = entry.getValue().getRawAbundance();
+            dataAll.addAll(tmp);
+            Collections.sort(tmp);
+            int idx = tmp.size()/2;
+            if(tmp.size() % 2 == 0){
+                double md = (tmp.get(idx-1) + tmp.get(idx))/2;
+                medianEach.add(md);
+            } else {
+                medianEach.add(tmp.get(idx));
+            }
+        }
+
+        Collections.sort(dataAll);
+        int idx = dataAll.size()/2;
+        double mdAll = 0;
+        if(dataAll.size() %2 == 0){
+            mdAll = (dataAll.get(idx-1) + dataAll.get(idx))/2;
+        } else {
+            mdAll = dataAll.get(idx);
+        }
+
+        idx = 0;
+        for(Map.Entry<String, Sample> entry : samples.entrySet()){
+            entry.getValue().rawAbundanceMedianNorm(mdAll-medianEach.get(idx));
+            idx++;
+        }
+
+        return;
+    }
+
+    public void iBAQMedianNorm(){
+        ArrayList<Double> medianEach = new ArrayList<>();
+        ArrayList<Double> dataAll = new ArrayList<>();
+        for(Map.Entry<String, Sample> entry : samples.entrySet()){
+            ArrayList<Double> tmp = entry.getValue().getiBAQAbundance();
+            dataAll.addAll(tmp);
+            Collections.sort(tmp);
+            int idx = tmp.size()/2;
+            if(tmp.size() % 2 == 0){
+                double md = (tmp.get(idx-1) + tmp.get(idx))/2;
+                medianEach.add(md);
+            } else {
+                medianEach.add(tmp.get(idx));
+            }
+        }
+
+        Collections.sort(dataAll);
+        int idx = dataAll.size()/2;
+        double mdAll = 0;
+        if(dataAll.size() %2 == 0){
+            mdAll = (dataAll.get(idx-1) + dataAll.get(idx))/2;
+        } else {
+            mdAll = dataAll.get(idx);
+        }
+
+        idx = 0;
+        for(Map.Entry<String, Sample> entry : samples.entrySet()){
+            entry.getValue().iBAQMedianNorm(mdAll-medianEach.get(idx));
+            idx++;
+        }
+        return;
+    }
+
+    public void setAbundanceRange(){
+        if(flagAbundanceRange){
+            return;
+        }
+        for(Sample sp : samples.values()){
+            sp.setAbundanceRange();
+        }
+        flagAbundanceRange = true;
     }
 
 }

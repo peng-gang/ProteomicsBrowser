@@ -28,6 +28,45 @@
                   <MenuItem fx:id="menuCorrelation" mnemonicParsing="false" onAction="#correlation" text="Correlation" />
             </items>
           </Menu>
+            <Menu fx:id="menuData" mnemonicParsing="false" text="Data" visible="false">
+              <items>
+                  <Menu mnemonicParsing="false" text="Integration">
+                     <items>
+                        <RadioMenuItem fx:id="menuProteinRaw" mnemonicParsing="false" onAction="#rawData" selected="true" text="Raw">
+                           <toggleGroup>
+                              <ToggleGroup fx:id="toggleIntegratioin" />
+                           </toggleGroup>
+                        </RadioMenuItem>
+                        <RadioMenuItem fx:id="menuProteiniBAQ" mnemonicParsing="false" onAction="#iBAQ" text="iBAQ" toggleGroup="$toggleIntegratioin" />
+                     </items>
+                  </Menu>
+                  <Menu mnemonicParsing="false" text="Normalization">
+                     <items>
+                        <RadioMenuItem fx:id="menuNonnormalization" mnemonicParsing="false" onAction="#nonNormalization" selected="true" text="No">
+                           <toggleGroup>
+                              <ToggleGroup fx:id="toggleNormalization" />
+                           </toggleGroup>
+                        </RadioMenuItem>
+                        <RadioMenuItem fx:id="menuMedianNormalization" mnemonicParsing="false" onAction="#medianNormalization" text="Median" toggleGroup="$toggleNormalization" />
+                     </items>
+                  </Menu>
+              </items>
+            </Menu>
+            <Menu fx:id="menuView" mnemonicParsing="false" text="View" visible="false">
+               <items>
+                  <Menu mnemonicParsing="false" text="Scale">
+                     <items>
+                        <RadioMenuItem fx:id="menuScaleRegular" mnemonicParsing="false" onAction="#scaleRegular" selected="true" text="Regular">
+                           <toggleGroup>
+                              <ToggleGroup fx:id="toggleGroupScale" />
+                           </toggleGroup>
+                        </RadioMenuItem>
+                        <RadioMenuItem fx:id="menuScaleLog2" mnemonicParsing="false" onAction="#scaleLog2" text="Log2" toggleGroup="$toggleGroupScale" />
+                        <RadioMenuItem fx:id="menuScaleLog10" mnemonicParsing="false" onAction="#scaleLog10" text="Log10" toggleGroup="$toggleGroupScale" />
+                     </items>
+                  </Menu>
+               </items>
+            </Menu>
           <Menu mnemonicParsing="false" text="Help">
             <items>
               <MenuItem fx:id="menuAbout" mnemonicParsing="false" text="About" />

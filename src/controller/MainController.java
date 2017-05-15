@@ -5,6 +5,7 @@ import controller.browser.PBrowserController;
 import controller.data.ProteomicsDataController;
 import controller.data.SamplePepDataController;
 import controller.data.SampleProteinDataController;
+import controller.dataselect.BoxPlotDataSelectController;
 import controller.dataselect.CorScatterDataSelectController;
 import controller.dataselect.TTestDataSelectController;
 import controller.result.CorScatterController;
@@ -19,6 +20,7 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Group;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -26,10 +28,15 @@ import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.input.SwipeEvent;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
+import javafx.scene.shape.Line;
+import javafx.scene.shape.Rectangle;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import org.apache.commons.math3.stat.inference.TestUtils;
+import project.PublicInfo;
 
 import java.io.*;
 import java.net.URL;
@@ -47,8 +54,27 @@ public class MainController implements Initializable{
     @FXML private MenuItem menuOpenProj;
     @FXML private MenuItem menuSaveProj;
 
+
+    //Data
+    @FXML private Menu menuData;
+    @FXML private RadioMenuItem menuProteinRaw;
+    @FXML private RadioMenuItem menuProteiniBAQ;
+
+    @FXML private RadioMenuItem menuNonnormalization;
+    @FXML private RadioMenuItem menuMedianNormalization;
+
+
     //Analyze
     @FXML private Menu menuAnalyze;
+
+
+    //View
+    @FXML private Menu menuView;
+    @FXML private RadioMenuItem menuScaleRegular;
+    @FXML private RadioMenuItem menuScaleLog2;
+    @FXML private RadioMenuItem menuScaleLog10;
+
+
 
 
     //TreeView
@@ -148,7 +174,7 @@ public class MainController implements Initializable{
     @FXML private void importData(ActionEvent event) throws IOException {
         System.out.println("Import Data");
 
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("../view/apps/ImportData.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/apps/ImportData.fxml"));
         Parent root = loader.load();
         Stage importDataStage = new Stage();
         importDataStage.setTitle("Import Data");
@@ -180,9 +206,10 @@ public class MainController implements Initializable{
         menuImportData.setDisable(true);
     }
 
+    //Menu Analyze
     @FXML private void correlation(ActionEvent event){
         System.out.println("correlation");
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("../view/dataselect/CorScatterDataSelect.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/dataselect/CorScatterDataSelect.fxml"));
         Parent root = null;
         try {
             root = loader.load();
@@ -225,7 +252,7 @@ public class MainController implements Initializable{
         }
 
 
-        FXMLLoader loader2 = new FXMLLoader(getClass().getResource("../view/result/CorScatter.fxml"));
+        FXMLLoader loader2 = new FXMLLoader(getClass().getResource("/view/result/CorScatter.fxml"));
         Parent root2 = null;
         try {
             root2 = loader2.load();
@@ -247,7 +274,7 @@ public class MainController implements Initializable{
 
     @FXML private void tTest(ActionEvent event){
         System.out.println("t-test");
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("../view/dataselect/TTestDataSelect.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/dataselect/TTestDataSelect.fxml"));
         Parent root = null;
         try {
             root = loader.load();
@@ -370,7 +397,7 @@ public class MainController implements Initializable{
 
 
         //show result
-        FXMLLoader loader2 = new FXMLLoader(getClass().getResource("../view/result/PValueTable.fxml"));
+        FXMLLoader loader2 = new FXMLLoader(getClass().getResource("/view/result/PValueTable.fxml"));
         Parent root2 = null;
         try {
             root2 = loader2.load();
@@ -391,7 +418,216 @@ public class MainController implements Initializable{
     }
 
     @FXML private void boxPlot(ActionEvent event){
+        System.out.println("BoxPlots");
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/dataselect/BoxPlotDataSelect.fxml"));
+        Parent root = null;
+        try {
+            root = loader.load();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Stage boxPlotDataSelectStage = new Stage();
+        boxPlotDataSelectStage.setTitle("Data Select (BoxPlot)");
+        boxPlotDataSelectStage.setScene(new Scene(root, 400, 300));
 
+        boxPlotDataSelectStage.initModality(Modality.WINDOW_MODAL);
+        boxPlotDataSelectStage.initOwner(menuBar.getScene().getWindow());
+
+        BoxPlotDataSelectController controller = loader.getController();
+        controller.set(sampleGroup);
+        String tabSel = tabPane.getSelectionModel().getSelectedItem().getText();
+        if(tabSel.equals("Peptide")){
+            controller.init("Peptide");
+        } else if(tabSel.equals("Protein")){
+            controller.init("Protein");
+        } else {
+            System.err.println("Wrong Tab");
+        }
+
+        boxPlotDataSelectStage.showAndWait();
+
+        Double low = controller.getLow();
+        Double high = controller.getHigh();
+        String groupId= controller.getGroupId();
+        String dataId = controller.getDataId();
+
+        //set into different groups
+        ArrayList<String> sampleId = new ArrayList<>(sampleGroup.getSampleId());
+        ArrayList<String> g1 = new ArrayList<>();
+        ArrayList<String> g2 = new ArrayList<>();
+        if(low == null){
+            String g1Str = sampleGroup.getStrInfo(sampleId.get(0), groupId);
+            for(String sp : sampleId){
+                if(sampleGroup.getStrInfo(sp, groupId).equals(g1Str)){
+                    g1.add(sp);
+                } else {
+                    g2.add(sp);
+                }
+            }
+        } else {
+            for(String sp: sampleId){
+                if(sampleGroup.getNumInfo(sp, groupId) < low){
+                    g1.add(sp);
+                }
+
+                if(sampleGroup.getNumInfo(sp, groupId) > high){
+                    g2.add(sp);
+                }
+            }
+        }
+
+        ArrayList<Double> t1 = new ArrayList<>();
+        ArrayList<Double> t2 = new ArrayList<>();
+
+        if(tabSel.equals("Peptide")){
+            for(int i=0; i<g1.size(); i++){
+                t1.add(sampleGroup.getPepData(g1.get(i), dataId));
+            }
+
+            for(int i=0; i<g2.size(); i++){
+                t2.add(sampleGroup.getPepData(g2.get(i), dataId));
+            }
+        } else if(tabSel.equals("Protein")){
+            for(int i=0; i<g1.size(); i++){
+                t1.add(sampleGroup.getProteinData(g1.get(i), dataId));
+            }
+
+            for(int i=0; i<g2.size(); i++){
+                t2.add(sampleGroup.getProteinData(g2.get(i), dataId));
+            }
+        } else {
+            System.err.println("Wrong Tab");
+        }
+
+        ArrayList<ArrayList<Double>> dataAll = new ArrayList<>();
+        dataAll.add(t1);
+        dataAll.add(t2);
+
+        //Box Plot
+        Stage boxPlotStage = new Stage();
+        boxPlotStage.setTitle("BoxPlot " + dataId);
+        boxPlotStage.setScene(new Scene(boxPlot(dataAll, 250, 200, 25, 25), 300, 250, Color.WHITE));
+
+
+        boxPlotStage.initModality(Modality.WINDOW_MODAL);
+        boxPlotStage.initOwner(menuBar.getScene().getWindow());
+
+        boxPlotStage.showAndWait();
+    }
+
+    //Menu Data
+    @FXML private void rawData(ActionEvent event){
+        String selTab = tabPane.getSelectionModel().getSelectedItem().getText();
+        if(selTab.equals("Protein")){
+            //set back to non-normalization
+            menuNonnormalization.setSelected(true);
+            sampleGroup.setProteinIntegrationType(PublicInfo.ProteinIntegrationType.Raw);
+            sampleGroup.setProteinStatus(PublicInfo.ProteinStatus.Unnormalized);
+        } else {
+            System.out.println("Wrong Selection: " + selTab);
+        }
+        sampleGroup.updateProtein();
+        sampleProteinDataController.show();
+    }
+
+    @FXML private void iBAQ(ActionEvent event){
+        String selTab = tabPane.getSelectionModel().getSelectedItem().getText();
+        if(selTab.equals("Protein")){
+            menuNonnormalization.setSelected(true);
+            sampleGroup.setProteinIntegrationType(PublicInfo.ProteinIntegrationType.iBAQ);
+            sampleGroup.setProteinStatus(PublicInfo.ProteinStatus.Unnormalized);
+        } else {
+            System.out.println("Wrong Selection: " + selTab);
+        }
+        sampleGroup.updateProtein();
+        sampleProteinDataController.show();
+    }
+
+
+    @FXML private void nonNormalization(ActionEvent event){
+        String selTab = tabPane.getSelectionModel().getSelectedItem().getText();
+        if(selTab.equals("Protein")){
+            sampleGroup.setProteinStatus(PublicInfo.ProteinStatus.Unnormalized);
+        } else {
+            System.out.println("Wrong Selection: " + selTab);
+        }
+        sampleGroup.updateProtein();
+        sampleProteinDataController.show();
+    }
+
+    @FXML private void medianNormalization(ActionEvent event){
+        String selTab = tabPane.getSelectionModel().getSelectedItem().getText();
+        if(selTab.equals("Protein")){
+            sampleGroup.setProteinStatus(PublicInfo.ProteinStatus.Median);
+        } else {
+            System.out.println("Wrong Selection: " + selTab);
+        }
+        sampleGroup.updateProtein();
+        sampleProteinDataController.show();
+    }
+
+    //Menu View
+    @FXML private void scaleRegular(ActionEvent event){
+        String selTab = tabPane.getSelectionModel().getSelectedItem().getText();
+        switch (selTab){
+            case "Proteomics":
+                System.err.println("Wrong Selection: " + selTab);
+                break;
+            case "Peptide":
+                samplePepDataController.setScaleType(PublicInfo.ScaleType.Regular);
+                break;
+            case "Protein":
+                sampleProteinDataController.setScaleType(PublicInfo.ScaleType.Regular);
+                break;
+            case "Browser":
+                System.err.println("Wrong Selection: " + selTab);
+                break;
+            default:
+                System.err.println("Cannot find " + selTab);
+                break;
+        }
+    }
+
+    @FXML private void scaleLog2(ActionEvent event){
+        String selTab = tabPane.getSelectionModel().getSelectedItem().getText();
+        switch (selTab){
+            case "Proteomics":
+                System.err.println("Wrong Selection: " + selTab);
+                break;
+            case "Peptide":
+                samplePepDataController.setScaleType(PublicInfo.ScaleType.Log2);
+                break;
+            case "Protein":
+                sampleProteinDataController.setScaleType(PublicInfo.ScaleType.Log2);
+                break;
+            case "Browser":
+                System.err.println("Wrong Selection: " + selTab);
+                break;
+            default:
+                System.err.println("Cannot find " + selTab);
+                break;
+        }
+    }
+
+    @FXML private void scaleLog10(ActionEvent event){
+        String selTab = tabPane.getSelectionModel().getSelectedItem().getText();
+        switch (selTab){
+            case "Proteomics":
+                System.err.println("Wrong Selection: " + selTab);
+                break;
+            case "Peptide":
+                samplePepDataController.setScaleType(PublicInfo.ScaleType.Log10);
+                break;
+            case "Protein":
+                sampleProteinDataController.setScaleType(PublicInfo.ScaleType.Log10);
+                break;
+            case "Browser":
+                System.err.println("Wrong Selection: " + selTab);
+                break;
+            default:
+                System.err.println("Cannot find " + selTab);
+                break;
+        }
     }
 
     @Override
@@ -408,15 +644,22 @@ public class MainController implements Initializable{
                 switch (selectedValue){
                     case "Proteomics":
                         menuAnalyze.setVisible(false);
+                        menuData.setVisible(false);
+                        menuView.setVisible(false);
                         break;
                     case "Peptide":
                         menuAnalyze.setVisible(true);
+                        menuView.setVisible(true);
                         break;
                     case "Protein":
                         menuAnalyze.setVisible(true);
+                        menuData.setVisible(true);
+                        menuView.setVisible(true);
                         break;
                     case "Browser":
                         menuAnalyze.setVisible(false);
+                        menuData.setVisible(false);
+                        menuView.setVisible(false);
                         break;
                     default:
                         System.err.println("Cannot find " + selectedValue);
@@ -473,6 +716,8 @@ public class MainController implements Initializable{
                         }
                         selectionModel.select(tabSampleProteinData);
                         menuAnalyze.setVisible(true);
+                        menuData.setVisible(true);
+                        menuView.setVisible(true);
                         break;
                     case "Browser":
                         System.out.println("Select Browser");
@@ -480,6 +725,7 @@ public class MainController implements Initializable{
                             initBrowserTab();
                             tabPane.getTabs().add(tabBrowser);
                         }
+                        sampleGroup.setAbundanceRange();
                         selectionModel.select(tabBrowser);
                         menuAnalyze.setVisible(false);
                         break;
@@ -495,7 +741,7 @@ public class MainController implements Initializable{
 
     private void initProteomicsDataTab(){
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("../view/data/ProteomicsData.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/data/ProteomicsData.fxml"));
             tabProteomicsData.setContent(loader.load());
             tabProteomicsData.setText("Proteomics");
             proteomicsDataController = loader.getController();
@@ -509,7 +755,7 @@ public class MainController implements Initializable{
 
     private void initSamplePepDataTab(){
         tabSamplePepData = new Tab();
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("../view/data/SamplePepData.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/data/SamplePepData.fxml"));
         try {
             tabSamplePepData.setContent(loader.load());
         } catch (IOException e) {
@@ -523,7 +769,7 @@ public class MainController implements Initializable{
 
     private void initSampleProteinDataTab(){
         tabSampleProteinData = new Tab();
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("../view/data/SampleProteinData.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/data/SampleProteinData.fxml"));
         try {
             tabSampleProteinData.setContent(loader.load());
         } catch (IOException e) {
@@ -538,7 +784,7 @@ public class MainController implements Initializable{
 
     private void initBrowserTab(){
         tabBrowser = new Tab();
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("../view/browser/PBrowser.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/browser/PBrowser.fxml"));
         try {
             tabBrowser.setContent(loader.load());
         } catch (IOException e) {
@@ -812,6 +1058,9 @@ public class MainController implements Initializable{
                 }
             }
         }
+
+        //set raw abundance
+        sampleGroup.rawAbundance();
     }
 
 
@@ -829,6 +1078,135 @@ public class MainController implements Initializable{
         } catch (NumberFormatException e) {
             return null;
         }
+    }
+
+    private Group boxPlot(ArrayList<ArrayList<Double>> dataAll, double width, double height, double top, double left){
+        int numGroup = dataAll.size();
+
+        Group root = new Group();
+
+        double cellWidth = width / numGroup;
+
+        ArrayList<Double> maxEach = new ArrayList<>();
+        ArrayList<Double> minEach = new ArrayList<>();
+        for(int i =0; i < numGroup; i++){
+            maxEach.add(Collections.max(dataAll.get(i)));
+            minEach.add(Collections.min(dataAll.get(i)));
+        }
+
+        double maxAll = Collections.max(maxEach);
+        double minAll = Collections.min(minEach);
+
+        double range = maxAll - minAll;
+
+        double unit = height/range;
+
+        double cellLeft = cellWidth/8;
+        double cellRight = cellWidth/8;
+        if(cellLeft < 2){
+            cellLeft = 2;
+        }
+
+        if(cellRight < 2){
+            cellRight = 2;
+        }
+
+        double paintWidth = cellWidth- cellLeft - cellRight;
+        double widthFence = paintWidth/3;
+
+
+        for(int i= 0; i < numGroup; i++){
+            ArrayList<Double> data = dataAll.get(i);
+            Collections.sort(data);
+
+            int idx = data.size()/4;
+            double q1 = data.get(idx);
+            double q2 = data.get(idx*2);
+            double q3 = data.get(idx*3);
+            double IQR = q3 - q1;
+            double innerFenceLow = q1 - IQR * 1.58;
+            double innerFenceHigh = q3 + IQR * 1.58;
+            double min = data.get(0);
+            double max = data.get(data.size()-1);
+
+            if(innerFenceHigh > max){
+                innerFenceHigh = max;
+            }
+
+            if(innerFenceLow < min){
+                innerFenceLow = min;
+            }
+
+            double st = left + i*cellWidth + cellLeft;
+
+            Rectangle r = new Rectangle();
+            r.setX(st);
+            r.setY(transferY(q3, top, height, minAll, maxAll));
+            r.setWidth(paintWidth);
+            r.setHeight(unit*IQR);
+            r.setFill(Color.TRANSPARENT);
+            r.setStroke(Color.BLACK);
+
+
+            Line md = new Line();
+            md.setStartX(st);
+            md.setStartY(transferY(q2, top, height, minAll, maxAll));
+            md.setEndX(st+paintWidth);
+            md.setEndY(transferY(q2, top, height, minAll, maxAll));
+
+            Line h1 = new Line();
+            h1.setStartX(st + (paintWidth-widthFence)/2);
+            h1.setStartY(transferY(innerFenceLow, top, height, minAll, maxAll));
+            h1.setEndX(st + (paintWidth+widthFence)/2);
+            h1.setEndY(transferY(innerFenceLow, top, height, minAll, maxAll));
+
+            Line h2 = new Line();
+            h2.setStartX(st + (paintWidth-widthFence)/2);
+            h2.setStartY(transferY(innerFenceHigh, top, height, minAll, maxAll));
+            h2.setEndX(st + (paintWidth+widthFence)/2);
+            h2.setEndY(transferY(innerFenceHigh, top, height, minAll, maxAll));
+
+            Line v1 = new Line();
+            v1.setStartX(st + paintWidth/2);
+            v1.setStartY(transferY(innerFenceLow, top, height, minAll, maxAll));
+            v1.setEndX(st + paintWidth/2);
+            v1.setEndY(transferY(q1, top, height, minAll, maxAll));
+
+            Line v2 = new Line();
+            v2.setStartX(st + paintWidth/2);
+            v2.setStartY(transferY(innerFenceHigh, top, height, minAll, maxAll));
+            v2.setEndX(st + paintWidth/2);
+            v2.setEndY(transferY(q3, top, height, minAll, maxAll));
+
+            root.getChildren().addAll(r,md, h1, h2, v1, v2);
+
+            for(int j=data.size()/4;j>=0;j--){
+                if(data.get(j) < innerFenceLow){
+                    Circle pt = new Circle();
+                    pt.setCenterX(st + paintWidth/2);
+                    pt.setCenterY(transferY(data.get(j), top, height, minAll, maxAll));
+                    pt.setRadius(1);
+
+                    root.getChildren().add(pt);
+                }
+            }
+
+            for(int j=data.size()*3/4;j< data.size();j++){
+                if(data.get(j) > innerFenceHigh){
+                    Circle pt = new Circle();
+                    pt.setCenterX(st + paintWidth/2);
+                    pt.setCenterY(transferY(data.get(j), top, height, minAll, maxAll));
+                    pt.setRadius(1);
+
+                    root.getChildren().add(pt);
+                }
+            }
+        }
+        return root;
+    }
+
+    private double transferY(double y, double top, double height, double min, double max){
+        return (top + (max-y)*height/(max-min));
     }
 
 }

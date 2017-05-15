@@ -1,5 +1,7 @@
 package data;
 
+import project.PublicInfo;
+
 import java.util.*;
 
 /**
@@ -15,6 +17,21 @@ public class Protein {
     private ArrayList<Integer> pepEnd;
     private TreeSet<Modification.ModificationType> modiTypeAll;
     private TreeMap<Integer, PosModiInfo> modiInfo;
+
+    //before normalization
+    /**
+     * raw abundance
+     */
+    private double rawAbundance=-1;
+    /**
+     * iBAQ abundance
+     */
+    private double iBAQAbundance=-1;
+
+
+    //after median normalization
+    private double rawAbundanceMedianNorm;
+    private double iBAQAbundanceMedianNorm;
 
     public String getName() { return  name;}
     public String getSequence() { return sequence;}
@@ -98,8 +115,89 @@ public class Protein {
                 return true;
             }
         }
+    }
 
+    public double getAbundance(PublicInfo.ProteinIntegrationType proteinIntegrationType, PublicInfo.ProteinStatus proteinStatus){
+        switch (proteinIntegrationType){
+            case Raw:
+                switch (proteinStatus){
+                    case Unnormalized:
+                        return rawAbundance;
+                    case Median:
+                        return rawAbundanceMedianNorm;
+                    default:
+                        return -1;
+                }
+            case iBAQ:
+                switch (proteinStatus) {
+                    case Unnormalized:
+                        return iBAQAbundance;
+                    case Median:
+                        return iBAQAbundanceMedianNorm;
+                    default:
+                        return -1;
+                }
+            default:
+                return -1;
+        }
     }
 
 
+    /**
+     * set the raw abundance
+     * summation of peptide abundance
+     */
+    public void sumRawAbundance(){
+        rawAbundance = 0;
+        for(Peptide peptide: peptides){
+            rawAbundance += peptide.getAbundance();
+        }
+    }
+
+    /**
+     * get raw abundance
+     * @return raw abundance
+     */
+    public double getRawAbundance(){
+        if(rawAbundance==-1){
+            this.sumRawAbundance();
+        }
+
+        return rawAbundance;
+    }
+
+    /**
+     * set iBAQ abundance
+     * @param theoreticalPepCount theoretical peptide count
+     */
+    public void setiBAQAbundance(double theoreticalPepCount){
+        if(rawAbundance==-1){
+            this.sumRawAbundance();
+        }
+
+        iBAQAbundance = rawAbundance/theoreticalPepCount;
+    }
+
+    /**
+     * get iBAQ abundance
+     * @return iBAQ abundance
+     */
+    public double getiBAQAbundance(){
+        return iBAQAbundance;
+    }
+
+
+    public void setRawAbundanceMedianNorm(double diff) {
+        rawAbundanceMedianNorm = rawAbundance + diff;
+    }
+
+    public void setiBAQAbundanceMedianNorm(double diff) {
+        iBAQAbundanceMedianNorm = iBAQAbundance + diff;
+    }
+
+    public void setAbundanceRange(ArrayList<Double> cutoff){
+        for(Peptide pt : peptides){
+            pt.setAbundanceRange(cutoff);
+        }
+    }
 }

@@ -14,7 +14,7 @@ public class Main extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception{
         System.out.println("Proteomics Start!");
-        Parent root = FXMLLoader.load(getClass().getResource("../view/MainView.fxml"));
+        Parent root = FXMLLoader.load(getClass().getResource("/view/MainView.fxml"));
         primaryStage.setTitle("ProteomicsBrowser");
         primaryStage.setScene(new Scene(root, 1600, 1200));
 

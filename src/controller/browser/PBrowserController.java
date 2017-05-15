@@ -338,7 +338,8 @@ public class PBrowserController implements Initializable {
 
 
             if(tlX < canvasWidth && rX > 0){
-                gc.setFill(Color.GRAY);
+                int range = pp.getPep().getAbundanceRange();
+                gc.setFill(Color.rgb(220-15*range, 220-15*range, 220-15*range));
                 tlX = Math.max(tlX, 0);
                 rX = Math.min(rX, canvasWidth);
                 gc.fillRect(tlX, tlY, (rX-tlX), h);
