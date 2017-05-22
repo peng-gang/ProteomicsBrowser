@@ -67,6 +67,11 @@
                   </Menu>
                </items>
             </Menu>
+            <Menu fx:id="menuExport" mnemonicParsing="false" text="Export" visible="false">
+              <items>
+                <MenuItem fx:id="menuExportModificationInfo" mnemonicParsing="false" onAction="#exportModificationInfo" text="Modification Info" />
+              </items>
+            </Menu>
           <Menu mnemonicParsing="false" text="Help">
             <items>
               <MenuItem fx:id="menuAbout" mnemonicParsing="false" text="About" />

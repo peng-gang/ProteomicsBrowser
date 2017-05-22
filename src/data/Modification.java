@@ -33,7 +33,7 @@ public class Modification {
         String infoTmp = tmp[1].substring(0, (tmp[1].length()-1));
         String[] info = infoTmp.split(":");
 
-        System.out.println(modi);
+        //System.out.println(modi);
 
         pos = new ArrayList<>();
         percent = new ArrayList<>();

@@ -141,4 +141,8 @@ public class SampleProteinDataController implements Initializable {
         this.scaleType = scaleType;
         show();
     }
+
+    public PublicInfo.ScaleType getScaleType(){
+        return scaleType;
+    }
 }

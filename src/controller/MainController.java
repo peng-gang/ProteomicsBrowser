@@ -8,6 +8,7 @@ import controller.data.SampleProteinDataController;
 import controller.dataselect.BoxPlotDataSelectController;
 import controller.dataselect.CorScatterDataSelectController;
 import controller.dataselect.TTestDataSelectController;
+import controller.parameter.ParaExportModificationInfoController;
 import controller.result.CorScatterController;
 import controller.result.PValueTableController;
 import data.*;
@@ -36,6 +37,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import org.apache.commons.math3.stat.inference.TestUtils;
+import project.ProjectInfo;
 import project.PublicInfo;
 
 import java.io.*;
@@ -74,8 +76,8 @@ public class MainController implements Initializable{
     @FXML private RadioMenuItem menuScaleLog2;
     @FXML private RadioMenuItem menuScaleLog10;
 
-
-
+    //Export
+    @FXML private Menu menuExport;
 
     //TreeView
     @FXML private TreeView treeView;
@@ -124,6 +126,11 @@ public class MainController implements Initializable{
     private SampleGroup sampleGroup;
 
 
+    //project information
+    private ProjectInfo projectInfo = null;
+
+
+
     //Menu functions
     @FXML private void close(ActionEvent event){
         System.out.println("Menu Close");
@@ -147,12 +154,20 @@ public class MainController implements Initializable{
 
         if(file != null){
             try{
-                FileWriter fileWriter = new FileWriter(file);
-                fileWriter.write(projName);
-                fileWriter.close();
+                projectInfo = new ProjectInfo(file, projName);
+                FileOutputStream fos = new FileOutputStream(file);
+                ObjectOutputStream oos = new ObjectOutputStream(fos);
+                oos.writeObject(projectInfo);
+                oos.close();
+
+                //FileWriter fileWriter = new FileWriter(file);
+                //fileWriter.write(projName);
+                //fileWriter.close();
             } catch (IOException e){
                 e.printStackTrace();
             }
+        } else {
+            return;
         }
 
 
@@ -164,10 +179,81 @@ public class MainController implements Initializable{
     }
 
     @FXML private void openProj(ActionEvent event){
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Open Project");
+        fileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
+        fileChooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("ProteomicsBrowser Proj", "*.pbproj")
+        );
+        Stage stage = (Stage) menuBar.getScene().getWindow();
+        File file = fileChooser.showOpenDialog(stage);
+        if(file != null){
+            try {
+                FileInputStream fis = new FileInputStream(file);
+                ObjectInputStream ois = new ObjectInputStream(fis);
+                if(projectInfo == null){
+                    try {
+                        projectInfo = (ProjectInfo) ois.readObject();
+                    } catch (ClassNotFoundException e) {
+                        e.printStackTrace();
+                    }
 
+                    treeRoot = new TreeItem<>(projectInfo.getProjectName());
+                    treeView.setRoot(treeRoot);
+                    if(!projectInfo.getDataImported()){
+                        menuImportData.setDisable(false);
+                        menuSaveProj.setDisable(false);
+                        return;
+                    }
+
+                    initTreeView();
+
+                    proteomicsRawName = projectInfo.getProteomicsRawName();
+                    proteomicsRaw = projectInfo.getProteomicsRaw();
+                    proteomicsRawType = projectInfo.getProteomicsRawType();
+                    sampleGroup = projectInfo.getSampleGroup();
+
+                    initProteomicsDataTab();
+                    menuImportData.setDisable(true);
+
+                    //Do something more?
+                } else {
+                    //Do something first
+                    try {
+                        projectInfo = (ProjectInfo) ois.readObject();
+                    } catch (ClassNotFoundException e) {
+                        e.printStackTrace();
+                    }
+                }
+                ois.close();
+                fis.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        } else {
+            return;
+        }
     }
 
     @FXML private void saveProj(ActionEvent event){
+        File file = projectInfo.getPorjectFile();
+        if(menuImportData.isDisable()){
+            projectInfo.setDataImported(true);
+            projectInfo.setProteomicsRaw(proteomicsRaw);
+            projectInfo.setProteomicsRawName(proteomicsRawName);
+            projectInfo.setProteomicsRawType(proteomicsRawType);
+            projectInfo.setSampleGroup(sampleGroup);
+        }
+        try {
+            FileOutputStream fos = new FileOutputStream(file);
+            ObjectOutputStream oos = new ObjectOutputStream(fos);
+            oos.writeObject(projectInfo);
+            oos.close();
+            fos.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
     }
 
@@ -630,6 +716,39 @@ public class MainController implements Initializable{
         }
     }
 
+    @FXML private  void exportModificationInfo(ActionEvent event){
+        System.out.println("Export Modification Information");
+        Protein protein = pBrowserController.getProtein();
+        if(protein==null){
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Modification Export");
+            alert.setHeaderText(null);
+            alert.setContentText("Please select Proteins in Browser");
+            alert.showAndWait();
+            return;
+        }
+
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/parameter/ParaExportModificationInfo.fxml"));
+        try {
+            Parent root = loader.load();
+
+            Stage exportModiStage = new Stage();
+            exportModiStage.setTitle("Export Modification Information");
+            exportModiStage.setScene(new Scene(root, 400, 250));
+            exportModiStage.initModality(Modality.WINDOW_MODAL);
+            exportModiStage.initOwner(menuBar.getScene().getWindow());
+
+            ParaExportModificationInfoController controller = loader.getController();
+            controller.setProtein(protein);
+
+            exportModiStage.showAndWait();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         System.out.println("MainController Initialization");
@@ -646,20 +765,29 @@ public class MainController implements Initializable{
                         menuAnalyze.setVisible(false);
                         menuData.setVisible(false);
                         menuView.setVisible(false);
+                        menuExport.setVisible(false);
+                        treeView.getSelectionModel().select(2);
                         break;
                     case "Peptide":
                         menuAnalyze.setVisible(true);
+                        menuData.setVisible(false);
                         menuView.setVisible(true);
+                        menuExport.setVisible(false);
+                        treeView.getSelectionModel().select(3);
                         break;
                     case "Protein":
                         menuAnalyze.setVisible(true);
                         menuData.setVisible(true);
                         menuView.setVisible(true);
+                        menuExport.setVisible(false);
+                        treeView.getSelectionModel().select(4);
                         break;
                     case "Browser":
                         menuAnalyze.setVisible(false);
                         menuData.setVisible(false);
                         menuView.setVisible(false);
+                        menuExport.setVisible(true);
+                        treeView.getSelectionModel().select(5);
                         break;
                     default:
                         System.err.println("Cannot find " + selectedValue);
@@ -690,6 +818,7 @@ public class MainController implements Initializable{
         treeView.getSelectionModel().selectedItemProperty().addListener(new ChangeListener() {
             @Override
             public void changed(ObservableValue observable, Object oldValue, Object newValue) {
+                //System.out.println(treeView.getSelectionModel().getSelectedIndex());
                 TreeItem<String> selectedItem = (TreeItem<String>) newValue;
 
                 String selectedValue = selectedItem.getValue();
@@ -698,7 +827,12 @@ public class MainController implements Initializable{
                     case "Proteomics Data":
                         System.out.println("Select Proteomics Data Tab");
                         selectionModel.select(tabProteomicsData);
+                        menuAnalyze.setVisible(false);
+                        menuData.setVisible(false);
+                        menuView.setVisible(false);
+                        menuExport.setVisible(false);
                         break;
+
                     case "Peptide Data":
                         System.out.println("Select Peptide Data");
                         if(tabSamplePepData == null){
@@ -707,6 +841,25 @@ public class MainController implements Initializable{
                         }
                         selectionModel.select(tabSamplePepData);
                         menuAnalyze.setVisible(true);
+                        menuData.setVisible(false);
+                        menuView.setVisible(true);
+                        menuExport.setVisible(false);
+
+                        switch (samplePepDataController.getScaleType()){
+                            case Regular:
+                                menuScaleRegular.setSelected(true);
+                                break;
+                            case Log2:
+                                menuScaleLog2.setSelected(true);
+                                break;
+                            case Log10:
+                                menuScaleLog10.setSelected(true);
+                                break;
+                            default:
+                                System.out.println("Wrong Type!");
+                                break;
+                        }
+
                         break;
                     case "Protein Data":
                         System.out.println("Select Protein Data");
@@ -718,6 +871,24 @@ public class MainController implements Initializable{
                         menuAnalyze.setVisible(true);
                         menuData.setVisible(true);
                         menuView.setVisible(true);
+                        menuExport.setVisible(false);
+
+                        switch (sampleProteinDataController.getScaleType()){
+                            case Regular:
+                                menuScaleRegular.setSelected(true);
+                                break;
+                            case Log2:
+                                menuScaleLog2.setSelected(true);
+                                break;
+                            case Log10:
+                                menuScaleLog10.setSelected(true);
+                                break;
+                            default:
+                                System.out.println("Wrong Type!");
+                                break;
+                        }
+
+
                         break;
                     case "Browser":
                         System.out.println("Select Browser");
@@ -728,6 +899,9 @@ public class MainController implements Initializable{
                         sampleGroup.setAbundanceRange();
                         selectionModel.select(tabBrowser);
                         menuAnalyze.setVisible(false);
+                        menuData.setVisible(false);
+                        menuView.setVisible(false);
+                        menuExport.setVisible(true);
                         break;
                     default:
                         System.err.println("Wrong Selected tree item " + selectedValue);

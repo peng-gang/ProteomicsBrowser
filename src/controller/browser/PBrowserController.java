@@ -91,6 +91,8 @@ public class PBrowserController implements Initializable {
     //selected modifications to show
     private ArrayList<Modification.ModificationType> modiSelected;
 
+    public Protein getProtein() { return  protein; }
+
 
 
     public void setData(SampleGroup sampleGroup){
@@ -114,6 +116,9 @@ public class PBrowserController implements Initializable {
                 selectedSample = newValue;
                 if(selectedProtein != null && selectedSample !=null){
                     protein = sampleGroup.getProtein(selectedSample, selectedProtein);
+                    //clear combModiPos first
+                    combModiPos.getSelectionModel().clearSelection();
+                    combModiPos.getItems().clear();
                     combModiPos.getItems().addAll(protein.getModiPos());
                     combModiPos.setDisable(false);
                     scaleX = 1;
@@ -138,6 +143,8 @@ public class PBrowserController implements Initializable {
                 selectedProtein = newValue;
                 if(selectedProtein != null && selectedSample !=null){
                     protein = sampleGroup.getProtein(selectedSample, selectedProtein);
+                    combModiPos.getSelectionModel().clearSelection();
+                    combModiPos.getItems().clear();
                     combModiPos.getItems().addAll(protein.getModiPos());
                     combModiPos.setDisable(false);
                     scaleX = 1;
@@ -328,6 +335,7 @@ public class PBrowserController implements Initializable {
         gc.clearRect(0, 0, canvasWidth, canvasHeight);
 
         for(PepPos pp : arrangePep){
+            //top left coordinate
             double tlX = leftPix + pp.getStart()*pixPerLocus*scaleX + 0.5;
             double tlY = canvasHeight - pixXLabel - bottomPix - (pp.getY() + 1) * (pixPerPep  + pixPepGap * 2) * scaleY + 1;
             double w = pixPerLocus * pp.getPep().getLength()*scaleX - 0.5;
@@ -587,13 +595,18 @@ public class PBrowserController implements Initializable {
 
 
                 // start from 0
-                int idxX = (int) ((x + sbarCanvas.getValue()) /(pixPerLocus*scaleX)) - 1;
+                int idxX = (int) ((x + sbarCanvas.getValue() - leftPix) /(pixPerLocus*scaleX));
+                if(idxX < 0){
+                    return;
+                }
                 int idxY = (int) ((canvasHeight - pixXLabel - bottomPix - y - 1) / ((pixPerPep + pixPepGap * 2) * scaleY));
 
                 for(PepPos tmp : arrangePep){
-                    if(tmp.contains(idxX, idxY)){
+                    if(tmp.contains(idxX, idxY)) {
                         lblPep.setText(tmp.getPep().toString());
                         break;
+                    } else {
+                        lblPep.setText("No Peptide");
                     }
                 }
 

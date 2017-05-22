@@ -13,6 +13,7 @@ public class Protein {
     private String sequence;
 
     private ArrayList<Peptide> peptides;
+    //start and end are all included in peptide
     private ArrayList<Integer> pepStart;
     private ArrayList<Integer> pepEnd;
     private TreeSet<Modification.ModificationType> modiTypeAll;
@@ -199,5 +200,50 @@ public class Protein {
         for(Peptide pt : peptides){
             pt.setAbundanceRange(cutoff);
         }
+    }
+
+
+    public String getModiInfoAll(double cutoff){
+        String rlt = "";
+        Set<Integer> modiPos = modiInfo.keySet();
+
+        for(Integer pos : modiPos){
+            String rltTmp = "";
+            int numPep = 0;
+            for(int i=0; i < pepStart.size(); i++){
+                if(pos>=pepStart.get(i) && pos <= pepEnd.get(i)){
+                    numPep++;
+                }
+            }
+
+            PosModiInfo posModiInfo = modiInfo.get(pos);
+            TreeMap<Modification.ModificationType, ArrayList<Double>> modis = posModiInfo.getModifications();
+            Set modiTypeSet = modis.entrySet();
+            Iterator it = modiTypeSet.iterator();
+            while(it.hasNext()){
+                Map.Entry me = (Map.Entry) it.next();
+                Modification.ModificationType mt = (Modification.ModificationType) me.getKey();
+                ArrayList<Double> pc = (ArrayList<Double>) me.getValue();
+                ArrayList<Double> pcCutOff = new ArrayList<>();
+                for(int i=0; i<pc.size(); i++){
+                    if(pc.get(i) >= cutoff){
+                        pcCutOff.add(pc.get(i));
+                    }
+                }
+                if(pcCutOff.size() > 0){
+                    if(rltTmp.equals("")){
+                        rltTmp = "Position:" + (pos+1) + "\tTotalPep:" + numPep;
+                    }
+                    rltTmp += ("\t" + mt + ":" + pcCutOff.size());
+                }
+            }
+
+            if(!rltTmp.equals("")){
+                rlt += (rltTmp + "\n");
+            }
+        }
+
+        return rlt;
+
     }
 }

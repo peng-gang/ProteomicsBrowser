@@ -45,6 +45,11 @@
             <Insets left="20.0" right="20.0" />
          </VBox.margin>
       </VBox>
+      <Label text="Data Type">
+         <VBox.margin>
+            <Insets left="20.0" />
+         </VBox.margin>
+      </Label>
       <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0" spacing="150.0">
          <children>
             <ComboBox fx:id="cmbType" prefWidth="150.0" />

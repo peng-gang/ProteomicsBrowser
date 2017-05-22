@@ -20,7 +20,7 @@ import java.util.ResourceBundle;
  * Created by gpeng on 2/14/17.
  */
 public class SamplePepDataController implements Initializable {
-    @FXML TableView tbvSamplePepData;
+    @FXML private TableView tbvSamplePepData;
 
     private SampleGroup sampleGroup;
 
@@ -132,11 +132,16 @@ public class SamplePepDataController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        scaleType = PublicInfo.ScaleType.Regular;
         System.out.println("Init SamplePepDataController");
     }
 
     public void setScaleType(PublicInfo.ScaleType scaleType){
         this.scaleType = scaleType;
         show();
+    }
+
+    public PublicInfo.ScaleType getScaleType(){
+        return scaleType;
     }
 }

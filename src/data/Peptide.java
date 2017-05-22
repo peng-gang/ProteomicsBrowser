@@ -14,6 +14,7 @@ public class Peptide {
     private Double mz;
     private Double score;
     private Double abundance;
+    //the position in modification starts from 0
     private ArrayList<Modification> modifications;
 
     private Integer abundanceRange = -1;
@@ -71,7 +72,7 @@ public class Peptide {
             rlt += "Modification: \n";
             for(Modification md : modifications){
                 rlt += "\t" + md.getType() + ": ";
-                rlt += md.getPos().get(0) + "(" + md.getPercent().get(0) + ")";
+                rlt += (md.getPos().get(0) + 1) + "(" + md.getPercent().get(0) + ")";
                 for(int i=1; i<md.getPos().size();i++){
                     rlt += ";" + md.getPos().get(i) + "(" + md.getPercent().get(i) + ")";
                 }
