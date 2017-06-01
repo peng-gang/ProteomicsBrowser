@@ -65,10 +65,8 @@ public class MainController implements Initializable{
     @FXML private RadioMenuItem menuNonnormalization;
     @FXML private RadioMenuItem menuMedianNormalization;
 
-
     //Analyze
     @FXML private Menu menuAnalyze;
-
 
     //View
     @FXML private Menu menuView;
@@ -159,6 +157,7 @@ public class MainController implements Initializable{
                 ObjectOutputStream oos = new ObjectOutputStream(fos);
                 oos.writeObject(projectInfo);
                 oos.close();
+                fos.close();
 
                 //FileWriter fileWriter = new FileWriter(file);
                 //fileWriter.write(projName);
@@ -176,6 +175,8 @@ public class MainController implements Initializable{
         treeView.setRoot(treeRoot);
         menuImportData.setDisable(false);
         menuSaveProj.setDisable(false);
+        menuNewProj.setDisable(true);
+        menuOpenProj.setDisable(true);
     }
 
     @FXML private void openProj(ActionEvent event){
@@ -203,6 +204,8 @@ public class MainController implements Initializable{
                     if(!projectInfo.getDataImported()){
                         menuImportData.setDisable(false);
                         menuSaveProj.setDisable(false);
+                        menuNewProj.setDisable(true);
+                        menuOpenProj.setDisable(true);
                         return;
                     }
 
@@ -215,7 +218,8 @@ public class MainController implements Initializable{
 
                     initProteomicsDataTab();
                     menuImportData.setDisable(true);
-
+                    menuNewProj.setDisable(true);
+                    menuOpenProj.setDisable(true);
                     //Do something more?
                 } else {
                     //Do something first
@@ -745,6 +749,15 @@ public class MainController implements Initializable{
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    @FXML private void about(ActionEvent event){
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("ProteomicsBrowser");
+        alert.setHeaderText(null);
+        alert.setContentText("ProteomicsBrowser: Alpha \n Gang Peng, Yishuo Tang \n");
+        alert.showAndWait();
+        return;
     }
 
 

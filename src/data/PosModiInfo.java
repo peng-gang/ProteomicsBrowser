@@ -1,5 +1,6 @@
 package data;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.TreeMap;
 
@@ -7,7 +8,7 @@ import java.util.TreeMap;
  * Modification information at each position
  * Created by gpeng on 2/18/17.
  */
-public class PosModiInfo {
+public class PosModiInfo implements Serializable {
     private TreeMap<Modification.ModificationType, ArrayList<Double>> modifications;
 
 

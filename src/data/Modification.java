@@ -1,5 +1,6 @@
 package data;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.DoubleSummaryStatistics;
 import java.util.IntSummaryStatistics;
@@ -8,7 +9,7 @@ import java.util.IntSummaryStatistics;
  * modification information
  * Created by gpeng on 2/10/17.
  */
-public class Modification {
+public class Modification implements Serializable {
     public enum ModificationType {
         Acetylation, Carbamidomethylation, Phosphorylation, Oxidation
     }

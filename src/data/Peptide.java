@@ -1,13 +1,14 @@
 package data;
 
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
 /**
  * Peptide Class to store peptide information
  * Created by gpeng on 2/10/17.
  */
-public class Peptide {
+public class Peptide implements Serializable {
     private String id;
     private String sequence;
     private Integer charge;

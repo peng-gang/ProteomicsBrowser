@@ -2,12 +2,13 @@ package data;
 
 import project.PublicInfo;
 
+import java.io.Serializable;
 import java.util.*;
 
 /**
  * Created by gpeng on 2/13/17.
  */
-public class Sample {
+public class Sample implements Serializable {
     /**
      * sample id
      */

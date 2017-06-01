@@ -124,8 +124,8 @@ public class PBrowserController implements Initializable {
                     scaleX = 1;
                     scaleY = 1;
                     double sc = (canvasWidth - leftPix - rightPix)/(protein.getLength() * pixPerLocus);
-                    sliderZoom.setMin(sc);
-                    sliderZoom.setValue(1);
+                    sliderZoom.setMin(Math.log(sc) /Math.log(2.0));
+                    sliderZoom.setValue(0);
                     orderPep();
                     //too many modification to show in a canvas
                     if(maxY * (pixPerPep + 2*pixPepGap) > (canvasHeight-bottomPix-pixXLabel)){
@@ -150,8 +150,8 @@ public class PBrowserController implements Initializable {
                     scaleX = 1;
                     scaleY = 1;
                     double sc = (canvasWidth - leftPix - rightPix)/(protein.getLength() * pixPerLocus);
-                    sliderZoom.setMin(sc);
-                    sliderZoom.setValue(1);
+                    sliderZoom.setMin(Math.log(sc) / Math.log(2.0));
+                    sliderZoom.setValue(0);
                     orderPep();
                     if(maxY * (pixPerPep + 2*pixPepGap) > (canvasHeight-bottomPix-pixXLabel)){
                         scaleY = (canvasHeight-bottomPix-pixXLabel)/((pixPerPep + 2*pixPepGap)*maxY);
@@ -172,9 +172,11 @@ public class PBrowserController implements Initializable {
         sliderZoom.valueProperty().addListener(new ChangeListener<Number>() {
             @Override
             public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-                scaleX = newValue.doubleValue();
+                double newV = Math.pow(2.0, newValue.doubleValue());
+                double oldV = Math.pow(2.0, oldValue.doubleValue());
+                scaleX = newV;
                 double sbVal = sbarCanvas.getValue();
-                initSBar(sbVal * newValue.doubleValue()/oldValue.doubleValue());
+                initSBar(sbVal * newV/oldV);
                 draw();
             }
         });
@@ -536,13 +538,17 @@ public class PBrowserController implements Initializable {
 
         gc = canvas.getGraphicsContext2D();
 
-        sliderZoom.setMax(4);
-        sliderZoom.setMin(0.25);
-        sliderZoom.setValue(1);
-        sliderZoom.setShowTickLabels(true);
-        sliderZoom.setShowTickMarks(true);
+        //sliderZoom.setMax(4);
+        //sliderZoom.setMin(0.25);
+        //sliderZoom.setValue(1);
+        //sliderZoom.setShowTickLabels(true);
+        //sliderZoom.setShowTickMarks(true);
+        //sliderZoom.setMajorTickUnit(0.25);
+        //sliderZoom.setMin(0.1);
+        sliderZoom.setMax(2);
+        sliderZoom.setMin(-2);
+        sliderZoom.setValue(0);
         sliderZoom.setMajorTickUnit(0.25);
-        sliderZoom.setMin(0.1);
 
 
         hbAcetylation = new HBox();

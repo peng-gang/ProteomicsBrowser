@@ -2,13 +2,14 @@ package data;
 
 import project.PublicInfo;
 
+import java.io.Serializable;
 import java.util.*;
 
 /**
  * sample groups storing sample information including numeric, string information and peptide and protein data for each sample
  * Created by gpeng on 2/13/17.
  */
-public class SampleGroup {
+public class SampleGroup implements Serializable {
     private TreeMap<String, Sample> samples;
     private HashSet<String> numInfoName;
     private HashSet<String> strInfoName;

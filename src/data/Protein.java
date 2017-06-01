@@ -2,13 +2,14 @@ package data;
 
 import project.PublicInfo;
 
+import java.io.Serializable;
 import java.util.*;
 
 /**
  * protein or gene information
  * Created by gpeng on 2/10/17.
  */
-public class Protein {
+public class Protein implements Serializable {
     private String name;
     private String sequence;
 

@@ -1,5 +1,6 @@
 package data;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.TreeMap;
 
@@ -7,7 +8,7 @@ import java.util.TreeMap;
  * Sample information
  * Created by gpeng on 2/10/17.
  */
-public class SampleInfo {
+public class SampleInfo implements Serializable {
     private ArrayList<String> id;
 
     private TreeMap<String, ArrayList<Double> > numInfo;

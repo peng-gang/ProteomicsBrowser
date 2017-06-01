@@ -4,10 +4,12 @@ import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 
+import java.io.Serializable;
+
 /**
  * Created by gpeng on 2/12/17.
  */
-public class PeptideInfo {
+public class PeptideInfo implements Serializable {
     private SimpleStringProperty sampleId;
     private SimpleStringProperty pepId;
     private SimpleStringProperty sequence;
