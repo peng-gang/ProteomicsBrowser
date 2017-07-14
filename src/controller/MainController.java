@@ -36,6 +36,7 @@ import javafx.scene.shape.Rectangle;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import org.apache.commons.math3.ode.events.Action;
 import org.apache.commons.math3.stat.inference.TestUtils;
 import project.ProjectInfo;
 import project.PublicInfo;
@@ -760,6 +761,26 @@ public class MainController implements Initializable{
         return;
     }
 
+    @FXML private void pepFilter(ActionEvent event){
+        System.out.println("pepFilter");
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/filter/PepFilter.fxml"));
+        Parent root = null;
+        try {
+            root = loader.load();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        Stage pepFilterStage = new Stage();
+        pepFilterStage.setTitle("Peptide Filter");
+        pepFilterStage.setScene(new Scene(root, 400, 300));
+
+        pepFilterStage.initModality(Modality.WINDOW_MODAL);
+        pepFilterStage.initOwner(menuBar.getScene().getWindow());
+
+        pepFilterStage.showAndWait();
+    }
+
 
 
     @Override
@@ -1094,11 +1115,15 @@ public class MainController implements Initializable{
                 sampleId.add(vslines[indexSampleId]);
             }
 
+            bufferedReader.close();
+
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+
 
 
         System.out.println("Read Sample Data");

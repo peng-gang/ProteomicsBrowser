@@ -52,6 +52,11 @@
                   </Menu>
               </items>
             </Menu>
+            <Menu mnemonicParsing="false" text="Data Clean">
+              <items>
+                <MenuItem mnemonicParsing="false" onAction="#pepFilter" text="Peptides" />
+              </items>
+            </Menu>
             <Menu fx:id="menuView" mnemonicParsing="false" text="View" visible="false">
                <items>
                   <Menu mnemonicParsing="false" text="Scale">

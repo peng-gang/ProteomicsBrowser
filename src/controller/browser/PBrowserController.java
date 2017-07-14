@@ -6,6 +6,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
@@ -16,6 +17,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 
+import java.net.InterfaceAddress;
 import java.net.URL;
 import java.util.*;
 
@@ -38,6 +40,7 @@ public class PBrowserController implements Initializable {
     @FXML private VBox vbLegend;
     @FXML private ComboBox<Integer> combModiPos;
 
+    //Legend 1
     private HBox hbAcetylation;
     private Label lbAcetylation1;
     private Label lbAcetylation2;
@@ -53,6 +56,25 @@ public class PBrowserController implements Initializable {
     private HBox hbOxidation;
     private Label lbOxidation1;
     private Label lbOxidation2;
+
+
+    //Legend 2
+    private HBox hbAbundance1;
+    private Label lbAbundance11;
+    private Label lbAbundance12;
+
+    private HBox hbAbundance2;
+    private Label lbAbundance21;
+    private Label lbAbundance22;
+
+    private HBox hbAbundance3;
+    private Label lbAbundance31;
+    private Label lbAbundance32;
+
+    private HBox hbAbundance4;
+    private Label lbAbundance41;
+    private Label lbAbundance42;
+
 
     private GraphicsContext gc;
 
@@ -298,6 +320,11 @@ public class PBrowserController implements Initializable {
         if(cbPhosphorylation.isSelected()){
             vbLegend.getChildren().add(hbPhosphorylation);
         }
+
+        vbLegend.getChildren().add(hbAbundance1);
+        vbLegend.getChildren().add(hbAbundance2);
+        vbLegend.getChildren().add(hbAbundance3);
+        vbLegend.getChildren().add(hbAbundance4);
     }
 
     private void initSBar(double val){
@@ -424,7 +451,7 @@ public class PBrowserController implements Initializable {
                 }
 
                 if(cbOxidation.isSelected()){
-                    gc.setFill(Color.VIOLET);
+                    gc.setFill(Color.GOLD);
                     for(Modification modi : modifications){
                         if(modi.getType() == Modification.ModificationType.Oxidation){
                             for(int i=0; i<modi.getPos().size(); i++){
@@ -458,8 +485,9 @@ public class PBrowserController implements Initializable {
         Set<Integer> modiPos = protein.getModiPos();
         int xAxisStart = (int)(st / (pixPerLocus * scaleX));
         int xAxisEnd = (int)(0.5 + (st + canvasWidth)/(pixPerLocus * scaleX));
-        gc.setFont(new Font("Courier New", fontSize));
+
         for(int i = xAxisStart; i <= xAxisEnd ;i++){
+            gc.setFont(new Font("Courier New", fontSize));
             if(i>=proteinSeq.length()){
                 break;
             }
@@ -471,6 +499,12 @@ public class PBrowserController implements Initializable {
                 gc.setFill(Color.BLACK);
             }
             gc.fillText(Character.toString(proteinSeq.charAt(i)), leftX, topY);
+
+            gc.setFill(Color.BLACK);
+
+            gc.setFont(new Font("Courier New", fontSize/2));
+
+            gc.fillText(Integer.toString(i+1), leftX, (topY + fontSize));
         }
 
 
@@ -586,11 +620,58 @@ public class PBrowserController implements Initializable {
         hbOxidation.setAlignment(Pos.CENTER_LEFT);
         hbOxidation.setSpacing(5);
         lbOxidation1 = new Label("");
-        lbOxidation1.setStyle("-fx-background-color: violet");
+        lbOxidation1.setStyle("-fx-background-color: gold");
         lbOxidation1.setPrefHeight(10);
         lbOxidation1.setPrefWidth(10);
         lbOxidation2 = new Label("Oxidation");
         hbOxidation.getChildren().addAll(lbOxidation1, lbOxidation2);
+
+
+
+        hbAbundance1 = new HBox();
+        hbAbundance1.setAlignment(Pos.CENTER_LEFT);
+        hbAbundance1.setSpacing(5);
+        lbAbundance11 = new Label("");
+        lbAbundance11.setStyle("-fx-background-color: #CDCDCD");
+        lbAbundance11.setPrefHeight(10);
+        lbAbundance11.setPrefWidth(10);
+        lbAbundance12 = new Label("0~25%");
+        hbAbundance1.getChildren().addAll(lbAbundance11, lbAbundance12);
+        HBox.setMargin(lbAbundance11, new Insets(20,0,0,0));
+        HBox.setMargin(lbAbundance12, new Insets(20,0,0,0));
+
+        hbAbundance2 = new HBox();
+        hbAbundance2.setAlignment(Pos.CENTER_LEFT);
+        hbAbundance2.setSpacing(5);
+        lbAbundance21 = new Label("");
+        lbAbundance21.setStyle("-fx-background-color: #BEBEBE");
+        lbAbundance21.setPrefHeight(10);
+        lbAbundance21.setPrefWidth(10);
+        lbAbundance22 = new Label("25~50%");
+        hbAbundance2.getChildren().addAll(lbAbundance21, lbAbundance22);
+
+        hbAbundance3 = new HBox();
+        hbAbundance3.setAlignment(Pos.CENTER_LEFT);
+        hbAbundance3.setSpacing(5);
+        lbAbundance31 = new Label("");
+        lbAbundance31.setStyle("-fx-background-color: #AFAFAF");
+        lbAbundance31.setPrefHeight(10);
+        lbAbundance31.setPrefWidth(10);
+        lbAbundance32 = new Label("50~75%");
+        hbAbundance3.getChildren().addAll(lbAbundance31, lbAbundance32);
+
+        hbAbundance4 = new HBox();
+        hbAbundance4.setAlignment(Pos.CENTER_LEFT);
+        hbAbundance4.setSpacing(5);
+        lbAbundance41 = new Label("");
+        lbAbundance41.setStyle("-fx-background-color: #A0A0A0");
+        lbAbundance41.setPrefHeight(10);
+        lbAbundance41.setPrefWidth(10);
+        lbAbundance42 = new Label("75~100%");
+        hbAbundance4.getChildren().addAll(lbAbundance41, lbAbundance42);
+
+
+
 
 
         canvas.addEventHandler(MouseEvent.MOUSE_MOVED, new EventHandler<MouseEvent>() {
@@ -618,7 +699,7 @@ public class PBrowserController implements Initializable {
 
                 PosModiInfo posModiInfo = protein.getModiInfo().get(idxX);
                 if(posModiInfo == null){
-                    lblPos.setText("No Modification at this position");
+                    lblPos.setText("No Modification at position: " + (idxX + 1));
                 } else {
                     int numTotal = 0;
                     for(PepPos tmp : arrangePep){
@@ -627,7 +708,7 @@ public class PBrowserController implements Initializable {
                         }
                     }
 
-                    String txtShow = "Total peptides: " + numTotal + "\n";
+                    String txtShow = "Modifications at position: " + (idxX +1) + "\nTotal peptides: " + numTotal + "\n";
 
                     TreeMap<Modification.ModificationType, ArrayList<Double>> modis =  posModiInfo.getModifications();
                     Set set = modis.entrySet();

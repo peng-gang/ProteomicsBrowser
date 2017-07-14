@@ -66,7 +66,7 @@ public class Peptide implements Serializable {
         rlt = rlt + "Charge: " + charge + "\n";
         rlt = rlt + "mz: " + mz + "\n";
         rlt = rlt + "Score: " + score + "\n";
-        rlt = rlt + "Abundance: " + abundance + "\n";
+        rlt = rlt + "Abundance: " + abundance + "\n\t" +  String.format("%.2f", Math.log10(abundance)) + "(log10)\n";
         if(modifications.size()==0){
             rlt += "Modification: None\n";
         } else {

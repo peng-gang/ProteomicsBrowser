@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox alignment="CENTER_LEFT" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" spacing="20.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.filter.PepFilterController">
+   <children>
+      <HBox alignment="CENTER_LEFT" prefHeight="30.0" prefWidth="200.0" spacing="100.0">
+         <children>
+            <Label text="Low Abundance:" />
+            <TextArea prefHeight="200.0" prefWidth="200.0" text="0.05" />
+         </children>
+         <opaqueInsets>
+            <Insets />
+         </opaqueInsets>
+         <VBox.margin>
+            <Insets left="10.0" right="10.0" />
+         </VBox.margin>
+      </HBox>
+      <HBox alignment="CENTER_RIGHT" prefHeight="30.0" prefWidth="200.0">
+         <children>
+            <Button fx:id="btnSubmit" mnemonicParsing="false" onAction="#submit" text="Submit" />
+         </children>
+         <VBox.margin>
+            <Insets left="10.0" right="30.0" />
+         </VBox.margin>
+      </HBox>
+   </children>
+</VBox>
