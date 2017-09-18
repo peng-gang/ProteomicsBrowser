@@ -88,7 +88,7 @@ public class ParaExportModificationInfoController implements Initializable{
             e.printStackTrace();
         }
 
-        System.out.println(output);
+        //System.out.println(output);
         try {
             bufferedWriter.close();
         } catch (IOException e) {

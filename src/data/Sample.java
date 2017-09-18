@@ -83,6 +83,18 @@ public class Sample implements Serializable {
         }
     }
 
+    public void updatePepShow(){
+        for(Map.Entry<String, Protein> entry : proteins.entrySet()){
+            entry.getValue().updateShow();
+        }
+    }
+
+    public void initPepCutoff(){
+        for(Map.Entry<String, Protein> entry : proteins.entrySet()){
+            entry.getValue().initCutoff();
+        }
+    }
+
     public Double getNumInfo(String name){
         return numInfo.get(name);
     }
@@ -185,6 +197,7 @@ public class Sample implements Serializable {
     }
 
     public void setAbundanceRange(){
+        /*
         ArrayList<Double> abundance = new ArrayList<>(pepData.values());
         Collections.sort(abundance);
         ArrayList<Double> cutoff = new ArrayList<>();
@@ -195,8 +208,13 @@ public class Sample implements Serializable {
         idx = abundance.size()*3/4;
         cutoff.add(abundance.get(idx));
 
+
         for(Protein pt : proteins.values()){
             pt.setAbundanceRange(cutoff);
+        }
+        */
+        for(Protein pt : proteins.values()){
+            pt.setAbundanceRange();
         }
     }
 

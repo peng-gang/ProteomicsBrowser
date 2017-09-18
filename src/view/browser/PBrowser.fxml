@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.paint.*?>
 <?import javafx.geometry.*?>
 <?import javafx.scene.canvas.*?>
 <?import javafx.scene.text.*?>
@@ -119,7 +120,7 @@
             <Insets top="10.0" />
          </HBox.margin>
       </VBox>
-      <VBox prefHeight="1100.0" prefWidth="950.0" spacing="20.0">
+      <VBox prefHeight="1100.0" prefWidth="950.0">
          <children>
             <HBox prefHeight="620.0" prefWidth="950.0" spacing="5.0">
                <children>
@@ -131,6 +132,18 @@
                   </VBox>
                   <VBox fx:id="vbLegend" alignment="CENTER" prefHeight="520.0" prefWidth="150.0" />
                </children>
+            </HBox>
+            <HBox alignment="CENTER" maxWidth="800.0" prefHeight="30.0" prefWidth="800.0" spacing="600.0">
+               <children>
+                  <Label fx:id="lblStart" prefWidth="95.0" textFill="#d55e00" />
+                  <Label fx:id="lblEnd" alignment="CENTER_RIGHT" contentDisplay="RIGHT" prefWidth="95.0" textFill="#d45c00" />
+               </children>
+               <opaqueInsets>
+                  <Insets />
+               </opaqueInsets>
+               <VBox.margin>
+                  <Insets />
+               </VBox.margin>
             </HBox>
             <HBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="950.0" spacing="100.0">
                <children>

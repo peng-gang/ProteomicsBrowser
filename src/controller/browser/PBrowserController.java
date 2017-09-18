@@ -39,6 +39,11 @@ public class PBrowserController implements Initializable {
     @FXML private ScrollBar sbarCanvas;
     @FXML private VBox vbLegend;
     @FXML private ComboBox<Integer> combModiPos;
+    @FXML private Label lblStart;
+    @FXML private Label lblEnd;
+
+
+    private boolean initialized = false;
 
     //Legend 1
     private HBox hbAcetylation;
@@ -121,6 +126,21 @@ public class PBrowserController implements Initializable {
         this.sampleGroup = sampleGroup;
         sampleId = new ArrayList<>(sampleGroup.getSampleId());
         proteinId = new ArrayList<>(sampleGroup.getProteinId());
+    }
+
+    public void updatePep(){
+        scaleX = 1;
+        scaleY = 1;
+        double sc = (canvasWidth - leftPix - rightPix)/(protein.getLength() * pixPerLocus);
+        sliderZoom.setMin(Math.log(sc) /Math.log(2.0));
+        sliderZoom.setValue(0);
+        orderPep();
+        //too many modification to show in a canvas
+        if(maxY * (pixPerPep + 2*pixPepGap) > (canvasHeight-bottomPix-pixXLabel)){
+            scaleY = (canvasHeight-bottomPix-pixXLabel)/((pixPerPep + 2*pixPepGap)*maxY);
+        }
+        initSBar(0);
+        draw();
     }
 
     public void show(){
@@ -358,6 +378,8 @@ public class PBrowserController implements Initializable {
         }
         */
         //start 0, end 0
+
+        initialized = true;
         double st = sbarCanvas.getValue();
 
         //Start to plot
@@ -499,13 +521,17 @@ public class PBrowserController implements Initializable {
                 gc.setFill(Color.BLACK);
             }
             gc.fillText(Character.toString(proteinSeq.charAt(i)), leftX, topY);
+            //position
+            //gc.setFill(Color.BLACK);
 
-            gc.setFill(Color.BLACK);
+            //gc.setFont(new Font("Courier New", fontSize/2));
 
-            gc.setFont(new Font("Courier New", fontSize/2));
-
-            gc.fillText(Integer.toString(i+1), leftX, (topY + fontSize));
+            //gc.fillText(Integer.toString(i+1), leftX, (topY + fontSize));
         }
+
+        lblStart.setText("Start:" + (xAxisStart + 1));
+        //Warning: check whether need to + 1 here
+        lblEnd.setText("End:" + (xAxisEnd-1));
 
 
         legend();
@@ -523,9 +549,18 @@ public class PBrowserController implements Initializable {
         }
 
         for(int i =0;i<start.size();i++){
-            PepPos tmp = new PepPos(start.get(i), end.get(i), peps.get(i));
-            arrangePep.add(tmp);
+            // decide what kind of data to show
+            if(protein.getPepShow(i) > 0){
+                PepPos tmp = new PepPos(start.get(i), end.get(i), peps.get(i));
+                arrangePep.add(tmp);
+            }
+
         }
+
+        if(arrangePep.size()==0){
+            return;
+        }
+
         Collections.sort(arrangePep);
 
         maxY = 0;
@@ -671,12 +706,13 @@ public class PBrowserController implements Initializable {
         hbAbundance4.getChildren().addAll(lbAbundance41, lbAbundance42);
 
 
-
-
-
         canvas.addEventHandler(MouseEvent.MOUSE_MOVED, new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent event) {
+                if(!initialized){
+                    return;
+                }
+
                 double x = event.getX();
                 double y = event.getY();
 
@@ -690,14 +726,21 @@ public class PBrowserController implements Initializable {
 
                 for(PepPos tmp : arrangePep){
                     if(tmp.contains(idxX, idxY)) {
-                        lblPep.setText(tmp.getPep().toString());
+                        String info = tmp.getPep().toString();
+                        info = info + "Start: " + (tmp.getStart() + 1) + "\n";
+                        info = info + "End: " + (tmp.getEnd() + 1);
+                        lblPep.setText(info);
                         break;
                     } else {
                         lblPep.setText("No Peptide");
                     }
                 }
 
-                PosModiInfo posModiInfo = protein.getModiInfo().get(idxX);
+                //PosModiInfo posModiInfo = protein.getModiInfo().get(idxX);
+                //if(idxX < 0 || idxX >= protein.getModiInfoSel().size()){
+                //    return;
+                //}
+                PosModiInfo posModiInfo = protein.getModiInfoSel().get(idxX);
                 if(posModiInfo == null){
                     lblPos.setText("No Modification at position: " + (idxX + 1));
                 } else {

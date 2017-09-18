@@ -1,9 +1,13 @@
 package data;
 
+import javafx.util.Pair;
 import project.PublicInfo;
 
-import java.io.Serializable;
+import java.io.*;
 import java.util.*;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * sample groups storing sample information including numeric, string information and peptide and protein data for each sample
@@ -134,6 +138,19 @@ public class SampleGroup implements Serializable {
 
     public void setProteinStatus(PublicInfo.ProteinStatus proteinStatus){
         this.proteinStatus = proteinStatus;
+    }
+
+    public void updatePepShow() {
+        //update peptide show information
+        for(Map.Entry<String, Sample> entry : samples.entrySet()){
+            entry.getValue().updatePepShow();
+        }
+    }
+
+    public void initPepCutoff(){
+        for(Map.Entry<String, Sample> entry : samples.entrySet()){
+            entry.getValue().initPepCutoff();
+        }
     }
 
     public void updateProtein(){
@@ -414,6 +431,83 @@ public class SampleGroup implements Serializable {
             sp.setAbundanceRange();
         }
         flagAbundanceRange = true;
+    }
+
+
+    public void outputModiResText(File textFile,  String sample, ArrayList<Modification.ModificationType> modiSelected, int numResidual){
+
+        FileWriter fileWriter= null;
+        try {
+            fileWriter = new FileWriter(textFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+
+        for(Protein protein: samples.get(sample).getProteins()){
+            ArrayList<String> info = protein.getModiResInfo(modiSelected, numResidual);
+            for(String infoTmp : info){
+                try{
+                    bufferedWriter.write(infoTmp);
+                    bufferedWriter.write("\n");
+                } catch (IOException e){
+                    e.printStackTrace();
+                }
+            }
+        }
+        try {
+            bufferedWriter.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            fileWriter.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public ArrayList<Map<Character, Double>> outputModiResFreq(String sample, ArrayList<Modification.ModificationType> modiSelected, int numResidual){
+        ArrayList<Pair<String, Integer> > modiRes = new ArrayList<>();
+        for(Protein protein : samples.get(sample).getProteins()){
+            modiRes.addAll(protein.getModiRes(modiSelected, numResidual));
+        }
+
+        ArrayList<HashMap<Character, Double> > count = new ArrayList<>();
+        for(int i=0; i<(2*numResidual+1); i++){
+            count.add(new HashMap<>());
+        }
+
+        for(Pair<String, Integer> modiResTmp : modiRes){
+            String seq = modiResTmp.getKey();
+            int pos = modiResTmp.getValue();
+            for(int i=0; i<seq.length();i++){
+                Double d = (count.get((numResidual-pos+i))).get(seq.charAt(i));
+                if(d==null){
+                    (count.get((numResidual-pos+i))).put(seq.charAt(i), 1.0);
+                } else {
+                    (count.get((numResidual-pos+i))).put(seq.charAt(i), d + 1.0);
+                }
+            }
+        }
+
+        ArrayList<Map<Character, Double>> rlt = new ArrayList<>();
+        for(HashMap<Character, Double> ct : count){
+            double total = 0;
+            for(Double d : ct.values()){
+                total += d;
+            }
+
+            for(Map.Entry<Character, Double> entry : ct.entrySet()){
+                entry.setValue(entry.getValue()/total);
+            }
+
+            Map<Character, Double> sorted = (ct.entrySet().stream().sorted(Collections.reverseOrder(Map.Entry.comparingByValue()))).
+                    collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+            rlt.add(sorted);
+        }
+
+        return rlt;
     }
 
 }

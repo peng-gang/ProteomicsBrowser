@@ -8,8 +8,12 @@ import controller.data.SampleProteinDataController;
 import controller.dataselect.BoxPlotDataSelectController;
 import controller.dataselect.CorScatterDataSelectController;
 import controller.dataselect.TTestDataSelectController;
+import controller.filter.PepFilterController;
 import controller.parameter.ParaExportModificationInfoController;
+import controller.parameter.ParaModifiedCysController;
+import controller.parameter.ParaModifiedCysFigureController;
 import controller.result.CorScatterController;
+import controller.result.CysResidualFigureController;
 import controller.result.PValueTableController;
 import data.*;
 import javafx.beans.value.ChangeListener;
@@ -69,6 +73,8 @@ public class MainController implements Initializable{
     //Analyze
     @FXML private Menu menuAnalyze;
 
+    @FXML private Menu menuDataClean;
+
     //View
     @FXML private Menu menuView;
     @FXML private RadioMenuItem menuScaleRegular;
@@ -77,6 +83,8 @@ public class MainController implements Initializable{
 
     //Export
     @FXML private Menu menuExport;
+    @FXML private MenuItem menuExportModificationInfo;
+    @FXML private Menu menuExportModiCys;
 
     //TreeView
     @FXML private TreeView treeView;
@@ -107,7 +115,9 @@ public class MainController implements Initializable{
     ///Data
     //DB
     //private String proteinDBFile = "src/protein.info.csv";
-    private TreeMap<String, String> proteinSeq;
+    //private TreeMap<String, String> proteinSeq;
+    private ProteinDB proteinDB;
+
 
 
     //proteomics data
@@ -752,6 +762,76 @@ public class MainController implements Initializable{
         }
     }
 
+    @FXML private void exportModifiedCysText(ActionEvent event){
+        System.out.println("Export modified Cys Info Text");
+
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/parameter/ParaModifiedCys.fxml"));
+        try{
+            Parent root = loader.load();
+            Stage stage = new Stage();
+            stage.setTitle("Export modified Cys information in text file");
+            stage.setScene(new Scene(root, 600, 400));
+            stage.initModality(Modality.WINDOW_MODAL);
+            stage.initOwner(menuBar.getScene().getWindow());
+
+            ParaModifiedCysController controller = loader.getController();
+            controller.init(sampleGroup);
+
+            stage.showAndWait();
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+    }
+
+    @FXML private void showModifiedCysFigure(ActionEvent event){
+        System.out.println("Show modified Cys Info Figure");
+
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/parameter/ParaModifiedCysFigure.fxml"));
+        ArrayList<Map<Character, Double>> residualFreq = null;
+        try{
+            Parent root = loader.load();
+            Stage stage = new Stage();
+            stage.setTitle("Parameter for Modified Cys information Figure");
+            stage.setScene(new Scene(root, 600, 300));
+            stage.initModality(Modality.WINDOW_MODAL);
+            stage.initOwner(menuBar.getScene().getWindow());
+
+            ParaModifiedCysFigureController controller = loader.getController();
+            controller.init(sampleGroup);
+            stage.showAndWait();
+
+            residualFreq = controller.getResidualFreq();
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+
+        if(residualFreq == null){
+            return;
+        }
+
+        FXMLLoader figLoader = new FXMLLoader(getClass().getResource("/view/result/CysResidualFigure.fxml"));
+        try{
+            Parent root = figLoader.load();
+
+            Stage stage = new Stage();
+            stage.setTitle("Cys Residual Frequency");
+            stage.setScene(new Scene(root, 600, 400));
+            stage.initModality(Modality.WINDOW_MODAL);
+            stage.initOwner(menuBar.getScene().getWindow());
+
+            CysResidualFigureController controller = figLoader.getController();
+            controller.init(residualFreq);
+            stage.showAndWait();
+
+
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+
+
+    }
+
+
     @FXML private void about(ActionEvent event){
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("ProteomicsBrowser");
@@ -773,12 +853,18 @@ public class MainController implements Initializable{
 
         Stage pepFilterStage = new Stage();
         pepFilterStage.setTitle("Peptide Filter");
-        pepFilterStage.setScene(new Scene(root, 400, 300));
+        pepFilterStage.setScene(new Scene(root, 600, 400));
 
         pepFilterStage.initModality(Modality.WINDOW_MODAL);
         pepFilterStage.initOwner(menuBar.getScene().getWindow());
 
+        PepFilterController controller = loader.getController();
+        controller.init(pBrowserController.getProtein());
+
         pepFilterStage.showAndWait();
+
+        pBrowserController.getProtein().updateShow();
+        pBrowserController.updatePep();
     }
 
 
@@ -800,6 +886,7 @@ public class MainController implements Initializable{
                         menuData.setVisible(false);
                         menuView.setVisible(false);
                         menuExport.setVisible(false);
+                        menuDataClean.setVisible(false);
                         treeView.getSelectionModel().select(2);
                         break;
                     case "Peptide":
@@ -807,13 +894,17 @@ public class MainController implements Initializable{
                         menuData.setVisible(false);
                         menuView.setVisible(true);
                         menuExport.setVisible(false);
+                        menuDataClean.setVisible(false);
                         treeView.getSelectionModel().select(3);
                         break;
                     case "Protein":
                         menuAnalyze.setVisible(true);
                         menuData.setVisible(true);
                         menuView.setVisible(true);
-                        menuExport.setVisible(false);
+                        menuExport.setVisible(true);
+                        menuExportModificationInfo.setDisable(true);
+                        menuExportModiCys.setDisable(false);
+                        menuDataClean.setVisible(false);
                         treeView.getSelectionModel().select(4);
                         break;
                     case "Browser":
@@ -821,6 +912,9 @@ public class MainController implements Initializable{
                         menuData.setVisible(false);
                         menuView.setVisible(false);
                         menuExport.setVisible(true);
+                        menuExportModificationInfo.setDisable(false);
+                        menuExportModiCys.setDisable(true);
+                        menuDataClean.setVisible(true);
                         treeView.getSelectionModel().select(5);
                         break;
                     default:
@@ -865,6 +959,7 @@ public class MainController implements Initializable{
                         menuData.setVisible(false);
                         menuView.setVisible(false);
                         menuExport.setVisible(false);
+                        menuDataClean.setVisible(false);
                         break;
 
                     case "Peptide Data":
@@ -878,6 +973,7 @@ public class MainController implements Initializable{
                         menuData.setVisible(false);
                         menuView.setVisible(true);
                         menuExport.setVisible(false);
+                        menuDataClean.setVisible(false);
 
                         switch (samplePepDataController.getScaleType()){
                             case Regular:
@@ -905,7 +1001,10 @@ public class MainController implements Initializable{
                         menuAnalyze.setVisible(true);
                         menuData.setVisible(true);
                         menuView.setVisible(true);
-                        menuExport.setVisible(false);
+                        menuExport.setVisible(true);
+                        menuExportModiCys.setDisable(false);
+                        menuExportModificationInfo.setDisable(true);
+                        menuDataClean.setVisible(false);
 
                         switch (sampleProteinDataController.getScaleType()){
                             case Regular:
@@ -936,6 +1035,9 @@ public class MainController implements Initializable{
                         menuData.setVisible(false);
                         menuView.setVisible(false);
                         menuExport.setVisible(true);
+                        menuExportModiCys.setDisable(true);
+                        menuExportModificationInfo.setDisable(false);
+                        menuDataClean.setVisible(true);
                         break;
                     default:
                         System.err.println("Wrong Selected tree item " + selectedValue);
@@ -1012,7 +1114,33 @@ public class MainController implements Initializable{
     }
 
     private void loadProteinSeqDB(String type){
-        proteinSeq = new TreeMap<>();
+        proteinDB = new ProteinDB();
+        proteinDB.setSpecies(type);
+        //proteinSeq = new TreeMap<>();
+        String proteinDBFile = "db/" + type + ".txt";
+        File dbFile = new File(proteinDBFile);
+        BufferedReader bufferedReader;
+        try {
+            bufferedReader = new BufferedReader(new FileReader(dbFile));
+
+            String fline;
+            while((fline = bufferedReader.readLine()) != null){
+                String[] vslines = fline.split("\t");
+                //proteinSeq.put(vslines[0], vslines[1]);
+                if(vslines.length != 3){
+                    System.out.println(fline);
+                    for(int i =0; i< vslines.length;i++){
+                        System.out.println(vslines[i]);
+                    }
+                }
+                proteinDB.add(vslines[1], vslines[0], vslines[2]);
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        /*
         String proteinDBFile = "db/" + type + "/protein.info.csv";
         File dbFile = new File(proteinDBFile);
         BufferedReader bufferedReader;
@@ -1029,6 +1157,7 @@ public class MainController implements Initializable{
         } catch (IOException e) {
             e.printStackTrace();
         }
+        */
     }
 
     private void readProteomicsDataFile() {
@@ -1229,7 +1358,7 @@ public class MainController implements Initializable{
             }
         }
 
-
+        Set<String> proteinNotFind = new TreeSet<>();
         for(int i=0; i<proteomicsRaw.get(0).size(); i++){
             String id = proteomicsRaw.get(indexId).get(i);
             String sequence = proteomicsRaw.get(indexSequence).get(i);
@@ -1239,6 +1368,13 @@ public class MainController implements Initializable{
             String protein = proteomicsRaw.get(indexProtein).get(i);
             String modificationStr = proteomicsRaw.get(indexModification).get(i);
             ArrayList<Modification> modifications = new ArrayList<>();
+
+            String seq = proteinDB.getSeq(protein);
+            if(seq == null){
+                proteinNotFind.add(protein);
+                continue;
+            }
+
             if(!modificationStr.isEmpty()){
                 String[] modiTmp = modificationStr.split(";");
                 for(int j=0; j<modiTmp.length; j++){
@@ -1253,9 +1389,22 @@ public class MainController implements Initializable{
                 Peptide ptTmp = new Peptide(id, sequence, charge, mz, score, abTmp, modifications);
 
                 sampleGroup.addPepData(spId, id, abTmp);
-                sampleGroup.addPeptide(spId, protein, proteinSeq.get(protein), ptTmp);
+                sampleGroup.addPeptide(spId, protein, seq, ptTmp);
                 sampleGroup.increaseProteinData(spId, protein, abTmp);
             }
+        }
+
+        if(proteinNotFind.size() > 0){
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("Import Data");
+            alert.setHeaderText(null);
+            String msg = "The following proteins are not found in database:\n";
+            for(String s : proteinNotFind){
+                msg = msg + s + ",";
+            }
+            alert.setContentText(msg);
+            alert.showAndWait();
+            return;
         }
 
         for(int i=0; i<sampleId.size();i++){
@@ -1272,7 +1421,11 @@ public class MainController implements Initializable{
         }
 
         //set raw abundance
+
+        sampleGroup.initPepCutoff();
+        sampleGroup.updatePepShow();
         sampleGroup.rawAbundance();
+
     }
 
 

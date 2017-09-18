@@ -5,10 +5,8 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.ScrollBar;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
+import javafx.scene.shape.Arc;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
@@ -16,7 +14,9 @@ import javafx.stage.WindowEvent;
 
 import java.io.File;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.ResourceBundle;
+import java.util.stream.Stream;
 
 /**
  * Created by gpeng on 2/12/17.
@@ -75,9 +75,33 @@ public class ImportDataController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
 
         System.out.println("Import Data Initialization");
+        cmbType.getItems().add("");
+        cmbType.getSelectionModel().select(0);
 
-        cmbType.getItems().add("Mouse");
-        cmbType.getItems().add("Other");
+        File dbFolder = new File("db/");
+        File[] files = dbFolder.listFiles();
+        ArrayList<String> types = new ArrayList<>();
+        for(File file : files){
+            if(file.isFile()){
+                String fileName = file.getName();
+                if(fileName.charAt(0) != '.' && fileName.substring(fileName.length()-3).equals("txt")){
+                    types.add(fileName.substring(0, fileName.length()-4));
+                }
+            }
+            System.out.println(file.getName());
+        }
+
+        if(types.size()==0){
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("Database");
+            alert.setHeaderText(null);
+            alert.setContentText("There is no database file in db folder");
+            alert.showAndWait();
+            return;
+        }
+        cmbType.getItems().addAll(types);
+
+
 
         /*
         stage = (Stage) btnSpDataFile.getScene().getWindow();

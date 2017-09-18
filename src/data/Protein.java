@@ -1,5 +1,6 @@
 package data;
 
+import javafx.util.Pair;
 import project.PublicInfo;
 
 import java.io.Serializable;
@@ -15,10 +16,54 @@ public class Protein implements Serializable {
 
     private ArrayList<Peptide> peptides;
     //start and end are all included in peptide
+    // index from 0
     private ArrayList<Integer> pepStart;
     private ArrayList<Integer> pepEnd;
     private TreeSet<Modification.ModificationType> modiTypeAll;
     private TreeMap<Integer, PosModiInfo> modiInfo;
+    // <= 0, not show
+    private ArrayList<Integer> pepShow;
+    //Modification information for selected peptides
+    private TreeSet<Modification.ModificationType> modiTypeAllSel;
+    private TreeMap<Integer, PosModiInfo> modiInfoSel;
+
+
+    // range of peptide data
+    private int chargeMax;
+    private int chargeMin;
+    private double mzMax;
+    private double mzMin;
+    private double scoreMax;
+    private double scoreMin;
+    private double abundanceMax;
+    private double abundanceMin;
+
+    // cutoff of peptide data
+    private int chargeCutHigh;
+    private int chargeCutLow;
+    private double mzCutHigh;
+    private double mzCutLow;
+    private double scoreCutHigh;
+    private double scoreCutLow;
+    private double abundanceCutHigh;
+    private double abundanceCutLow;
+
+    private double chargeCutPerHigh;
+    private double chargeCutPerLow;
+    private double mzCutPerHigh;
+    private double mzCutPerLow;
+    private double scoreCutPerHigh;
+    private double scoreCutPerLow;
+    private double abundanceCutPerHigh;
+    private double abundanceCutPerLow;
+
+
+
+    private ArrayList<Integer> chargeAll;
+    private ArrayList<Double> mzAll;
+    private ArrayList<Double> scoreAll;
+    private ArrayList<Double> abundanceAll;
+
 
     //before normalization
     /**
@@ -44,6 +89,14 @@ public class Protein implements Serializable {
     public TreeSet<Modification.ModificationType> getModiTypeAll() { return modiTypeAll; }
     public Set<Integer> getModiPos() { return  modiInfo.keySet(); }
     public TreeMap<Integer, PosModiInfo> getModiInfo() { return  modiInfo; }
+    public TreeSet<Modification.ModificationType> getModiTypeAllSel() { return  modiTypeAllSel; }
+    public Set<Integer> getModiPosSel() { return  modiInfoSel.keySet(); }
+    public TreeMap<Integer, PosModiInfo> getModiInfoSel() { return modiInfoSel; }
+    public ArrayList<Integer> getPepShow() { return  pepShow; }
+    public Integer getPepShow(int i) { return pepShow.get(i); }
+
+    public void setPepShow(int i, int val) { pepShow.set(i,val); }
+    public void setPepShow(ArrayList<Integer> pepShow) { this.pepShow = pepShow; }
 
 
     public ArrayList<Integer> getModiPos(Modification.ModificationType mt) {
@@ -72,6 +125,311 @@ public class Protein implements Serializable {
     }
 
 
+    public int getChargeMax() { return chargeMax; }
+    public int getChargeMin() { return chargeMin; }
+    public int getChargeCutHigh() { return chargeCutHigh; }
+    public int getChargeCutLow() { return chargeCutLow; }
+    public double getMzMax() { return mzMax; }
+    public double getMzMin() { return mzMin; }
+    public double getMzCutHigh() { return mzCutHigh; }
+    public double getMzCutLow() { return  mzCutLow; }
+    public double getScoreMax() { return scoreMax; }
+    public double getScoreMin() { return scoreMin; }
+    public double getScoreCutHigh() { return scoreCutHigh; }
+    public double getScoreCutLow() { return scoreCutLow; }
+    public double getAbundanceMax() { return abundanceMax; }
+    public double getAbundanceMin() { return abundanceMin; }
+    public double getAbundanceCutHigh() { return abundanceCutHigh; }
+    public double getAbundanceCutLow() { return abundanceCutLow; }
+
+    public double getChargeCutPerHigh() {return chargeCutPerHigh; }
+    public double getChargeCutPerLow() { return chargeCutPerLow; }
+    public double getMzCutPerHigh() { return mzCutPerHigh; }
+    public double getMzCutPerLow() { return mzCutPerLow; }
+    public double getScoreCutPerHigh() { return scoreCutPerHigh; }
+    public double getScoreCutPerLow() { return scoreCutPerLow; }
+    public double getAbundanceCutPerHigh() { return abundanceCutPerHigh; }
+    public double getAbundanceCutPerLow() { return abundanceCutPerLow; }
+
+    public void setChargeCutHigh(int chargeCutHigh){
+        this.chargeCutHigh = chargeCutHigh;
+        int idx = -1;
+        for(int i=0; i<chargeAll.size();i++){
+            if(chargeAll.get(i) > chargeCutHigh){
+                idx = i;
+                break;
+            }
+        }
+        if(idx < 0){
+            chargeCutPerHigh = 1;
+        } else {
+            chargeCutPerHigh = (double)idx / chargeAll.size();
+        }
+        updatePepShow();
+    }
+
+    public void setChargeCutLow(int chargeCutLow){
+        this.chargeCutLow = chargeCutLow;
+        int idx = -1;
+        for(int i=0; i<chargeAll.size();i++){
+            if(chargeAll.get(i) >= chargeCutLow){
+                idx = i;
+                break;
+            }
+        }
+        if(idx < 0){
+            chargeCutPerLow = 1;
+        } else {
+            chargeCutPerLow = (double)idx / chargeAll.size();
+        }
+        updatePepShow();
+    }
+
+    public void setMzCutHigh(double mzCutHigh){
+        this.mzCutHigh = mzCutHigh;
+        int idx = -1;
+        for(int i=0; i<mzAll.size();i++){
+            if(mzAll.get(i) > mzCutHigh){
+                idx = i;
+                break;
+            }
+        }
+        if(idx < 0){
+            mzCutPerHigh = 1;
+        } else {
+            mzCutPerHigh = (double)idx / mzAll.size();
+        }
+        updatePepShow();
+    }
+
+    public void setMzCutLow(double mzCutLow){
+        this.mzCutLow = mzCutLow;
+        int idx = -1;
+        for(int i=0; i<mzAll.size();i++){
+            if(mzAll.get(i) >= mzCutLow){
+                idx = i;
+                break;
+            }
+        }
+        if(idx < 0){
+            mzCutPerLow= 1;
+        } else {
+            mzCutPerLow = (double)idx / mzAll.size();
+        }
+        updatePepShow();
+    }
+
+    public void setScoreCutHigh(double scoreCutHigh){
+        this.scoreCutHigh = scoreCutHigh;
+        int idx = -1;
+        for(int i=0; i<scoreAll.size();i++){
+            if(scoreAll.get(i) > scoreCutHigh){
+                idx = i;
+                break;
+            }
+        }
+        if(idx < 0){
+            scoreCutPerHigh = 1;
+        } else {
+            scoreCutPerHigh = (double)idx / scoreAll.size();
+        }
+        updatePepShow();
+    }
+
+    public void setScoreCutLow(double scoreCutLow){
+        this.scoreCutLow = scoreCutLow;
+        int idx = -1;
+        for(int i=0; i<scoreAll.size();i++){
+            if(scoreAll.get(i) >= scoreCutLow){
+                idx = i;
+                break;
+            }
+        }
+        if(idx < 0){
+            scoreCutPerLow = 1;
+        } else {
+            scoreCutPerLow = (double)idx / scoreAll.size();
+        }
+        updatePepShow();
+    }
+
+    public void setAbundanceCutHigh(double abundanceCutHigh){
+        this.abundanceCutHigh = abundanceCutHigh;
+        int idx = -1;
+        for(int i=0; i<abundanceAll.size();i++){
+            if(abundanceAll.get(i) > abundanceCutHigh){
+                idx = i;
+                break;
+            }
+        }
+        if(idx < 0){
+            abundanceCutPerHigh = 1;
+        } else {
+            abundanceCutPerHigh = (double)idx / abundanceAll.size();
+        }
+        updatePepShow();
+    }
+
+    public void setAbundanceCutLow(double abundanceCutLow){
+        this.abundanceCutLow = abundanceCutLow;
+        int idx = -1;
+        for(int i=0; i<abundanceAll.size();i++){
+            if(abundanceAll.get(i) >= abundanceCutLow){
+                idx = i;
+            }
+        }
+        if(idx < 0){
+            abundanceCutPerLow = 1;
+        } else {
+            abundanceCutPerLow = (double)idx / abundanceAll.size();
+        }
+        updatePepShow();
+    }
+
+    public void setChargeCutPerHigh(double chargeCutPerHigh){
+        this.chargeCutPerHigh = chargeCutPerHigh;
+        int idx = (int) (chargeAll.size() * chargeCutPerHigh);
+        chargeCutHigh = chargeAll.get(idx);
+        updatePepShow();
+    }
+
+    public void setChargeCutPerLow(double chargeCutPerLow){
+        this.chargeCutPerLow = chargeCutPerLow;
+        int idx = (int) (chargeAll.size() * chargeCutPerLow);
+        chargeCutLow = chargeAll.get(idx);
+        updatePepShow();
+    }
+
+    public void setMzCutPerHigh(double mzCutPerHigh){
+        this.mzCutPerHigh = mzCutPerHigh;
+        int idx = (int) (mzAll.size() * mzCutPerHigh);
+        mzCutHigh = mzAll.get(idx);
+        updatePepShow();
+    }
+
+    public void setMzCutPerLow(double mzCutPerLow){
+        this.mzCutPerLow = mzCutPerLow;
+        int idx = (int) (mzAll.size() * mzCutPerLow);
+        mzCutLow = mzAll.get(idx);
+        updatePepShow();
+    }
+
+    public void setScoreCutPerHigh(double scoreCutPerHigh){
+        this.scoreCutPerHigh = scoreCutPerHigh;
+        int idx = (int) (scoreAll.size() * scoreCutPerHigh);
+        scoreCutHigh = scoreAll.get(idx);
+        updatePepShow();
+    }
+
+    public void setScoreCutPerLow(double scoreCutPerLow){
+        this.scoreCutPerLow = scoreCutPerLow;
+        int idx = (int) (scoreAll.size() * scoreCutPerLow);
+        scoreCutLow = scoreAll.get(idx);
+        updatePepShow();
+    }
+
+    public void setAbundanceCutPerHigh(double abundanceCutPerHigh){
+        this.abundanceCutPerHigh = abundanceCutPerHigh;
+        int idx = (int) (abundanceAll.size() * abundanceCutPerHigh);
+        abundanceCutHigh = abundanceAll.get(idx);
+        updatePepShow();
+    }
+
+    public void setAbundanceCutPerLow(double abundanceCutPerLow){
+        this.abundanceCutPerLow = abundanceCutPerLow;
+        int idx = (int) (abundanceAll.size() * abundanceCutPerLow);
+        abundanceCutLow = abundanceAll.get(idx);
+        updatePepShow();
+    }
+
+    //update pepShow
+    private void updatePepShow(){
+        for(int i=0; i<peptides.size(); i++){
+            pepShow.set(i, 1);
+
+            if(peptides.get(i).getCharge() < chargeCutLow){
+                pepShow.set(i, 0);
+            }
+
+            if(peptides.get(i).getCharge() > chargeCutHigh){
+                pepShow.set(i, 0);
+            }
+
+            if(peptides.get(i).getMz() < mzCutLow){
+                pepShow.set(i, 0);
+            }
+
+            if(peptides.get(i).getMz() > mzCutHigh){
+                pepShow.set(i, 0);
+            }
+
+            if(peptides.get(i).getScore() < scoreCutLow){
+                pepShow.set(i, 0);
+            }
+
+            if(peptides.get(i).getScore() > scoreCutHigh){
+                pepShow.set(i, 0);
+            }
+
+            if(peptides.get(i).getAbundance() < abundanceCutLow){
+                pepShow.set(i, 0);
+            }
+
+            if(peptides.get(i).getAbundance() > abundanceCutHigh){
+                pepShow.set(i, 0);
+            }
+        }
+    }
+
+    public int numPepShow(){
+        int num = 0;
+        for(int n:pepShow){
+            num += n;
+        }
+        return num;
+    }
+
+    public void initCutoff(){
+        Collections.sort(chargeAll);
+        Collections.sort(mzAll);
+        Collections.sort(scoreAll);
+        Collections.sort(abundanceAll);
+        //Collections.sort(chargeAll, Comparator.nullsFirst(Comparator.naturalOrder()));
+        //Collections.sort(mzAll, Comparator.nullsFirst(Comparator.naturalOrder()));
+        //Collections.sort(scoreAll, Comparator.nullsFirst(Comparator.naturalOrder()));
+        //Collections.sort(abundanceAll, Comparator.nullsFirst(Comparator.naturalOrder()));
+
+        chargeCutLow = chargeAll.get(0);
+        chargeMin = chargeCutLow;
+        chargeCutHigh = chargeAll.get(chargeAll.size()-1);
+        chargeMax = chargeCutHigh;
+        mzCutLow = mzAll.get(0);
+        mzMin = mzCutLow;
+        mzCutHigh = mzAll.get(mzAll.size()-1);
+        mzMax = mzCutHigh;
+        scoreCutLow = scoreAll.get(0);
+        scoreMin = scoreCutLow;
+        scoreCutHigh = scoreAll.get(scoreAll.size()-1);
+        scoreMax = scoreCutHigh;
+        abundanceCutLow = abundanceAll.get(0);
+        abundanceMin = abundanceCutLow;
+        abundanceCutHigh = abundanceAll.get(abundanceAll.size()-1);
+        abundanceMax = abundanceCutHigh;
+
+
+        chargeCutPerHigh = 1;
+        chargeCutPerLow = 0;
+        mzCutPerHigh = 1;
+        mzCutPerLow = 0;
+        scoreCutPerHigh = 1;
+        scoreCutPerLow = 0;
+        abundanceCutPerHigh = 1;
+        abundanceCutPerLow = 0;
+    }
+
+
+
+
 
     public Protein(String name, String sequence){
         this.name = name;
@@ -81,6 +439,24 @@ public class Protein implements Serializable {
         pepEnd = new ArrayList<>();
         modiTypeAll = new TreeSet<>();
         modiInfo = new TreeMap<>();
+        pepShow = new ArrayList<>();
+        modiTypeAllSel = new TreeSet<>();
+        modiInfoSel = new TreeMap<>();
+        chargeAll = new ArrayList<>();
+        mzAll = new ArrayList<>();
+        scoreAll = new ArrayList<>();
+        abundanceAll = new ArrayList<>();
+
+        /*
+        chargeMax = Integer.MIN_VALUE;
+        chargeMin = Integer.MAX_VALUE;
+        mzMax = -Double.MAX_VALUE;
+        mzMin = Double.MAX_VALUE;
+        scoreMax = -Double.MAX_VALUE;
+        scoreMin = Double.MAX_VALUE;
+        abundanceMax = -Double.MAX_VALUE;
+        abundanceMin = Double.MAX_VALUE;
+        */
     }
 
     public boolean addPeptide(Peptide pep){
@@ -99,6 +475,75 @@ public class Protein implements Serializable {
                 peptides.add(pep);
                 pepStart.add(indexF);
                 pepEnd.add(indexF + pep.getLength() - 1);
+                pepShow.add(1);
+
+                if(pep.getCharge() == null){
+                    chargeAll.add(-100);
+                } else {
+                    chargeAll.add(pep.getCharge());
+                }
+
+                if(pep.getMz() == null){
+                    mzAll.add(-100.0);
+                } else {
+                    mzAll.add(pep.getMz());
+                }
+
+                if(pep.getScore() == null){
+                    scoreAll.add(-100.0);
+                } else {
+                    scoreAll.add(pep.getScore());
+                }
+
+                if(pep.getAbundance() == null){
+                    abundanceAll.add(-100.0);
+                } else {
+                    abundanceAll.add(pep.getAbundance());
+                }
+
+
+                /*
+                if(pep.getCharge() > chargeMax){
+                    chargeMax = pep.getCharge();
+                    chargeCutHigh = chargeMax;
+                }
+
+                if(pep.getCharge() < chargeMin){
+                    chargeMin = pep.getCharge();
+                    chargeCutLow = chargeMin;
+                }
+
+                if(pep.getMz() > mzMax){
+                    mzMax = pep.getMz();
+                    mzCutHigh = mzMax;
+                }
+
+                if(pep.getMz() < mzMin){
+                    mzMin = pep.getMz();
+                    mzCutLow = mzMin;
+                }
+
+                if(pep.getScore() > scoreMax){
+                    scoreMax = pep.getScore();
+                    scoreCutHigh = scoreMax;
+                }
+
+                if(pep.getScore() < scoreMin){
+                    scoreMin = pep.getScore();
+                    scoreCutLow = scoreMin;
+                }
+
+                if(pep.getAbundance() > abundanceMax){
+                    abundanceMax = pep.getAbundance();
+                    abundanceCutHigh = abundanceMax;
+                }
+
+                if(pep.getAbundance() < abundanceMin){
+                    abundanceMin = pep.getAbundance();
+                    abundanceCutLow = abundanceMin;
+                }
+                */
+
                 if(pep.isModified()){
                     for(Modification m : pep.getModifications()){
                         modiTypeAll.add(m.getType());
@@ -115,6 +560,31 @@ public class Protein implements Serializable {
                     }
                 }
                 return true;
+            }
+        }
+    }
+
+    // update modiTypeAllSel and modiInfoSel according to pepShow
+    public void updateShow(){
+        modiTypeAllSel.clear();
+        modiInfoSel.clear();
+        for(int i=0; i<peptides.size();i++){
+            if(pepShow.get(i) > 0){
+                if(peptides.get(i).isModified()){
+                    for(Modification m : peptides.get(i).getModifications()){
+                        modiTypeAllSel.add(m.getType());
+                        for(int j=0; j<m.getPos().size();j++){
+                            int modiPos = m.getPos().get(j) + pepStart.get(i);
+                            PosModiInfo tmp = modiInfoSel.get(modiPos);
+                            if(tmp == null){
+                                PosModiInfo posModiInfo = new PosModiInfo(m.getType(), m.getPercent().get(j));
+                                modiInfoSel.put(modiPos, posModiInfo);
+                            } else {
+                                tmp.addModi(m.getType(), m.getPercent().get(j));
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -203,6 +673,21 @@ public class Protein implements Serializable {
         }
     }
 
+    public void setAbundanceRange(){
+        ArrayList<Double> cutoff = new ArrayList<>();
+        int idx = abundanceAll.size()/4;
+        cutoff.add(abundanceAll.get(idx));
+        idx = abundanceAll.size()/2;
+        cutoff.add(abundanceAll.get(idx));
+        idx = abundanceAll.size()*3/4;
+        cutoff.add(abundanceAll.get(idx));
+
+
+        for(Peptide pt : peptides){
+            pt.setAbundanceRange(cutoff);
+        }
+    }
+
 
     public String getModiInfoAll(double cutoff){
         String rlt = "";
@@ -246,5 +731,75 @@ public class Protein implements Serializable {
 
         return rlt;
 
+    }
+
+
+    public ArrayList<String> getModiResInfo(ArrayList<Modification.ModificationType> modiSelected, int numResidual){
+        ArrayList<String> rlt = new ArrayList<>();
+
+        for(int i=0; i<peptides.size();i++){
+            if(pepShow.get(i) > 0){
+                Peptide pep = peptides.get(i);
+                String infoTmp = pep.getModiInfo(modiSelected);
+                if(infoTmp == null){
+                    continue;
+                }
+                infoTmp = infoTmp + "\t" + name + "\t";
+                ArrayList<Integer> modiPosTmp = pep.getModiPos(modiSelected);
+                //Warning: modiPosTmp null? it should not be
+                for(Integer pos : modiPosTmp){
+                    int posProtein = pos + pepStart.get(i);
+                    int st = posProtein - numResidual;
+                    int ed = posProtein + numResidual + 1;
+
+                    if(st < 0){
+                        st = 0;
+                    }
+
+                    if(ed > sequence.length()){
+                        ed = sequence.length();
+                    }
+
+                    infoTmp = infoTmp + sequence.substring(st, ed) + "\t" + (posProtein + 1) + "\t" + (st + 1) + "\t" + ed + "\t";
+                }
+                rlt.add(infoTmp);
+            }
+        }
+
+        return rlt;
+    }
+
+    public ArrayList<Pair<String, Integer> > getModiRes(ArrayList<Modification.ModificationType> modiSelected, int numResidual){
+        ArrayList<Pair<String, Integer> > rlt = new ArrayList<>();
+        for(int i=0; i<peptides.size(); i++){
+            if(pepShow.get(i) > 0){
+                Peptide pep = peptides.get(i);
+                ArrayList<Integer> modiPosTmp = pep.getModiPos(modiSelected);
+                if(modiPosTmp == null){
+                    continue;
+                }
+                for(Integer pos : modiPosTmp){
+
+                    int posProtein = pos + pepStart.get(i);
+                    int st = posProtein - numResidual;
+                    //for substring +1
+                    int ed = posProtein + numResidual + 1;
+
+                    int posTmp;
+                    if(st < 0){
+                        posTmp = numResidual + st;
+                        st = 0;
+                    } else {
+                        posTmp = numResidual;
+                    }
+
+                    if(ed > sequence.length()){
+                        ed = sequence.length();
+                    }
+                    rlt.add(new Pair<>(sequence.substring(st, ed), posTmp));
+                }
+            }
+        }
+        return rlt;
     }
 }

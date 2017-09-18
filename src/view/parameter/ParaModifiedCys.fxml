@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="300.0" prefWidth="600.0" spacing="15.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.parameter.ParaModifiedCysController">
+   <children>
+      <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="400.0" spacing="20.0">
+         <children>
+            <Label text="Sample:" />
+            <ComboBox fx:id="cmbSample" prefWidth="150.0" />
+            <Label maxWidth="100.0" prefWidth="100.0" text="Num Residual:">
+               <HBox.margin>
+                  <Insets left="40.0" />
+               </HBox.margin></Label>
+            <TextField fx:id="textNumResidual" maxWidth="50.0" prefWidth="50.0" />
+         </children>
+         <padding>
+            <Insets left="20.0" />
+         </padding>
+      </HBox>
+      <VBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="100.0">
+         <children>
+            <Label text="Modifications:" />
+            <HBox alignment="CENTER_LEFT" prefWidth="400.0" spacing="20.0">
+               <children>
+                  <CheckBox fx:id="cbAcetylation" mnemonicParsing="false" text="Acetylation" />
+                  <CheckBox fx:id="cbCarbamidomethylation" mnemonicParsing="false" text="Carbamidomethylation" />
+                  <CheckBox fx:id="cbPhosphorylation" mnemonicParsing="false" text="Phosphorylation" />
+                  <CheckBox fx:id="cbOxidation" mnemonicParsing="false" text="Oxidation" />
+               </children>
+            </HBox>
+         </children>
+         <padding>
+            <Insets left="20.0" />
+         </padding>
+      </VBox>
+      <VBox alignment="CENTER_LEFT" maxHeight="100.0" prefHeight="100.0" prefWidth="580.0">
+         <children>
+            <Label text="Output Residual Infomation File:" />
+            <HBox prefHeight="40.0" prefWidth="580.0" spacing="20.0">
+               <children>
+                  <TextField fx:id="textTextFile" prefWidth="300.0" />
+                  <Button fx:id="btnTextFile" mnemonicParsing="false" onAction="#getTextFile" text="..." />
+               </children>
+            </HBox>
+         </children>
+         <padding>
+            <Insets left="20.0" />
+         </padding>
+      </VBox>
+      <HBox alignment="CENTER_RIGHT" prefHeight="100.0" prefWidth="400.0">
+         <children>
+            <Button mnemonicParsing="false" onAction="#export" text="Export File" />
+         </children>
+         <padding>
+            <Insets right="40.0" />
+         </padding>
+      </HBox>
+   </children>
+</VBox>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox alignment="TOP_CENTER" maxHeight="400.0" maxWidth="600.0" minHeight="400.0" minWidth="600.0" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.result.CysResidualFigureController">
+   <children>
+      <HBox fx:id="hBox" maxHeight="300.0" maxWidth="600.0" minHeight="300.0" minWidth="600.0" prefHeight="300.0" prefWidth="600.0" />
+      <HBox alignment="CENTER" maxHeight="100.0" maxWidth="600.0" minHeight="100.0" minWidth="600.0" prefHeight="100.0" prefWidth="600.0" spacing="50.0">
+         <children>
+            <VBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="300.0">
+               <children>
+                  <Label text="Set Color" />
+                  <HBox alignment="CENTER_LEFT" prefHeight="40.0" prefWidth="200.0" spacing="10.0">
+                     <children>
+                        <ComboBox fx:id="cmbColor" prefWidth="150.0" />
+                        <ColorPicker fx:id="colorPicker" onAction="#setColor" />
+                     </children>
+                  </HBox>
+               </children>
+               <padding>
+                  <Insets left="20.0" />
+               </padding>
+            </VBox>
+            <Button mnemonicParsing="false" onAction="#output" text="Output Figure" />
+         </children>
+         <padding>
+            <Insets left="50.0" right="50.0" />
+         </padding>
+      </HBox>
+   </children>
+</VBox>

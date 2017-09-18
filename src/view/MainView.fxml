@@ -52,7 +52,7 @@
                   </Menu>
               </items>
             </Menu>
-            <Menu mnemonicParsing="false" text="Data Clean">
+            <Menu fx:id="menuDataClean" mnemonicParsing="false" text="Data Clean" visible="false">
               <items>
                 <MenuItem mnemonicParsing="false" onAction="#pepFilter" text="Peptides" />
               </items>
@@ -74,6 +74,12 @@
             </Menu>
             <Menu fx:id="menuExport" mnemonicParsing="false" text="Export" visible="false">
               <items>
+                  <Menu fx:id="menuExportModiCys" mnemonicParsing="false" text="Export Modified Cys">
+                    <items>
+                        <MenuItem mnemonicParsing="false" onAction="#exportModifiedCysText" text="Export Text File" />
+                      <MenuItem mnemonicParsing="false" onAction="#showModifiedCysFigure" text="Show Figure" />
+                    </items>
+                  </Menu>
                 <MenuItem fx:id="menuExportModificationInfo" mnemonicParsing="false" onAction="#exportModificationInfo" text="Modification Info" />
               </items>
             </Menu>

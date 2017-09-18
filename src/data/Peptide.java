@@ -2,7 +2,7 @@ package data;
 
 
 import java.io.Serializable;
-import java.util.ArrayList;
+import java.util.*;
 
 /**
  * Peptide Class to store peptide information
@@ -82,6 +82,61 @@ public class Peptide implements Serializable {
         }
 
         return rlt;
+    }
+
+    public String getModiInfo(ArrayList<Modification.ModificationType> modiSelected){
+        if(modifications.size() == 0){
+            return null;
+        }
+
+        String rlt = sequence;
+        rlt = rlt + "\t";
+
+        TreeMap<Integer, Modification.ModificationType> modiPosAll = new TreeMap<>();
+        for(Modification modification : modifications){
+            if(modiSelected.contains(modification.getType())){
+                for(int i=0; i<modification.getPos().size();i++){
+                    modiPosAll.put(modification.getPos().get(i), modification.getType());
+                }
+            }
+        }
+
+        if(modiPosAll.size() == 0){
+            return null;
+        }
+
+        for(Map.Entry<Integer, Modification.ModificationType> entry : modiPosAll.entrySet()){
+            rlt = rlt + "[" + (entry.getKey() + 1) + "]" + entry.getValue() + "(" + sequence.charAt(entry.getKey()) + ")";
+            if(!entry.equals(modiPosAll.lastEntry())){
+                rlt = rlt + "|";
+            }
+        }
+
+        return rlt;
+    }
+
+    //get modified positions in a peptide
+    public ArrayList<Integer> getModiPos(ArrayList<Modification.ModificationType> modiSelected){
+        if(modifications.size() == 0){
+            return null;
+        }
+
+        Set<Integer> pos = new TreeSet<>();
+        for(Modification modification : modifications){
+            if(modiSelected.contains(modification.getType())){
+                for(int i=0; i<modification.getPos().size();i++){
+                    pos.add(modification.getPos().get(i));
+                }
+            }
+        }
+
+        if(pos.size() == 0){
+            return null;
+        }
+
+        ArrayList<Integer> rlt = new ArrayList<>(pos);
+        return rlt;
+
     }
 
     public void setAbundanceRange(ArrayList<Double> cutoff){
