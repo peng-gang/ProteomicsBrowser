@@ -18,11 +18,15 @@ public class SampleGroup implements Serializable {
     private HashSet<String> numInfoName;
     private HashSet<String> strInfoName;
     private HashSet<String> pepId;
+
+    // they are the same for different ways to use
     private HashSet<String> proteinId; //for abundance value
     private HashSet<String> proteinName; //for modification
 
     private PublicInfo.ProteinIntegrationType proteinIntegrationType;
     private PublicInfo.ProteinStatus proteinStatus;
+    //selected protein for normalization
+    private String selProteinNorm;
 
     private boolean flagRawAbundance = false;
     private boolean flagRawMedian = false;
@@ -44,6 +48,7 @@ public class SampleGroup implements Serializable {
 
         proteinIntegrationType = PublicInfo.ProteinIntegrationType.Raw;
         proteinStatus = PublicInfo.ProteinStatus.Unnormalized;
+        selProteinNorm = null;
     }
 
 
@@ -140,6 +145,11 @@ public class SampleGroup implements Serializable {
         this.proteinStatus = proteinStatus;
     }
 
+    public void setProteinStatus(PublicInfo.ProteinStatus proteinStatus, String selProteinNorm) {
+        this.proteinStatus = proteinStatus;
+        this.selProteinNorm = selProteinNorm;
+    }
+
     public void updatePepShow() {
         //update peptide show information
         for(Map.Entry<String, Sample> entry : samples.entrySet()){
@@ -171,6 +181,9 @@ public class SampleGroup implements Serializable {
                             flagRawMedian = true;
                         }
                         return;
+                    case SelProtein:
+                        rawAbundanceSelProteinNorm();
+                        return;
                     default:
                         return;
                 }
@@ -188,7 +201,9 @@ public class SampleGroup implements Serializable {
                             iBAQMedianNorm();
                             flagiBAQMedianNorm = true;
                         }
-
+                        return;
+                    case SelProtein:
+                        iBAQSelProteinNorm();
                         return;
                     default:
                         return;
@@ -421,6 +436,60 @@ public class SampleGroup implements Serializable {
             idx++;
         }
         return;
+    }
+
+    public void rawAbundanceSelProteinNorm(){
+        if(selProteinNorm == null){
+            return;
+        }
+
+        ArrayList<Double> rawAbundance = new ArrayList<>();
+        for(Map.Entry<String, Sample> entry : samples.entrySet()){
+            rawAbundance.add(entry.getValue().getRawAbundance(selProteinNorm));
+        }
+
+        ArrayList<Double> cp = new ArrayList<>(rawAbundance);
+        Collections.sort(cp);
+        int idx = cp.size()/2;
+        double md;
+        if(cp.size()%2 == 0){
+            md = (cp.get(idx-1) + cp.get(idx))/2;
+        } else {
+            md = cp.get(idx);
+        }
+
+        idx = 0;
+        for(Map.Entry<String, Sample> entry : samples.entrySet()){
+            entry.getValue().rawAbundanceSelProteinNorm(md - rawAbundance.get(idx));
+            idx++;
+        }
+    }
+
+    public void iBAQSelProteinNorm(){
+        if(selProteinNorm == null){
+            return;
+        }
+
+        ArrayList<Double> rawAbundance = new ArrayList<>();
+        for(Map.Entry<String, Sample> entry : samples.entrySet()){
+            rawAbundance.add(entry.getValue().getiBAQAbundance(selProteinNorm));
+        }
+
+        ArrayList<Double> cp = new ArrayList<>(rawAbundance);
+        Collections.sort(cp);
+        int idx = cp.size()/2;
+        double md;
+        if(cp.size()%2 == 0){
+            md = (cp.get(idx-1) + cp.get(idx))/2;
+        } else {
+            md = cp.get(idx);
+        }
+
+        idx = 0;
+        for(Map.Entry<String, Sample> entry : samples.entrySet()){
+            entry.getValue().iBAQSelProteinNorm(md - cp.get(idx));
+            idx++;
+        }
     }
 
     public void setAbundanceRange(){

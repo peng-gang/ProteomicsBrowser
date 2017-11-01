@@ -34,6 +34,10 @@ public class TTestDataSelectController implements Initializable{
 
     private  ArrayList<Double> val;
 
+    private boolean submitted;
+
+    public boolean getSubmitted() {return submitted; }
+
     public String getGroupId() { return combGroup.getValue(); }
     public String getDataId() { return combData.getValue(); }
     public Double getLow() {
@@ -50,6 +54,7 @@ public class TTestDataSelectController implements Initializable{
     }
 
     @FXML private void submit(ActionEvent event){
+        submitted = true;
         Stage stage = (Stage) btnSubmit.getScene().getWindow();
         stage.close();
     }
@@ -97,6 +102,8 @@ public class TTestDataSelectController implements Initializable{
                     rslinder.setHighValue(ed);
                     rslinder.setLowValue(st);
 
+                    lbLow.setVisible(true);
+                    lbHigh.setVisible(true);
                     Integer numLow = num/3;
                     Integer numHigh = numLow;
                     lbLow.setText(numLow.toString());
@@ -104,6 +111,8 @@ public class TTestDataSelectController implements Initializable{
 
                 } else {
                     rslinder.setVisible(false);
+                    lbLow.setVisible(false);
+                    lbHigh.setVisible(false);
                 }
             }
         });
@@ -151,5 +160,7 @@ public class TTestDataSelectController implements Initializable{
         lbHigh.setAlignment(Pos.CENTER_LEFT);
         lbHigh.setPrefWidth(40);
         hbSlider.getChildren().addAll(lbLow, rslinder, lbHigh);
+
+        submitted = false;
     }
 }

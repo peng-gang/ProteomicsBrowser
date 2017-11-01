@@ -172,6 +172,18 @@ public class Sample implements Serializable {
         }
     }
 
+    public void iBAQSelProteinNorm(double diff){
+        for(Map.Entry<String, Protein> entry : proteins.entrySet()){
+            entry.getValue().setiBAQAbundanceSelProteinNorm(diff);
+        }
+    }
+
+    public void rawAbundanceSelProteinNorm(double diff){
+        for(Map.Entry<String, Protein> entry : proteins.entrySet()){
+            entry.getValue().setRawAbundanceSelProteinNorm(diff);
+        }
+    }
+
     public ArrayList<Double> getRawAbundance(){
         ArrayList<Double> rlt = new ArrayList<>();
         for(Map.Entry<String, Protein> entry : proteins.entrySet()){
@@ -194,6 +206,14 @@ public class Sample implements Serializable {
         }
 
         return rlt;
+    }
+
+    public Double getRawAbundance(String proteinId){
+        return proteins.get(proteinId).getRawAbundance();
+    }
+
+    public Double getiBAQAbundance(String proteinId){
+        return proteins.get(proteinId).getiBAQAbundance();
     }
 
     public void setAbundanceRange(){

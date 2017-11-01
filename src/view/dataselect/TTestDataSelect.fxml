@@ -11,7 +11,7 @@
          <children>
             <HBox fx:id="hbGroup" alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0" spacing="10.0">
                <children>
-                  <Label text="Group: " />
+                  <Label prefWidth="65.0" text="Category:" />
                   <ComboBox fx:id="combGroup" editable="true" prefWidth="150.0" />
                </children>
             </HBox>
@@ -23,7 +23,7 @@
       </VBox>
       <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0" spacing="20.0">
          <children>
-            <Label text="Data:" />
+            <Label prefWidth="65.0" text="Data:" />
             <ComboBox fx:id="combData" editable="true" prefWidth="150.0" />
          </children>
          <VBox.margin>

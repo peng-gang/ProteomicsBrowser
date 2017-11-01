@@ -32,9 +32,12 @@ public class ImportDataController implements Initializable {
     private File ptFile = null;
     private File spFile = null;
 
+    private boolean submitted = false;
+
     public File getPtFile() { return ptFile; }
     public File getSpFile() { return  spFile; }
     public String getType() { return cmbType.getSelectionModel().getSelectedItem().toString(); }
+    public boolean getSubmitted() { return submitted; }
 
 
     @FXML private void getPtDataFile(ActionEvent event){
@@ -67,6 +70,26 @@ public class ImportDataController implements Initializable {
     }
 
     @FXML private void importData(ActionEvent event){
+        if(cmbType.getSelectionModel().getSelectedItem().equals("")){
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("Organism Selection");
+            alert.setHeaderText(null);
+            alert.setContentText("Please select the type of organism of input data");
+            alert.showAndWait();
+            cmbType.requestFocus();
+            return;
+        }
+
+        if(ptFile == null){
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("Proteomics Data Selection");
+            alert.setHeaderText(null);
+            alert.setContentText("Please select a proteomics data file");
+            alert.showAndWait();
+            btnPtDataFile.requestFocus();
+            return;
+        }
+        submitted = true;
         Stage stage = (Stage) btnPtDataFile.getScene().getWindow();
         stage.close();
     }
@@ -75,6 +98,7 @@ public class ImportDataController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
 
         System.out.println("Import Data Initialization");
+        submitted = false;
         cmbType.getItems().add("");
         cmbType.getSelectionModel().select(0);
 

@@ -45,6 +45,7 @@ import org.apache.commons.math3.stat.inference.TestUtils;
 import project.ProjectInfo;
 import project.PublicInfo;
 
+import javax.print.attribute.standard.DialogTypeSelection;
 import java.io.*;
 import java.net.URL;
 import java.util.*;
@@ -287,6 +288,10 @@ public class MainController implements Initializable{
         ImportDataController controller = loader.getController();
         importDataStage.showAndWait();
 
+        if(!controller.getSubmitted()){
+            return;
+        }
+
         ptFile = controller.getPtFile();
         spFile = controller.getSpFile();
 
@@ -294,10 +299,6 @@ public class MainController implements Initializable{
         System.out.println(type);
         System.out.println(ptFile);
         System.out.println(spFile);
-
-        if(ptFile == null){
-            return;
-        }
 
         initTreeView();
         loadData(type);
@@ -401,6 +402,10 @@ public class MainController implements Initializable{
         }
 
         tTestDataSelectStage.showAndWait();
+
+        if(!controller.getSubmitted()){
+            return;
+        }
 
         Double low = controller.getLow();
         Double high = controller.getHigh();
@@ -547,6 +552,10 @@ public class MainController implements Initializable{
 
         boxPlotDataSelectStage.showAndWait();
 
+        if(!controller.getSubmitted()){
+            return;
+        }
+
         Double low = controller.getLow();
         Double high = controller.getHigh();
         String groupId= controller.getGroupId();
@@ -624,11 +633,12 @@ public class MainController implements Initializable{
             menuNonnormalization.setSelected(true);
             sampleGroup.setProteinIntegrationType(PublicInfo.ProteinIntegrationType.Raw);
             sampleGroup.setProteinStatus(PublicInfo.ProteinStatus.Unnormalized);
+            sampleGroup.updateProtein();
+            sampleProteinDataController.show();
         } else {
             System.out.println("Wrong Selection: " + selTab);
         }
-        sampleGroup.updateProtein();
-        sampleProteinDataController.show();
+
     }
 
     @FXML private void iBAQ(ActionEvent event){
@@ -637,11 +647,12 @@ public class MainController implements Initializable{
             menuNonnormalization.setSelected(true);
             sampleGroup.setProteinIntegrationType(PublicInfo.ProteinIntegrationType.iBAQ);
             sampleGroup.setProteinStatus(PublicInfo.ProteinStatus.Unnormalized);
+            sampleGroup.updateProtein();
+            sampleProteinDataController.show();
         } else {
             System.out.println("Wrong Selection: " + selTab);
         }
-        sampleGroup.updateProtein();
-        sampleProteinDataController.show();
+
     }
 
 
@@ -649,22 +660,42 @@ public class MainController implements Initializable{
         String selTab = tabPane.getSelectionModel().getSelectedItem().getText();
         if(selTab.equals("Protein")){
             sampleGroup.setProteinStatus(PublicInfo.ProteinStatus.Unnormalized);
+            sampleGroup.updateProtein();
+            sampleProteinDataController.show();
         } else {
             System.out.println("Wrong Selection: " + selTab);
         }
-        sampleGroup.updateProtein();
-        sampleProteinDataController.show();
+
     }
 
     @FXML private void medianNormalization(ActionEvent event){
         String selTab = tabPane.getSelectionModel().getSelectedItem().getText();
         if(selTab.equals("Protein")){
             sampleGroup.setProteinStatus(PublicInfo.ProteinStatus.Median);
+            sampleGroup.updateProtein();
+            sampleProteinDataController.show();
         } else {
             System.out.println("Wrong Selection: " + selTab);
         }
-        sampleGroup.updateProtein();
-        sampleProteinDataController.show();
+    }
+
+    @FXML private void selProteinNormalization(ActionEvent event){
+        String selTab = tabPane.getSelectionModel().getSelectedItem().getText();
+        if(selTab.equals("Protein")){
+            ArrayList<String> choices = new ArrayList<>(sampleGroup.getProteinId());
+            ChoiceDialog<String> dialog = new ChoiceDialog<>(choices.get(0), choices);
+            dialog.setTitle("Protein Selection");
+            dialog.setHeaderText("Select a protein as the baseline for normalization");
+            dialog.setContentText("Protein:");
+            Optional<String> result = dialog.showAndWait();
+            if(result.isPresent()){
+                sampleGroup.setProteinStatus(PublicInfo.ProteinStatus.SelProtein, result.get());
+            }
+            sampleGroup.updateProtein();
+            sampleProteinDataController.show();
+        } else {
+            System.out.println("Wrong Selection: " + selTab);
+        }
     }
 
     //Menu View
@@ -1107,7 +1138,9 @@ public class MainController implements Initializable{
     }
 
     private void loadData(String type){
-        readSampleDataFile();
+        if(spFile != null){
+            readSampleDataFile();
+        }
         readProteomicsDataFile();
         loadProteinSeqDB(type);
         arrangeData();
@@ -1275,157 +1308,290 @@ public class MainController implements Initializable{
     }
 
 
-    private void arrangeData(){
+    private boolean arrangeData(){
         System.out.println("arrange data!");
         sampleGroup = new SampleGroup();
 
-        int indexId = -1;
-        int indexSequence = -1;
-        int indexCharge = -1;
-        int indexMz = -1;
-        int indexScore = -1;
-        int indexProtein = -1;
-        int indexModification = -1;
-        ArrayList<Integer> indexAbundance = new ArrayList<>();
-        for(int i=0; i<sampleId.size();i++){
-            indexAbundance.add(-1);
-        }
-        for(int i=0; i<proteomicsRawName.size(); i++){
-            String tmp = proteomicsRawName.get(i).toLowerCase();
-            int idx = containsCaseInsensitive(sampleId, tmp);
-            if(idx >= 0){
-                indexAbundance.set(idx, i);
-                continue;
-            }
+        if(spFile == null){
+            sampleInfoName = new ArrayList<>();
+            sampleInfoType = new ArrayList<>();
+            sampleInfo = new ArrayList<>();
+            sampleId = new ArrayList<>();
+            sampleId.add("Sample");
 
-            switch (tmp) {
-                case "id":
-                    indexId = i;
-                    break;
-                case "sequence":
-                    indexSequence = i;
-                    break;
-                case "charge":
-                    indexCharge = i;
-                    break;
-                case "mz":
-                    indexMz = i;
-                    break;
-                case "score":
-                    indexScore = i;
-                    break;
-                case "protein":
-                    indexProtein = i;
-                    break;
-                case "modification":
-                    indexModification = i;
-                    break;
-            }
-        }
-
-        //check find
-        if(indexId == -1){
-            System.err.println("Cannot find id");
-        }
-
-        if(indexSequence == -1){
-            System.err.println("Cannot find sequence");
-        }
-
-        if(indexCharge == -1){
-            System.err.println("Cannot find charge");
-        }
-
-        if(indexMz == -1){
-            System.err.println("Cannot find mz");
-        }
-
-        if(indexScore == -1) {
-            System.err.println("Cannot find score");
-        }
-
-        if(indexProtein == -1){
-            System.err.println("Cannot find protein");
-        }
-
-        if(indexModification == -1){
-            System.err.println("Cannot find modification");
-        }
-
-        for(int i=0; i<indexAbundance.size();i++){
-            if(indexAbundance.get(i) == -1){
-                System.err.println("Cannot find " + sampleId.get(i));
-            }
-        }
-
-        Set<String> proteinNotFind = new TreeSet<>();
-        for(int i=0; i<proteomicsRaw.get(0).size(); i++){
-            String id = proteomicsRaw.get(indexId).get(i);
-            String sequence = proteomicsRaw.get(indexSequence).get(i);
-            Integer charge = tryIntegerParse(proteomicsRaw.get(indexCharge).get(i));
-            Double mz = tryDoubleParse(proteomicsRaw.get(indexMz).get(i));
-            Double score = tryDoubleParse(proteomicsRaw.get(indexScore).get(i));
-            String protein = proteomicsRaw.get(indexProtein).get(i);
-            String modificationStr = proteomicsRaw.get(indexModification).get(i);
-            ArrayList<Modification> modifications = new ArrayList<>();
-
-            String seq = proteinDB.getSeq(protein);
-            if(seq == null){
-                proteinNotFind.add(protein);
-                continue;
-            }
-
-            if(!modificationStr.isEmpty()){
-                String[] modiTmp = modificationStr.split(";");
-                for(int j=0; j<modiTmp.length; j++){
-                    Modification tmp = new Modification(modiTmp[j]);
-                    modifications.add(tmp);
+            int indexId = -1;
+            int indexSequence = -1;
+            int indexProtein = -1;
+            int indexModification = -1;
+            int indexAbundance = -1;
+            ArrayList<String> otherInfo = new ArrayList<>();
+            ArrayList<Integer> indexOther = new ArrayList<>();
+            for(int i=0; i< proteomicsRawName.size(); i++){
+                String infoTmp = proteomicsRawName.get(i).toLowerCase();
+                switch (infoTmp){
+                    case "id":
+                        indexId = i;
+                        break;
+                    case "sequence":
+                        indexSequence = i;
+                        break;
+                    case "protein":
+                        indexProtein = i;
+                        break;
+                    case "modification":
+                        indexModification = i;
+                        break;
+                    case "abundance":
+                        indexAbundance = i;
+                        break;
+                    default:
+                        otherInfo.add(proteomicsRawName.get(i));
+                        indexOther.add(i);
+                        break;
                 }
             }
 
-            for(int j=0; j<sampleId.size(); j++){
-                Double abTmp = tryDoubleParse(proteomicsRaw.get(indexAbundance.get(j)).get(i));
-                String spId = sampleId.get(j);
-                Peptide ptTmp = new Peptide(id, sequence, charge, mz, score, abTmp, modifications);
+            if(indexId == -1){
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("Data Import");
+                alert.setHeaderText(null);
+                alert.setContentText("There must be a column \"id\" in proteomics data");
+                alert.showAndWait();
+                return false;
+            }
 
+            if(indexAbundance == -1){
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("Data Import");
+                alert.setHeaderText(null);
+                alert.setContentText("There must be a column \"abundance\" in proteomics data");
+                alert.showAndWait();
+                return false;
+            }
+
+            if(indexModification == -1){
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("Data Import");
+                alert.setHeaderText(null);
+                alert.setContentText("There must be a column \"modification\" in proteomics data");
+                alert.showAndWait();
+                return false;
+            }
+
+            if(indexProtein == -1){
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("Data Import");
+                alert.setHeaderText(null);
+                alert.setContentText("There must be a column \"protein\" in proteomics data");
+                alert.showAndWait();
+                return false;
+            }
+
+            if(indexSequence == -1){
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("Data Import");
+                alert.setHeaderText(null);
+                alert.setContentText("There must be a column \"sequence\" in proteomics data");
+                alert.showAndWait();
+                return false;
+            }
+
+            Set<String> proteinNotFind = new TreeSet<>();
+            for(int i=0; i<proteomicsRaw.get(0).size(); i++){
+                String id = proteomicsRaw.get(indexId).get(i);
+                String sequence = proteomicsRaw.get(indexSequence).get(i);
+                String protein = proteomicsRaw.get(indexProtein).get(i);
+                String modificationStr = proteomicsRaw.get(indexModification).get(i);
+
+                ArrayList<Modification> modifications = new ArrayList<>();
+
+                String seq = proteinDB.getSeq(protein);
+                if(seq == null){
+                    proteinNotFind.add(protein);
+                    continue;
+                }
+
+                if(!modificationStr.isEmpty()){
+                    String[] modiTmp = modificationStr.split(";");
+                    for(int j=0; j<modiTmp.length; j++){
+                        Modification tmp = new Modification(modiTmp[j]);
+                        modifications.add(tmp);
+                    }
+                }
+
+                TreeMap<String, Double> doubleInfo = new TreeMap<>();
+                TreeMap<String, String> strInfo = new TreeMap<>();
+
+                for(int j=0; j<otherInfo.size(); j++){
+                    if(proteomicsRawType.get(indexOther.get(j)).equals("Double")){
+                        doubleInfo.put(otherInfo.get(j), tryDoubleParse(proteomicsRaw.get(indexOther.get(j)).get(i)));
+                    } else {
+                        strInfo.put(otherInfo.get(j), proteomicsRaw.get(indexOther.get(j)).get(i));
+                    }
+                }
+
+                Double abTmp = tryDoubleParse(proteomicsRaw.get(indexAbundance).get(i));
+                String spId = "Sample";
+
+                Peptide ptTmp = new Peptide(id, sequence,  abTmp, doubleInfo, strInfo, modifications);
                 sampleGroup.addPepData(spId, id, abTmp);
                 sampleGroup.addPeptide(spId, protein, seq, ptTmp);
                 sampleGroup.increaseProteinData(spId, protein, abTmp);
-            }
-        }
 
-        if(proteinNotFind.size() > 0){
-            Alert alert = new Alert(Alert.AlertType.WARNING);
-            alert.setTitle("Import Data");
-            alert.setHeaderText(null);
-            String msg = "The following proteins are not found in database:\n";
-            for(String s : proteinNotFind){
-                msg = msg + s + ",";
             }
-            alert.setContentText(msg);
-            alert.showAndWait();
-            return;
-        }
 
-        for(int i=0; i<sampleId.size();i++){
-            for(int j=0; j<sampleInfoName.size(); j++){
-                if(sampleInfoName.get(j).toLowerCase().equals("sampleid")){
+            if(proteinNotFind.size() > 0){
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("Import Data");
+                alert.setHeaderText(null);
+                String msg = "The following proteins are not found in database:\n";
+                for(String s : proteinNotFind){
+                    msg = msg + s + ",";
+                }
+                alert.setContentText(msg);
+                alert.showAndWait();
+                //return false;
+            }
+
+        } else {
+            int indexId = -1;
+            int indexSequence = -1;
+            int indexProtein = -1;
+            int indexModification = -1;
+            ArrayList<Integer> indexAbundance = new ArrayList<>();
+            ArrayList<String> otherInfo = new ArrayList<>();
+            ArrayList<Integer> indexOther = new ArrayList<>();
+            for(int i=0; i< sampleId.size(); i++){
+                indexAbundance.add(-1);
+            }
+            for(int i=0; i< proteomicsRawName.size(); i++){
+                String infoTmp = proteomicsRawName.get(i).toLowerCase();
+                int idx = containsCaseInsensitive(sampleId, infoTmp);
+                if(idx >=0){
+                    indexAbundance.set(idx, i);
                     continue;
                 }
-                if(sampleInfoType.get(j).equals("Double")){
-                    sampleGroup.addNumInfo(sampleId.get(i), sampleInfoName.get(j), tryDoubleParse(sampleInfo.get(j).get(i)));
-                } else {
-                    sampleGroup.addStrInfo(sampleId.get(i), sampleInfoName.get(j), sampleInfo.get(j).get(i));
+
+                switch (infoTmp){
+                    case "id":
+                        indexId = i;
+                        break;
+                    case "sequence":
+                        indexSequence = i;
+                        break;
+                    case "protein":
+                        indexProtein = i;
+                        break;
+                    case "modification":
+                        indexModification = i;
+                        break;
+                    default:
+                        otherInfo.add(proteomicsRawName.get(i));
+                        indexOther.add(i);
+                        break;
                 }
             }
+
+            if(indexId == -1){
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("Data Import");
+                alert.setHeaderText(null);
+                alert.setContentText("There must be a column \"id\" in proteomics data");
+                alert.showAndWait();
+                return false;
+            }
+
+            if(indexModification == -1){
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("Data Import");
+                alert.setHeaderText(null);
+                alert.setContentText("There must be a column \"modification\" in proteomics data");
+                alert.showAndWait();
+                return false;
+            }
+
+            if(indexProtein == -1){
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("Data Import");
+                alert.setHeaderText(null);
+                alert.setContentText("There must be a column \"protein\" in proteomics data");
+                alert.showAndWait();
+                return false;
+            }
+
+            if(indexSequence == -1){
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("Data Import");
+                alert.setHeaderText(null);
+                alert.setContentText("There must be a column \"sequence\" in proteomics data");
+                alert.showAndWait();
+                return false;
+            }
+
+            Set<String> proteinNotFind = new TreeSet<>();
+            for(int i=0; i<proteomicsRaw.get(0).size(); i++){
+                String id = proteomicsRaw.get(indexId).get(i);
+                String sequence = proteomicsRaw.get(indexSequence).get(i);
+                String protein = proteomicsRaw.get(indexProtein).get(i);
+                String modificationStr = proteomicsRaw.get(indexModification).get(i);
+
+                ArrayList<Modification> modifications = new ArrayList<>();
+
+                String seq = proteinDB.getSeq(protein);
+                if(seq == null){
+                    proteinNotFind.add(protein);
+                    continue;
+                }
+
+                if(!modificationStr.isEmpty()){
+                    String[] modiTmp = modificationStr.split(";");
+                    for(int j=0; j<modiTmp.length; j++){
+                        Modification tmp = new Modification(modiTmp[j]);
+                        modifications.add(tmp);
+                    }
+                }
+
+                TreeMap<String, Double> doubleInfo = new TreeMap<>();
+                TreeMap<String, String> strInfo = new TreeMap<>();
+
+                for(int j=0; j<otherInfo.size(); j++){
+                    if(proteomicsRawType.get(indexOther.get(j)).equals("Double")){
+                        doubleInfo.put(otherInfo.get(j), tryDoubleParse(proteomicsRaw.get(indexOther.get(j)).get(i)));
+                    } else {
+                        strInfo.put(otherInfo.get(j), proteomicsRaw.get(indexOther.get(j)).get(i));
+                    }
+                }
+
+                for(int j=0; j<sampleId.size(); j++){
+                    Double abTmp = tryDoubleParse(proteomicsRaw.get(indexAbundance.get(j)).get(i));
+                    String spId = sampleId.get(j);
+                    Peptide ptTmp = new Peptide(id, sequence,  abTmp, doubleInfo, strInfo, modifications);
+
+                    sampleGroup.addPepData(spId, id, abTmp);
+                    sampleGroup.addPeptide(spId, protein, seq, ptTmp);
+                    sampleGroup.increaseProteinData(spId, protein, abTmp);
+                }
+
+            }
+            if(proteinNotFind.size() > 0){
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("Import Data");
+                alert.setHeaderText(null);
+                String msg = "The following proteins are not found in database:\n";
+                for(String s : proteinNotFind){
+                    msg = msg + s + ",";
+                }
+                alert.setContentText(msg);
+                alert.showAndWait();
+                //return false;
+            }
+
+
         }
-
-        //set raw abundance
-
         sampleGroup.initPepCutoff();
         sampleGroup.updatePepShow();
         sampleGroup.rawAbundance();
-
+        return true;
     }
 
 

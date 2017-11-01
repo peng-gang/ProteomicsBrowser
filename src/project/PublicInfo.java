@@ -13,6 +13,6 @@ public class PublicInfo {
     }
 
     public enum ProteinStatus{
-        Unnormalized, Median
+        Unnormalized, Median, SelProtein
     }
 }

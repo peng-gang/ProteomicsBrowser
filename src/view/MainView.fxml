@@ -48,6 +48,7 @@
                            </toggleGroup>
                         </RadioMenuItem>
                         <RadioMenuItem fx:id="menuMedianNormalization" mnemonicParsing="false" onAction="#medianNormalization" text="Median" toggleGroup="$toggleNormalization" />
+                        <RadioMenuItem fx:id="menuSelProteinNormalization" mnemonicParsing="false" onAction="#selProteinNormalization" text="Selected Protein" toggleGroup="$toggleNormalization" />
                      </items>
                   </Menu>
               </items>

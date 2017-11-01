@@ -79,6 +79,8 @@ public class Protein implements Serializable {
     //after median normalization
     private double rawAbundanceMedianNorm;
     private double iBAQAbundanceMedianNorm;
+    private double rawAbundanceSelProteinNorm;
+    private double iBAQAbundanceSelProteinNorm;
 
     public String getName() { return  name;}
     public String getSequence() { return sequence;}
@@ -597,6 +599,8 @@ public class Protein implements Serializable {
                         return rawAbundance;
                     case Median:
                         return rawAbundanceMedianNorm;
+                    case SelProtein:
+                        return rawAbundanceSelProteinNorm;
                     default:
                         return -1;
                 }
@@ -606,6 +610,8 @@ public class Protein implements Serializable {
                         return iBAQAbundance;
                     case Median:
                         return iBAQAbundanceMedianNorm;
+                    case SelProtein:
+                        return iBAQAbundanceSelProteinNorm;
                     default:
                         return -1;
                 }
@@ -666,6 +672,10 @@ public class Protein implements Serializable {
     public void setiBAQAbundanceMedianNorm(double diff) {
         iBAQAbundanceMedianNorm = iBAQAbundance + diff;
     }
+
+    public void setRawAbundanceSelProteinNorm(double diff) { rawAbundanceSelProteinNorm = rawAbundance + diff; }
+
+    public void setiBAQAbundanceSelProteinNorm(double diff) { iBAQAbundanceSelProteinNorm = iBAQAbundance + diff; }
 
     public void setAbundanceRange(ArrayList<Double> cutoff){
         for(Peptide pt : peptides){

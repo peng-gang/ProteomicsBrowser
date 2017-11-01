@@ -34,6 +34,11 @@ public class BoxPlotDataSelectController implements Initializable {
 
     private ArrayList<Double> val;
 
+    private boolean submitted;
+
+
+
+    public boolean getSubmitted() {return submitted; }
     public String getGroupId() { return combGroup.getValue(); }
     public String getDataId() { return combData.getValue(); }
     public Double getLow() {
@@ -50,6 +55,7 @@ public class BoxPlotDataSelectController implements Initializable {
     }
 
     @FXML private void submit(ActionEvent event){
+        submitted = true;
         Stage stage = (Stage) btnSubmit.getScene().getWindow();
         stage.close();
     }
@@ -97,11 +103,15 @@ public class BoxPlotDataSelectController implements Initializable {
 
                     Integer numLow = num/3;
                     Integer numHigh = numLow;
+                    lbLow.setVisible(true);
+                    lbLow.setVisible(true);
                     lbLow.setText(numLow.toString());
                     lbHigh.setText(numHigh.toString());
 
                 } else {
                     rslinder.setVisible(false);
+                    lbLow.setVisible(false);
+                    lbHigh.setVisible(false);
                 }
             }
         });
@@ -148,5 +158,7 @@ public class BoxPlotDataSelectController implements Initializable {
         lbHigh.setAlignment(Pos.CENTER_LEFT);
         lbHigh.setPrefWidth(40);
         hbSlider.getChildren().addAll(lbLow, rslinder, lbHigh);
+
+        submitted = false;
     }
 }

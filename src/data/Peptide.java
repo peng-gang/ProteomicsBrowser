@@ -3,6 +3,7 @@ package data;
 
 import java.io.Serializable;
 import java.util.*;
+import java.util.function.DoubleToLongFunction;
 
 /**
  * Peptide Class to store peptide information
@@ -20,6 +21,9 @@ public class Peptide implements Serializable {
 
     private Integer abundanceRange = -1;
 
+    private TreeMap<String, Double> doubleInfo;
+    private TreeMap<String, String> strInfo;
+
 
     public String getId() {return id;}
     public int getLength() {return sequence.length();}
@@ -31,10 +35,40 @@ public class Peptide implements Serializable {
     public int getNumModi() { return modifications.size();}
     public ArrayList<Modification> getModifications() { return  modifications;}
 
+    public TreeMap<String, Double> getDoubleInfo() { return doubleInfo; }
+    public TreeMap<String, String> getStrInfo() { return strInfo; }
+    public Double getDoubleInfo(String dName) { return doubleInfo.get(dName); }
+    public String getStrInfo(String strName) { return strInfo.get(strName); }
+    public void addDoubleInfo(String dName, Double info){
+        doubleInfo.put(dName, info);
+    }
+    public void addStrInfo(String strName, String info){
+        strInfo.put(strName, info);
+    }
+
     public void addModification(Modification modi){
         this.modifications.add(modi);
     }
     public void setModification(ArrayList<Modification> modi) { this.modifications = modi; }
+
+    public Peptide(String id, String sequence, Double abundance, TreeMap<String, Double> doubleInfo, TreeMap<String, String> strInfo){
+        this.id = id;
+        this.sequence = sequence.toUpperCase();
+        this.abundance = abundance;
+        this.doubleInfo = doubleInfo;
+        this.strInfo = strInfo;
+        this.modifications = new ArrayList<>();
+    }
+
+    public Peptide(String id, String sequence, Double abundance,TreeMap<String, Double> doubleInfo, TreeMap<String, String> strInfo,
+                   ArrayList<Modification> modifications){
+        this.id = id;
+        this.sequence = sequence.toUpperCase();
+        this.abundance = abundance;
+        this.doubleInfo = doubleInfo;
+        this.strInfo = strInfo;
+        this.modifications = modifications;
+    }
 
     public Peptide(String id, String sequence, Integer charge, Double mz, Double score, Double abundance){
         this.id = id;
@@ -63,9 +97,17 @@ public class Peptide implements Serializable {
     public String toString(){
         String rlt;
         rlt = "ID: " + id + "\n";
+        for(Map.Entry<String, Double> entry : doubleInfo.entrySet()){
+            rlt = rlt + entry.getKey() + ": " + entry.getValue() + "\n";
+        }
+        for(Map.Entry<String, String> entry : strInfo.entrySet()){
+            rlt = rlt + entry.getKey() + ": " + entry.getValue() + "\n";
+        }
+        /*
         rlt = rlt + "Charge: " + charge + "\n";
         rlt = rlt + "mz: " + mz + "\n";
         rlt = rlt + "Score: " + score + "\n";
+        */
         rlt = rlt + "Abundance: " + abundance + "\n\t" +  String.format("%.2f", Math.log10(abundance)) + "(log10)\n";
         if(modifications.size()==0){
             rlt += "Modification: None\n";
