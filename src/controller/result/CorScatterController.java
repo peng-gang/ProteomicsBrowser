@@ -1,12 +1,22 @@
 package controller.result;
 
+import javafx.embed.swing.SwingFXUtils;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.SnapshotParameters;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.ScatterChart;
 import javafx.scene.chart.XYChart;
+import javafx.scene.image.WritableImage;
 import javafx.scene.layout.Pane;
+import javafx.scene.transform.Transform;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 
+import javax.imageio.ImageIO;
+import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -25,6 +35,35 @@ public class CorScatterController implements Initializable{
     private ArrayList<Double> d2;
     private String t1;
     private String t2;
+
+    @FXML private void save(ActionEvent event){
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Output Scatter Plot");
+        fileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
+        fileChooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("Output Figure", "*.png")
+        );
+
+        Stage stage = (Stage) pane.getScene().getWindow();
+        File figureFile = fileChooser.showSaveDialog(stage);
+
+        double pixelScale = 3.0;
+        WritableImage image = new WritableImage((int)(pane.getWidth()*pixelScale), (int)(pane.getHeight()*pixelScale));
+        SnapshotParameters sp = new SnapshotParameters();
+        sp.setTransform(Transform.scale(pixelScale, pixelScale));
+        image = pane.snapshot(sp, image);
+
+        try{
+            ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", figureFile);
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+    }
+
+    @FXML private void exit(ActionEvent event){
+        Stage stage = (Stage) pane.getScene().getWindow();
+        stage.close();
+    }
 
     public void set(String t1, String t2, ArrayList<Double> d1, ArrayList<Double> d2){
         this.t1 = t1;

@@ -12,9 +12,9 @@ import java.util.function.DoubleToLongFunction;
 public class Peptide implements Serializable {
     private String id;
     private String sequence;
-    private Integer charge;
-    private Double mz;
-    private Double score;
+    //private Integer charge;
+    //private Double mz;
+    //private Double score;
     private Double abundance;
     //the position in modification starts from 0
     private ArrayList<Modification> modifications;
@@ -28,9 +28,9 @@ public class Peptide implements Serializable {
     public String getId() {return id;}
     public int getLength() {return sequence.length();}
     public String getSequence() {return  sequence; }
-    public Integer getCharge() { return charge;}
-    public Double getMz() { return mz;}
-    public Double getScore() { return score;}
+    //public Integer getCharge() { return charge;}
+    //public Double getMz() { return mz;}
+    //public Double getScore() { return score;}
     public Double getAbundance() { return  abundance;}
     public int getNumModi() { return modifications.size();}
     public ArrayList<Modification> getModifications() { return  modifications;}
@@ -70,6 +70,7 @@ public class Peptide implements Serializable {
         this.modifications = modifications;
     }
 
+    /*
     public Peptide(String id, String sequence, Integer charge, Double mz, Double score, Double abundance){
         this.id = id;
         this.sequence = sequence.toUpperCase();
@@ -89,6 +90,8 @@ public class Peptide implements Serializable {
         this.abundance = abundance;
         this.modifications = modifications;
     }
+    */
+
 
     public boolean isModified() {
         return modifications.size() > 0;

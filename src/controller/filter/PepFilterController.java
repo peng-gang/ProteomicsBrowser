@@ -6,33 +6,32 @@ import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import org.controlsfx.control.RangeSlider;
 
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.ResourceBundle;
 
 /**
  * Created by gpeng on 6/29/17.
  */
 public class PepFilterController implements Initializable {
-    @FXML private Button btnSubmit;
-    @FXML private HBox hbValCharge;
-    @FXML private HBox hbValMz;
-    @FXML private HBox hbValScore;
-    @FXML private HBox hbValAbundance;
-    @FXML private HBox hbPerCharge;
-    @FXML private HBox hbPerMz;
-    @FXML private HBox hbPerScore;
-    @FXML private HBox hbPerAbundance;
-    @FXML private TabPane tabPane;
     @FXML private Label numPep;
+    @FXML private VBox vBoxValue;
+    @FXML private VBox vBoxPercentage;
+    @FXML TabPane tabPane;
 
+    /*
     private RangeSlider rsValCharge;
     private RangeSlider rsValMz;
     private RangeSlider rsValScore;
@@ -59,6 +58,7 @@ public class PepFilterController implements Initializable {
     private Label lblPerScoreHigh;
     private Label lblPerAbundanceLow;
     private Label lblPerAbundanceHigh;
+    */
 
 
 
@@ -66,11 +66,39 @@ public class PepFilterController implements Initializable {
 
 
     @FXML private void submit(ActionEvent event){
-        Stage stage = (Stage) btnSubmit.getScene().getWindow();
+        Stage stage = (Stage) numPep.getScene().getWindow();
         stage.close();
     }
 
     @FXML private void reset(ActionEvent event){
+        protein.setAbundanceCutHigh(protein.getAbundanceMax());
+        protein.setAbundanceCutLow(protein.getAbundanceMin());
+        for(int i=0; i<protein.getDoubleInfoName().size();i++){
+            protein.setDoubleInfoCutHigh(i, protein.getDoubleInfoMax(i));
+            protein.setDoubleInfoCutLow(i, protein.getDoubleInfoMin(i));
+        }
+
+        for(Node hbx : vBoxValue.getChildren()){
+            for(Node nd : ((HBox) hbx).getChildren()){
+                if(nd instanceof RangeSlider){
+                    if("Abundance".equals(nd.getUserData())){
+                        ((RangeSlider) nd).setLowValue(protein.getAbundanceCutLow());
+                        ((RangeSlider) nd).setHighValue(protein.getAbundanceCutHigh());
+                    } else {
+                        for(int i=0; i<protein.getDoubleInfoName().size();i++){
+                            if(protein.getDoubleInfoName().get(i).equals(nd.getUserData())){
+                                ((RangeSlider) nd).setLowValue(protein.getDoubleInfoCutLow(i));
+                                ((RangeSlider) nd).setHighValue(protein.getDoubleInfoCutHigh(i));
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        numPep.setText("Peptides Remain: " + protein.numPepShow());
+        /*
         protein.setChargeCutHigh(protein.getChargeMax());
         protein.setChargeCutLow(protein.getChargeMin());
         protein.setMzCutHigh(protein.getMzMax());
@@ -100,10 +128,211 @@ public class PepFilterController implements Initializable {
         rsPerAbundance.setLowValue(protein.getAbundanceCutPerLow());
 
         numPep.setText("Peptides Remain: " + protein.numPepShow());
+        */
     }
 
     public void init(Protein protein){
         this.protein = protein;
+
+        RangeSlider rsValAbundance = new RangeSlider(protein.getAbundanceMin(), protein.getAbundanceMax(),
+                protein.getAbundanceCutLow(), protein.getAbundanceCutHigh());
+        rsValAbundance.setUserData("Abundance");
+        Label lblValAbundanceLow = new Label(String.format("%.2g",rsValAbundance.getLowValue()));
+        Label lblValAbundanceHigh = new Label(String.format("%.2g",rsValAbundance.getHighValue()));
+        lblValAbundanceLow.setPrefWidth(70);
+        lblValAbundanceHigh.setPrefWidth(70);
+        Label lblValAbundanceName = new Label("Abundance");
+        lblValAbundanceName.setPrefWidth(80);
+
+        RangeSlider rsPerAbundance = new RangeSlider(0, 1.0, protein.getAbundanceCutPerLow(), protein.getAbundanceCutPerHigh());
+        rsPerAbundance.setUserData("Abundance");
+        Label lblPerAbundanceLow = new Label(String.format("%.2f",rsPerAbundance.getLowValue() * 100));
+        Label lblPerAbundanceHigh = new Label(String.format("%.2f",rsPerAbundance.getHighValue() * 100));
+        lblPerAbundanceLow.setPrefWidth(70);
+        lblPerAbundanceHigh.setPrefWidth(70);
+        Label lblPerAbundanceName = new Label("Abundance");
+        lblPerAbundanceName.setPrefWidth(80);
+
+        rsValAbundance.lowValueProperty().addListener(new ChangeListener<Number>() {
+            @Override
+            public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+                protein.setAbundanceCutLow(newValue.doubleValue());
+                numPep.setText("Peptides Remain: " + protein.numPepShow());
+                lblValAbundanceLow.setText(String.format("%.2g",newValue.doubleValue()));
+            }
+        });
+
+        rsValAbundance.highValueProperty().addListener(new ChangeListener<Number>() {
+            @Override
+            public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+                protein.setAbundanceCutHigh(newValue.doubleValue());
+                numPep.setText("Peptides Remain: " + protein.numPepShow());
+                lblValAbundanceHigh.setText(String.format("%.2g",newValue.doubleValue()));
+            }
+        });
+
+        rsPerAbundance.lowValueProperty().addListener(new ChangeListener<Number>() {
+            @Override
+            public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+                protein.setAbundanceCutPerLow(newValue.doubleValue());
+                numPep.setText("Peptides Remain: " + protein.numPepShow());
+                lblPerAbundanceLow.setText(String.format("%.2f", newValue.doubleValue() * 100));
+            }
+        });
+
+        rsPerAbundance.highValueProperty().addListener(new ChangeListener<Number>() {
+            @Override
+            public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+                protein.setAbundanceCutPerHigh(newValue.doubleValue());
+                numPep.setText("Peptides Remain: " + protein.numPepShow());
+                lblPerAbundanceHigh.setText(String.format("%.2f", newValue.doubleValue() * 100));
+            }
+        });
+
+        HBox hBoxValAbundance = new HBox();
+        hBoxValAbundance.setAlignment(Pos.CENTER_LEFT);
+        hBoxValAbundance.setPadding(new Insets(0, 0, 0, 20));
+        hBoxValAbundance.setSpacing(10);
+        hBoxValAbundance.setPrefWidth(600);
+        hBoxValAbundance.setPrefHeight(60);
+        hBoxValAbundance.getChildren().addAll(lblValAbundanceName, lblValAbundanceLow, rsValAbundance, lblValAbundanceHigh);
+        vBoxValue.getChildren().add(hBoxValAbundance);
+
+        HBox hBoxPerAbundance = new HBox();
+        hBoxPerAbundance.setAlignment(Pos.CENTER_LEFT);
+        hBoxPerAbundance.setPadding(new Insets(0, 0, 0, 20));
+        hBoxPerAbundance.setSpacing(10);
+        hBoxPerAbundance.setPrefWidth(600);
+        hBoxPerAbundance.setPrefHeight(60);
+        hBoxPerAbundance.getChildren().addAll(lblPerAbundanceName, lblPerAbundanceLow, rsPerAbundance, lblPerAbundanceHigh);
+        vBoxPercentage.getChildren().add(hBoxPerAbundance);
+
+
+
+        ArrayList<String> doubleInfoName = protein.getDoubleInfoName();
+
+        for(int i=0; i<doubleInfoName.size(); i++){
+            RangeSlider rsValInfo = new RangeSlider(protein.getDoubleInfoMin(i), protein.getDoubleInfoMax(i),
+                    protein.getDoubleInfoCutLow(i), protein.getDoubleInfoCutHigh(i));
+            rsValInfo.setUserData(doubleInfoName.get(i));
+            Label lblValInfoLow = new Label(String.format("%.2g",rsValInfo.getLowValue()));
+            Label lblValInfoHigh = new Label(String.format("%.2g",rsValInfo.getHighValue()));
+            lblValInfoLow.setPrefWidth(70);
+            lblValInfoHigh.setPrefWidth(70);
+            Label lblValInfoName = new Label(doubleInfoName.get(i));
+            lblValInfoName.setPrefWidth(80);
+
+            int dInfoIdx = i;
+            rsValInfo.lowValueProperty().addListener(new ChangeListener<Number>() {
+                @Override
+                public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+                    protein.setDoubleInfoCutLow(dInfoIdx, newValue.doubleValue());
+                    numPep.setText("Peptides Remain: " + protein.numPepShow());
+                    lblValInfoLow.setText(String.format("%.2g",newValue.doubleValue()));
+                }
+            });
+
+            rsValInfo.highValueProperty().addListener(new ChangeListener<Number>() {
+                @Override
+                public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+                    protein.setDoubleInfoCutHigh(dInfoIdx, newValue.doubleValue());
+                    numPep.setText("Peptides Remain: " + protein.numPepShow());
+                    lblValInfoHigh.setText(String.format("%.2g",newValue.doubleValue()));
+                }
+            });
+
+            HBox hBoxValInfo = new HBox();
+            hBoxValInfo.setAlignment(Pos.CENTER_LEFT);
+            hBoxValInfo.setPadding(new Insets(0, 0, 0, 20));
+            hBoxValInfo.setSpacing(10);
+            hBoxValInfo.setPrefWidth(600);
+            hBoxValInfo.setPrefHeight(60);
+            hBoxValInfo.getChildren().addAll(lblValInfoName, lblValInfoLow, rsValInfo, lblValInfoHigh);
+            vBoxValue.getChildren().add(hBoxValInfo);
+        }
+
+
+
+        for(int i=0; i<doubleInfoName.size(); i++){
+            RangeSlider rsPerInfo = new RangeSlider(0.0, 1.0, protein.getDoubleInfoCutPerLow(i), protein.getDoubleInfoCutHigh(i));
+            rsPerInfo.setUserData(doubleInfoName.get(i));
+            Label lblPerInfoLow = new Label(String.format("%.2g",rsPerInfo.getLowValue() * 100));
+            Label lblPerInfoHigh = new Label(String.format("%.2g",rsPerInfo.getHighValue() * 100));
+            lblPerInfoLow.setPrefWidth(70);
+            lblPerInfoHigh.setPrefWidth(70);
+            Label lblPerInfoName = new Label(doubleInfoName.get(i));
+            lblPerInfoName.setPrefWidth(80);
+
+            int dInfoIdx = i;
+            rsPerInfo.lowValueProperty().addListener(new ChangeListener<Number>() {
+                @Override
+                public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+                    protein.setDoubleInfoCutPerLow(dInfoIdx, newValue.doubleValue());
+                    numPep.setText("Peptides Remain: " + protein.numPepShow());
+                    lblPerInfoLow.setText(String.format("%.2f",newValue.doubleValue() * 100));
+                }
+            });
+
+            rsPerInfo.highValueProperty().addListener(new ChangeListener<Number>() {
+                @Override
+                public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+                    protein.setDoubleInfoCutPerHigh(dInfoIdx, newValue.doubleValue());
+                    numPep.setText("Peptides Remain: " + protein.numPepShow());
+                    lblPerInfoHigh.setText(String.format("%.2f",newValue.doubleValue() * 100));
+                }
+            });
+
+            HBox hBoxPerInfo = new HBox();
+            hBoxPerInfo.setAlignment(Pos.CENTER_LEFT);
+            hBoxPerInfo.setPadding(new Insets(0, 0, 0, 20));
+            hBoxPerInfo.setSpacing(10);
+            hBoxPerInfo.setPrefWidth(600);
+            hBoxPerInfo.setPrefHeight(60);
+            hBoxPerInfo.getChildren().addAll(lblPerInfoName, lblPerInfoLow, rsPerInfo, lblPerInfoHigh);
+            vBoxPercentage.getChildren().add(hBoxPerInfo);
+        }
+
+
+        tabPane.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Tab>() {
+            @Override
+            public void changed(ObservableValue<? extends Tab> observable, Tab oldValue, Tab newValue) {
+                String selectedValue = newValue.getText();
+                if(selectedValue.equals("Value")){
+                    rsValAbundance.setHighValue(protein.getAbundanceCutHigh());
+                    rsValAbundance.setLowValue(protein.getAbundanceCutLow());
+                    for(Node hbs : vBoxValue.getChildren()){
+                        for(Node nd : ((HBox) hbs).getChildren()){
+                            if(nd instanceof RangeSlider){
+                                for(int i=0; i<protein.getDoubleInfoName().size(); i++){
+                                    if(protein.getDoubleInfoName().get(i).equals(nd.getUserData())){
+                                        ((RangeSlider) nd).setHighValue(protein.getDoubleInfoCutHigh(i));
+                                        ((RangeSlider) nd).setLowValue(protein.getDoubleInfoCutLow(i));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    rsPerAbundance.setHighValue(protein.getAbundanceCutPerHigh());
+                    rsPerAbundance.setLowValue(protein.getAbundanceCutPerLow());
+                    for(Node hbs : vBoxPercentage.getChildren()){
+                        for(Node nd : ((HBox) hbs).getChildren()){
+                            if(nd instanceof RangeSlider){
+                                for(int i=0; i<protein.getDoubleInfoName().size(); i++){
+                                    if(protein.getDoubleInfoName().get(i).equals(nd.getUserData())){
+                                        ((RangeSlider) nd).setHighValue(protein.getDoubleInfoCutPerHigh(i));
+                                        ((RangeSlider) nd).setLowValue(protein.getDoubleInfoCutPerLow(i));
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        /*
         rsValCharge.setMax(protein.getChargeMax());
         rsValCharge.setMin(protein.getChargeMin());
         rsValMz.setMax(protein.getMzMax());
@@ -156,11 +385,12 @@ public class PepFilterController implements Initializable {
         lblPerScoreHigh.setText(String.format("%.2f",rsPerScore.getHighValue() * 100));
         lblPerAbundanceLow.setText(String.format("%.2f",rsPerAbundance.getLowValue() * 100));
         lblPerAbundanceHigh.setText(String.format("%.2f",rsPerAbundance.getHighValue() * 100));
-
+        */
 
         numPep.setText("Peptides Remain: " + protein.numPepShow());
 
 
+        /*
         rsValCharge.lowValueProperty().addListener(new ChangeListener<Number>() {
             @Override
             public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
@@ -305,11 +535,13 @@ public class PepFilterController implements Initializable {
                 lblPerAbundanceHigh.setText(String.format("%.2f", newValue.doubleValue() * 100));
             }
         });
+        */
 
     }
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        /*
         rsValCharge = new RangeSlider();
         rsValMz = new RangeSlider();
         rsValScore = new RangeSlider();
@@ -390,5 +622,6 @@ public class PepFilterController implements Initializable {
                 }
             }
         });
+        */
     }
 }

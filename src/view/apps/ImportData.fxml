@@ -6,58 +6,166 @@
 <?import java.lang.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox alignment="CENTER_LEFT" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="300.0" prefWidth="400.0" spacing="20.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.apps.ImportDataController">
+<VBox alignment="CENTER_LEFT" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="300.0" prefWidth="400.0" spacing="10.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.apps.ImportDataController">
    <opaqueInsets>
-      <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+      <Insets />
    </opaqueInsets>
-   <padding>
-      <Insets bottom="40.0" top="40.0" />
-   </padding>
    <children>
-      <VBox alignment="CENTER_LEFT" prefHeight="200.0" prefWidth="100.0" spacing="5.0">
+      <TabPane prefHeight="250.0" prefWidth="400.0" tabClosingPolicy="UNAVAILABLE">
+        <tabs>
+          <Tab text="Peptide Data">
+               <content>
+                  <VBox prefHeight="200.0" prefWidth="400.0">
+                     <children>
+                        <VBox alignment="CENTER_LEFT" prefHeight="200.0" prefWidth="100.0" spacing="5.0">
+                           <children>
+                              <Label text="Proteomics Data" />
+                              <HBox prefHeight="100.0" prefWidth="200.0">
+                                 <children>
+                                    <TextField fx:id="txtPtDataFile" prefWidth="300.0" />
+                                    <Button fx:id="btnPtDataFile" mnemonicParsing="false" onAction="#getPtDataFile" text="..." />
+                                 </children>
+                                 <VBox.margin>
+                                    <Insets />
+                                 </VBox.margin>
+                              </HBox>
+                           </children>
+                           <VBox.margin>
+                              <Insets left="20.0" right="20.0" />
+                           </VBox.margin>
+                        </VBox>
+                        <VBox alignment="CENTER_LEFT" prefHeight="200.0" prefWidth="100.0" spacing="5.0">
+                           <children>
+                              <Label text="Sample Data (optional)" />
+                              <HBox prefHeight="100.0" prefWidth="200.0">
+                                 <children>
+                                    <TextField fx:id="txtSpDataFile" prefWidth="300.0" />
+                                    <Button fx:id="btnSpDataFile" mnemonicParsing="false" onAction="#getSpDataFile" text="..." />
+                                 </children>
+                              </HBox>
+                           </children>
+                           <VBox.margin>
+                              <Insets left="20.0" right="20.0" />
+                           </VBox.margin>
+                        </VBox>
+                     </children>
+                  </VBox>
+               </content>
+          </Tab>
+          <Tab text="Peptide and Protein Data">
+               <content>
+                  <VBox prefHeight="200.0" prefWidth="400.0">
+                     <children>
+                        <VBox alignment="CENTER_LEFT" prefHeight="200.0" prefWidth="100.0" spacing="5.0">
+                           <children>
+                              <Label text="Proteomics Data" />
+                              <HBox prefHeight="100.0" prefWidth="200.0">
+                                 <children>
+                                    <TextField fx:id="txtPtDataFile1" prefWidth="300.0" />
+                                    <Button fx:id="btnPtDataFile1" mnemonicParsing="false" onAction="#getPtDataFile" text="..." />
+                                 </children>
+                                 <VBox.margin>
+                                    <Insets />
+                                 </VBox.margin>
+                              </HBox>
+                           </children>
+                           <VBox.margin>
+                              <Insets left="20.0" right="20.0" />
+                           </VBox.margin>
+                        </VBox>
+                        <VBox alignment="CENTER_LEFT" prefHeight="200.0" prefWidth="100.0" spacing="5.0">
+                           <children>
+                              <Label text="Protein Data" />
+                              <HBox prefHeight="100.0" prefWidth="200.0">
+                                 <children>
+                                    <TextField fx:id="txtProtDataFile1" prefWidth="300.0" />
+                                    <Button fx:id="btnProtDataFile1" mnemonicParsing="false" onAction="#getPtDataFile" text="..." />
+                                 </children>
+                                 <VBox.margin>
+                                    <Insets />
+                                 </VBox.margin>
+                              </HBox>
+                           </children>
+                           <VBox.margin>
+                              <Insets left="20.0" right="20.0" />
+                           </VBox.margin>
+                        </VBox>
+                        <VBox alignment="CENTER_LEFT" prefHeight="200.0" prefWidth="100.0" spacing="5.0">
+                           <children>
+                              <Label text="Sample Data (optional)" />
+                              <HBox prefHeight="100.0" prefWidth="200.0">
+                                 <children>
+                                    <TextField fx:id="txtSpDataFile1" prefWidth="300.0" />
+                                    <Button fx:id="btnSpDataFile1" mnemonicParsing="false" onAction="#getSpDataFile" text="..." />
+                                 </children>
+                              </HBox>
+                           </children>
+                           <VBox.margin>
+                              <Insets left="20.0" right="20.0" />
+                           </VBox.margin>
+                        </VBox>
+                     </children>
+                  </VBox>
+               </content>
+          </Tab>
+            <Tab text="Protein Data">
+               <content>
+                  <VBox prefHeight="200.0" prefWidth="100.0">
+                     <children>
+                        <VBox alignment="CENTER_LEFT" prefHeight="200.0" prefWidth="100.0" spacing="5.0">
+                           <children>
+                              <Label text="Protein Data" />
+                              <HBox prefHeight="100.0" prefWidth="200.0">
+                                 <children>
+                                    <TextField fx:id="txtProtDataFile2" prefWidth="300.0" />
+                                    <Button fx:id="btnProtDataFile2" mnemonicParsing="false" onAction="#getPtDataFile" text="..." />
+                                 </children>
+                                 <VBox.margin>
+                                    <Insets />
+                                 </VBox.margin>
+                              </HBox>
+                           </children>
+                           <VBox.margin>
+                              <Insets left="20.0" right="20.0" />
+                           </VBox.margin>
+                        </VBox>
+                        <VBox alignment="CENTER_LEFT" prefHeight="200.0" prefWidth="100.0" spacing="5.0">
+                           <children>
+                              <Label text="Sample Data (optional)" />
+                              <HBox prefHeight="100.0" prefWidth="200.0">
+                                 <children>
+                                    <TextField fx:id="txtSpDataFile3" prefWidth="300.0" />
+                                    <Button fx:id="btnSpDataFile3" mnemonicParsing="false" onAction="#getSpDataFile" text="..." />
+                                 </children>
+                              </HBox>
+                           </children>
+                           <VBox.margin>
+                              <Insets left="20.0" right="20.0" />
+                           </VBox.margin>
+                        </VBox>
+                     </children>
+                  </VBox>
+               </content>
+            </Tab>
+        </tabs>
+      </TabPane>
+      <VBox>
          <children>
-            <Label text="Proteomics Data" />
-            <HBox prefHeight="100.0" prefWidth="200.0">
+            <Label text="Organisms:">
+               <VBox.margin>
+                  <Insets left="20.0" />
+               </VBox.margin>
+            </Label>
+            <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0" spacing="150.0">
                <children>
-                  <TextField fx:id="txtPtDataFile" prefWidth="300.0" />
-                  <Button fx:id="btnPtDataFile" mnemonicParsing="false" onAction="#getPtDataFile" text="..." />
+                  <ComboBox fx:id="cmbType" prefWidth="150.0" />
+                  <Button fx:id="btnImport" mnemonicParsing="false" onAction="#importData" text="Import" />
                </children>
                <VBox.margin>
-                  <Insets />
+                  <Insets left="20.0" right="20.0" />
                </VBox.margin>
             </HBox>
          </children>
-         <VBox.margin>
-            <Insets left="20.0" right="20.0" />
-         </VBox.margin>
       </VBox>
-      <VBox alignment="CENTER_LEFT" prefHeight="200.0" prefWidth="100.0" spacing="5.0">
-         <children>
-            <Label text="Sample Data (optional)" />
-            <HBox prefHeight="100.0" prefWidth="200.0">
-               <children>
-                  <TextField fx:id="txtSpDataFile" prefWidth="300.0" />
-                  <Button fx:id="btnSpDataFile" mnemonicParsing="false" onAction="#getSpDataFile" text="..." />
-               </children>
-            </HBox>
-         </children>
-         <VBox.margin>
-            <Insets left="20.0" right="20.0" />
-         </VBox.margin>
-      </VBox>
-      <Label text="Organisms:">
-         <VBox.margin>
-            <Insets left="20.0" />
-         </VBox.margin>
-      </Label>
-      <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0" spacing="150.0">
-         <children>
-            <ComboBox fx:id="cmbType" prefWidth="150.0" />
-            <Button fx:id="btnImport" mnemonicParsing="false" onAction="#importData" text="Import" />
-         </children>
-         <VBox.margin>
-            <Insets left="20.0" right="20.0" />
-         </VBox.margin>
-      </HBox>
    </children>
 </VBox>

@@ -12,6 +12,7 @@ import controller.filter.PepFilterController;
 import controller.parameter.ParaExportModificationInfoController;
 import controller.parameter.ParaModifiedCysController;
 import controller.parameter.ParaModifiedCysFigureController;
+import controller.result.BoxPlotController;
 import controller.result.CorScatterController;
 import controller.result.CysResidualFigureController;
 import controller.result.PValueTableController;
@@ -37,6 +38,8 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -565,16 +568,25 @@ public class MainController implements Initializable{
         ArrayList<String> sampleId = new ArrayList<>(sampleGroup.getSampleId());
         ArrayList<String> g1 = new ArrayList<>();
         ArrayList<String> g2 = new ArrayList<>();
+        ArrayList<String> gpName = new ArrayList<>();
+        boolean added = false;
         if(low == null){
             String g1Str = sampleGroup.getStrInfo(sampleId.get(0), groupId);
+            gpName.add(g1Str);
             for(String sp : sampleId){
                 if(sampleGroup.getStrInfo(sp, groupId).equals(g1Str)){
                     g1.add(sp);
                 } else {
                     g2.add(sp);
+                    if(!added){
+                        gpName.add(sampleGroup.getStrInfo(sp, groupId));
+                        added = true;
+                    }
                 }
             }
         } else {
+            gpName.add("Low");
+            gpName.add("High");
             for(String sp: sampleId){
                 if(sampleGroup.getNumInfo(sp, groupId) < low){
                     g1.add(sp);
@@ -613,16 +625,39 @@ public class MainController implements Initializable{
         dataAll.add(t1);
         dataAll.add(t2);
 
+
+        FXMLLoader loaderBP = new FXMLLoader(getClass().getResource("/view/result/BoxPlot.fxml"));
+        Parent rootBP = null;
+        try {
+            rootBP = loaderBP.load();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Stage boxPlotDataSelectStageBP = new Stage();
+        boxPlotDataSelectStageBP.setTitle("Box Plot");
+        boxPlotDataSelectStageBP.setScene(new Scene(rootBP, 300, 330));
+
+        boxPlotDataSelectStageBP.initModality(Modality.WINDOW_MODAL);
+        boxPlotDataSelectStageBP.initOwner(menuBar.getScene().getWindow());
+
+        BoxPlotController controllerBP = loaderBP.getController();
+        controllerBP.init(dataAll, gpName);
+
+
+        boxPlotDataSelectStageBP.showAndWait();
+
+        /*
         //Box Plot
         Stage boxPlotStage = new Stage();
         boxPlotStage.setTitle("BoxPlot " + dataId);
-        boxPlotStage.setScene(new Scene(boxPlot(dataAll, 250, 200, 25, 25), 300, 250, Color.WHITE));
+        boxPlotStage.setScene(new Scene(boxPlot(dataAll, gpName, 250, 200, 25, 25), 300, 300, Color.WHITE));
 
 
         boxPlotStage.initModality(Modality.WINDOW_MODAL);
         boxPlotStage.initOwner(menuBar.getScene().getWindow());
 
         boxPlotStage.showAndWait();
+        */
     }
 
     //Menu Data
@@ -873,6 +908,9 @@ public class MainController implements Initializable{
     }
 
     @FXML private void pepFilter(ActionEvent event){
+        if(!pBrowserController.getInitialized()){
+            return;
+        }
         System.out.println("pepFilter");
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/filter/PepFilter.fxml"));
         Parent root = null;
@@ -896,6 +934,7 @@ public class MainController implements Initializable{
 
         pBrowserController.getProtein().updateShow();
         pBrowserController.updatePep();
+        pBrowserController.updateCombModiPos();
     }
 
 
@@ -1528,6 +1567,18 @@ public class MainController implements Initializable{
                 return false;
             }
 
+            for(int i=0; i<sampleId.size();i++){
+                for(int j=0; j<sampleInfoName.size(); j++){
+                    if(sampleInfoName.get(j).toLowerCase().equals("sampleid")){
+                        continue;
+                    }
+                    if(sampleInfoType.get(j).equals("Double")){
+                        sampleGroup.addNumInfo(sampleId.get(i), sampleInfoName.get(j), tryDoubleParse(sampleInfo.get(j).get(i)));
+                    } else {
+                        sampleGroup.addStrInfo(sampleId.get(i), sampleInfoName.get(j), sampleInfo.get(j).get(i));
+                    }
+                }
+            }
             Set<String> proteinNotFind = new TreeSet<>();
             for(int i=0; i<proteomicsRaw.get(0).size(); i++){
                 String id = proteomicsRaw.get(indexId).get(i);
@@ -1585,8 +1636,6 @@ public class MainController implements Initializable{
                 alert.showAndWait();
                 //return false;
             }
-
-
         }
         sampleGroup.initPepCutoff();
         sampleGroup.updatePepShow();
@@ -1611,7 +1660,7 @@ public class MainController implements Initializable{
         }
     }
 
-    private Group boxPlot(ArrayList<ArrayList<Double>> dataAll, double width, double height, double top, double left){
+    private Group boxPlot(ArrayList<ArrayList<Double>> dataAll, ArrayList<String> name, double width, double height, double top, double left){
         int numGroup = dataAll.size();
 
         Group root = new Group();
@@ -1732,6 +1781,10 @@ public class MainController implements Initializable{
                     root.getChildren().add(pt);
                 }
             }
+
+            Text t = new Text(st + paintWidth/4, height + 50, name.get(i));
+            t.setTextAlignment(TextAlignment.CENTER);
+            root.getChildren().addAll(t);
         }
         return root;
     }

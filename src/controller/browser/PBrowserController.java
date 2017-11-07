@@ -119,6 +119,7 @@ public class PBrowserController implements Initializable {
     private ArrayList<Modification.ModificationType> modiSelected;
 
     public Protein getProtein() { return  protein; }
+    public boolean getInitialized() { return initialized; }
 
 
 
@@ -161,7 +162,7 @@ public class PBrowserController implements Initializable {
                     //clear combModiPos first
                     combModiPos.getSelectionModel().clearSelection();
                     combModiPos.getItems().clear();
-                    combModiPos.getItems().addAll(protein.getModiPos());
+                    combModiPos.getItems().addAll(protein.getModiPosSel1(modiSelected));
                     combModiPos.setDisable(false);
                     scaleX = 1;
                     scaleY = 1;
@@ -187,7 +188,7 @@ public class PBrowserController implements Initializable {
                     protein = sampleGroup.getProtein(selectedSample, selectedProtein);
                     combModiPos.getSelectionModel().clearSelection();
                     combModiPos.getItems().clear();
-                    combModiPos.getItems().addAll(protein.getModiPos());
+                    combModiPos.getItems().addAll(protein.getModiPosSel1(modiSelected));
                     combModiPos.setDisable(false);
                     scaleX = 1;
                     scaleY = 1;
@@ -297,7 +298,7 @@ public class PBrowserController implements Initializable {
             @Override
             public void changed(ObservableValue<? extends Integer> observable, Integer oldValue, Integer newValue) {
                 if(newValue != null){
-                    int centerPos = newValue;
+                    int centerPos = newValue-1;
                     double st = centerPos * pixPerLocus * scaleX - canvas.getWidth() / 2.0;
                     if(st < 0){
                         st = 0;
@@ -312,12 +313,12 @@ public class PBrowserController implements Initializable {
         });
     }
 
-    private void updateCombModiPos(){
+    public void updateCombModiPos(){
         combModiPos.getSelectionModel().clearSelection();
         combModiPos.setValue(null);
         combModiPos.getItems().clear();
 
-        combModiPos.getItems().addAll(protein.getModiPos(modiSelected));
+        combModiPos.getItems().addAll(protein.getModiPosSel1(modiSelected));
         if(combModiPos.getItems().size() > 0){
             combModiPos.setDisable(false);
         } else {
@@ -504,7 +505,7 @@ public class PBrowserController implements Initializable {
         //}
 
         String proteinSeq = protein.getSequence();
-        Set<Integer> modiPos = protein.getModiPos();
+        ArrayList<Integer> modiPos = protein.getModiPosSel(modiSelected);
         int xAxisStart = (int)(st / (pixPerLocus * scaleX));
         int xAxisEnd = (int)(0.5 + (st + canvasWidth)/(pixPerLocus * scaleX));
 
@@ -583,7 +584,7 @@ public class PBrowserController implements Initializable {
                 }
                 if(!find){
                     arrangePep.get(i).setY(plotQueue.size());
-                    plotQueue.add(arrangePep.get(i).getStart());
+                    plotQueue.add(arrangePep.get(i).getEnd());
                 }
             }
             maxY = plotQueue.size();

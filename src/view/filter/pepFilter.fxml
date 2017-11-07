@@ -11,41 +11,7 @@
         <tabs>
           <Tab text="Value">
                <content>
-                  <VBox prefHeight="280.0" prefWidth="600.0" spacing="10.0">
-                     <children>
-                        <HBox fx:id="hbValCharge" alignment="CENTER_LEFT" prefHeight="60.0" prefWidth="600.0" spacing="10.0">
-                           <children>
-                              <Label text="Charge:         " />
-                           </children>
-                           <padding>
-                              <Insets left="20.0" />
-                           </padding>
-                        </HBox>
-                        <HBox fx:id="hbValMz" alignment="CENTER_LEFT" prefHeight="60.0" prefWidth="600.0" spacing="10.0">
-                           <padding>
-                              <Insets left="20.0" />
-                           </padding>
-                           <children>
-                              <Label text="Mz:                " />
-                           </children>
-                        </HBox>
-                        <HBox fx:id="hbValScore" alignment="CENTER_LEFT" prefHeight="60.0" prefWidth="600.0" spacing="10.0">
-                           <padding>
-                              <Insets left="20.0" />
-                           </padding>
-                           <children>
-                              <Label text="Score:           " />
-                           </children>
-                        </HBox>
-                        <HBox fx:id="hbValAbundance" alignment="CENTER_LEFT" prefHeight="60.0" prefWidth="600.0" spacing="10.0">
-                           <padding>
-                              <Insets left="20.0" />
-                           </padding>
-                           <children>
-                              <Label text="Abundance:  " />
-                           </children>
-                        </HBox>
-                     </children>
+                  <VBox fx:id="vBoxValue" prefHeight="280.0" prefWidth="600.0" spacing="10.0">
                      <padding>
                         <Insets top="10.0" />
                      </padding>
@@ -54,41 +20,7 @@
           </Tab>
           <Tab text="Percentage">
                <content>
-                  <VBox prefHeight="280.0" prefWidth="600.0" spacing="10.0">
-                     <children>
-                        <HBox fx:id="hbPerCharge" alignment="CENTER_LEFT" prefHeight="60.0" prefWidth="600.0" spacing="10.0">
-                           <padding>
-                              <Insets left="20.0" />
-                           </padding>
-                           <children>
-                              <Label text="Charge:         " />
-                           </children>
-                        </HBox>
-                        <HBox fx:id="hbPerMz" alignment="CENTER_LEFT" prefHeight="60.0" prefWidth="600.0" spacing="10.0">
-                           <padding>
-                              <Insets left="20.0" />
-                           </padding>
-                           <children>
-                              <Label text="Mz:                " />
-                           </children>
-                        </HBox>
-                        <HBox fx:id="hbPerScore" alignment="CENTER_LEFT" prefHeight="60.0" prefWidth="600.0" spacing="10.0">
-                           <padding>
-                              <Insets left="20.0" />
-                           </padding>
-                           <children>
-                              <Label text="Score:           " />
-                           </children>
-                        </HBox>
-                        <HBox fx:id="hbPerAbundance" alignment="CENTER_LEFT" prefHeight="60.0" prefWidth="600.0" spacing="10.0">
-                           <padding>
-                              <Insets left="20.0" />
-                           </padding>
-                           <children>
-                              <Label text="Abundance:  " />
-                           </children>
-                        </HBox>
-                     </children>
+                  <VBox fx:id="vBoxPercentage" prefHeight="280.0" prefWidth="600.0" spacing="10.0">
                      <padding>
                         <Insets top="10.0" />
                      </padding>

@@ -2,6 +2,7 @@ package data;
 
 import javafx.util.Pair;
 import project.PublicInfo;
+import sun.rmi.server.InactiveGroupException;
 
 import java.io.Serializable;
 import java.util.*;
@@ -29,40 +30,61 @@ public class Protein implements Serializable {
 
 
     // range of peptide data
+    /*
     private int chargeMax;
     private int chargeMin;
     private double mzMax;
     private double mzMin;
     private double scoreMax;
     private double scoreMin;
+    */
     private double abundanceMax;
     private double abundanceMin;
 
+    private ArrayList<Double> doubleInfoMax;
+    private ArrayList<Double> doubleInfoMin;
+
     // cutoff of peptide data
+    /*
     private int chargeCutHigh;
     private int chargeCutLow;
     private double mzCutHigh;
     private double mzCutLow;
     private double scoreCutHigh;
     private double scoreCutLow;
+    */
     private double abundanceCutHigh;
     private double abundanceCutLow;
 
+    private ArrayList<Double> doubleInfoCutHigh;
+    private ArrayList<Double> doubleInfoCutLow;
+
+    /*
     private double chargeCutPerHigh;
     private double chargeCutPerLow;
     private double mzCutPerHigh;
     private double mzCutPerLow;
     private double scoreCutPerHigh;
     private double scoreCutPerLow;
+    */
     private double abundanceCutPerHigh;
     private double abundanceCutPerLow;
 
+    private ArrayList<Double> doubleInfoCutPerHigh;
+    private ArrayList<Double> doubleInfoCutPerLow;
 
 
+
+    /*
     private ArrayList<Integer> chargeAll;
     private ArrayList<Double> mzAll;
     private ArrayList<Double> scoreAll;
+    */
     private ArrayList<Double> abundanceAll;
+
+    private ArrayList<ArrayList<Double> > doubleInfoAll;
+
+    private ArrayList<String> doubleInfoName;
 
 
     //before normalization
@@ -126,7 +148,60 @@ public class Protein implements Serializable {
         return rlt;
     }
 
+    public ArrayList<Integer> getModiPosSel(Modification.ModificationType mt){
+        ArrayList<Integer> rlt = new ArrayList<>();
+        for(Map.Entry<Integer, PosModiInfo> entry : modiInfoSel.entrySet()){
+            Integer key = entry.getKey();
+            PosModiInfo value = entry.getValue();
+            if(value.modiExist(mt)){
+                rlt.add(key);
+            }
+        }
+        return rlt;
+    }
 
+    public ArrayList<Integer> getModiPosSel(ArrayList<Modification.ModificationType> mts){
+        ArrayList<Integer> rlt = new ArrayList<>();
+        for(Map.Entry<Integer, PosModiInfo> entry : modiInfoSel.entrySet()){
+            Integer key = entry.getKey();
+            PosModiInfo value = entry.getValue();
+            if(value.modiExist(mts)){
+                rlt.add(key);
+            }
+        }
+        return rlt;
+    }
+
+
+    public ArrayList<Integer> getModiPosSel1(Modification.ModificationType mt){
+        ArrayList<Integer> rlt = new ArrayList<>();
+        for(Map.Entry<Integer, PosModiInfo> entry : modiInfoSel.entrySet()){
+            Integer key = entry.getKey();
+            PosModiInfo value = entry.getValue();
+            if(value.modiExist(mt)){
+                rlt.add(key+1);
+            }
+        }
+        return rlt;
+    }
+
+    public ArrayList<Integer> getModiPosSel1(ArrayList<Modification.ModificationType> mts){
+        ArrayList<Integer> rlt = new ArrayList<>();
+        for(Map.Entry<Integer, PosModiInfo> entry : modiInfoSel.entrySet()){
+            Integer key = entry.getKey();
+            PosModiInfo value = entry.getValue();
+            if(value.modiExist(mts)){
+                rlt.add(key+1);
+            }
+        }
+        return rlt;
+    }
+
+    public ArrayList<String> getDoubleInfoName(){
+        return doubleInfoName;
+    }
+
+    /*
     public int getChargeMax() { return chargeMax; }
     public int getChargeMin() { return chargeMin; }
     public int getChargeCutHigh() { return chargeCutHigh; }
@@ -139,20 +214,30 @@ public class Protein implements Serializable {
     public double getScoreMin() { return scoreMin; }
     public double getScoreCutHigh() { return scoreCutHigh; }
     public double getScoreCutLow() { return scoreCutLow; }
+    */
     public double getAbundanceMax() { return abundanceMax; }
     public double getAbundanceMin() { return abundanceMin; }
     public double getAbundanceCutHigh() { return abundanceCutHigh; }
     public double getAbundanceCutLow() { return abundanceCutLow; }
+    public double getDoubleInfoMax(int i) { return doubleInfoMax.get(i);}
+    public double getDoubleInfoMin(int i) { return doubleInfoMin.get(i);}
+    public double getDoubleInfoCutHigh(int i) { return  doubleInfoCutHigh.get(i);}
+    public double getDoubleInfoCutLow(int i) { return  doubleInfoCutLow.get(i);}
 
+    /*
     public double getChargeCutPerHigh() {return chargeCutPerHigh; }
     public double getChargeCutPerLow() { return chargeCutPerLow; }
     public double getMzCutPerHigh() { return mzCutPerHigh; }
     public double getMzCutPerLow() { return mzCutPerLow; }
     public double getScoreCutPerHigh() { return scoreCutPerHigh; }
     public double getScoreCutPerLow() { return scoreCutPerLow; }
+    */
     public double getAbundanceCutPerHigh() { return abundanceCutPerHigh; }
     public double getAbundanceCutPerLow() { return abundanceCutPerLow; }
+    public double getDoubleInfoCutPerHigh(int i) { return doubleInfoCutPerHigh.get(i);}
+    public double getDoubleInfoCutPerLow(int i) { return doubleInfoCutPerLow.get(i);}
 
+    /*
     public void setChargeCutHigh(int chargeCutHigh){
         this.chargeCutHigh = chargeCutHigh;
         int idx = -1;
@@ -254,6 +339,7 @@ public class Protein implements Serializable {
         }
         updatePepShow();
     }
+    */
 
     public void setAbundanceCutHigh(double abundanceCutHigh){
         this.abundanceCutHigh = abundanceCutHigh;
@@ -278,9 +364,10 @@ public class Protein implements Serializable {
         for(int i=0; i<abundanceAll.size();i++){
             if(abundanceAll.get(i) >= abundanceCutLow){
                 idx = i;
+                break;
             }
         }
-        if(idx < 0){
+        if(idx < 0 || idx == (abundanceAll.size()-1)){
             abundanceCutPerLow = 1;
         } else {
             abundanceCutPerLow = (double)idx / abundanceAll.size();
@@ -288,6 +375,40 @@ public class Protein implements Serializable {
         updatePepShow();
     }
 
+    public void setDoubleInfoCutHigh(int index, double cutHigh){
+        doubleInfoCutHigh.set(index, cutHigh);
+        int idx = -1;
+        for(int i = 0; i<doubleInfoAll.get(index).size(); i++){
+            if(doubleInfoAll.get(index).get(i) >  cutHigh){
+                idx = i;
+                break;
+            }
+        }
+        if(idx < 0){
+            doubleInfoCutPerHigh.set(index, 1.0);
+        } else {
+            doubleInfoCutPerHigh.set(index, (double) idx / doubleInfoAll.get(index).size());
+        }
+        updatePepShow();
+    }
+
+    public void setDoubleInfoCutLow(int index, double cutLow){
+        doubleInfoCutLow.set(index, cutLow);
+        int idx = -1;
+        for(int i=0; i<doubleInfoAll.get(index).size();i++){
+            if(doubleInfoAll.get(index).get(i) >= cutLow){
+                idx = i;
+                break;
+            }
+        }
+        if(idx < 0 || idx == (doubleInfoAll.get(index).size()-1)){
+            doubleInfoCutPerLow.set(index, 1.0);
+        } else {
+            doubleInfoCutPerLow.set(index, (double) idx/ doubleInfoAll.get(index).size());
+        }
+    }
+
+    /*
     public void setChargeCutPerHigh(double chargeCutPerHigh){
         this.chargeCutPerHigh = chargeCutPerHigh;
         int idx = (int) (chargeAll.size() * chargeCutPerHigh);
@@ -329,10 +450,14 @@ public class Protein implements Serializable {
         scoreCutLow = scoreAll.get(idx);
         updatePepShow();
     }
+    */
 
     public void setAbundanceCutPerHigh(double abundanceCutPerHigh){
         this.abundanceCutPerHigh = abundanceCutPerHigh;
         int idx = (int) (abundanceAll.size() * abundanceCutPerHigh);
+        if(idx == abundanceAll.size()){
+            idx = abundanceAll.size() - 1;
+        }
         abundanceCutHigh = abundanceAll.get(idx);
         updatePepShow();
     }
@@ -340,7 +465,30 @@ public class Protein implements Serializable {
     public void setAbundanceCutPerLow(double abundanceCutPerLow){
         this.abundanceCutPerLow = abundanceCutPerLow;
         int idx = (int) (abundanceAll.size() * abundanceCutPerLow);
+        if(idx == abundanceAll.size()){
+            idx = abundanceAll.size()-1;
+        }
         abundanceCutLow = abundanceAll.get(idx);
+        updatePepShow();
+    }
+
+    public void setDoubleInfoCutPerHigh(int index, double cutPerHigh){
+        doubleInfoCutPerHigh.set(index, cutPerHigh);
+        int idx = (int) (doubleInfoAll.get(index).size()*cutPerHigh);
+        if(idx == doubleInfoAll.get(index).size()){
+            idx = doubleInfoAll.get(index).size() - 1;
+        }
+        doubleInfoCutHigh.set(index, doubleInfoAll.get(index).get(idx));
+        updatePepShow();
+    }
+
+    public void setDoubleInfoCutPerLow(int index, double cutPerLow){
+        doubleInfoCutPerLow.set(index, cutPerLow);
+        int idx = (int) (doubleInfoAll.get(index).size() * cutPerLow);
+        if(idx == doubleInfoAll.get(index).size()){
+            idx = doubleInfoAll.get(index).size()-1;
+        }
+        doubleInfoCutLow.set(index, doubleInfoAll.get(index).get(idx));
         updatePepShow();
     }
 
@@ -349,6 +497,7 @@ public class Protein implements Serializable {
         for(int i=0; i<peptides.size(); i++){
             pepShow.set(i, 1);
 
+            /*
             if(peptides.get(i).getCharge() < chargeCutLow){
                 pepShow.set(i, 0);
             }
@@ -372,13 +521,30 @@ public class Protein implements Serializable {
             if(peptides.get(i).getScore() > scoreCutHigh){
                 pepShow.set(i, 0);
             }
+            */
 
             if(peptides.get(i).getAbundance() < abundanceCutLow){
                 pepShow.set(i, 0);
+                continue;
             }
 
             if(peptides.get(i).getAbundance() > abundanceCutHigh){
                 pepShow.set(i, 0);
+                continue;
+            }
+
+            int idx = 0;
+            for(double dInfo : peptides.get(i).getDoubleInfo().values()){
+                if(dInfo < doubleInfoCutLow.get(idx)){
+                    pepShow.set(i, 0);
+                    break;
+                }
+
+                if(dInfo > doubleInfoCutHigh.get(idx)){
+                    pepShow.set(i, 0);
+                    break;
+                }
+                idx++;
             }
         }
     }
@@ -392,15 +558,19 @@ public class Protein implements Serializable {
     }
 
     public void initCutoff(){
-        Collections.sort(chargeAll);
-        Collections.sort(mzAll);
-        Collections.sort(scoreAll);
+        //Collections.sort(chargeAll);
+        //Collections.sort(mzAll);
+        //Collections.sort(scoreAll);
         Collections.sort(abundanceAll);
+        for(ArrayList<Double> tmp : doubleInfoAll){
+            Collections.sort(tmp);
+        }
         //Collections.sort(chargeAll, Comparator.nullsFirst(Comparator.naturalOrder()));
         //Collections.sort(mzAll, Comparator.nullsFirst(Comparator.naturalOrder()));
         //Collections.sort(scoreAll, Comparator.nullsFirst(Comparator.naturalOrder()));
         //Collections.sort(abundanceAll, Comparator.nullsFirst(Comparator.naturalOrder()));
 
+        /*
         chargeCutLow = chargeAll.get(0);
         chargeMin = chargeCutLow;
         chargeCutHigh = chargeAll.get(chargeAll.size()-1);
@@ -413,20 +583,34 @@ public class Protein implements Serializable {
         scoreMin = scoreCutLow;
         scoreCutHigh = scoreAll.get(scoreAll.size()-1);
         scoreMax = scoreCutHigh;
+        */
         abundanceCutLow = abundanceAll.get(0);
         abundanceMin = abundanceCutLow;
         abundanceCutHigh = abundanceAll.get(abundanceAll.size()-1);
         abundanceMax = abundanceCutHigh;
+        for(ArrayList<Double> tmp : doubleInfoAll){
+            doubleInfoCutLow.add(tmp.get(0));
+            doubleInfoMin.add(tmp.get(0));
+            doubleInfoCutHigh.add(tmp.get(tmp.size()-1));
+            doubleInfoMax.add(tmp.get(tmp.size()-1));
+        }
 
 
+        /*
         chargeCutPerHigh = 1;
         chargeCutPerLow = 0;
         mzCutPerHigh = 1;
         mzCutPerLow = 0;
         scoreCutPerHigh = 1;
         scoreCutPerLow = 0;
+        */
         abundanceCutPerHigh = 1;
         abundanceCutPerLow = 0;
+        for(int i=0;i<doubleInfoAll.size();i++){
+            doubleInfoCutPerHigh.add(1.0);
+            doubleInfoCutPerLow.add(0.0);
+        }
+
     }
 
 
@@ -444,10 +628,20 @@ public class Protein implements Serializable {
         pepShow = new ArrayList<>();
         modiTypeAllSel = new TreeSet<>();
         modiInfoSel = new TreeMap<>();
-        chargeAll = new ArrayList<>();
-        mzAll = new ArrayList<>();
-        scoreAll = new ArrayList<>();
+        //chargeAll = new ArrayList<>();
+        //mzAll = new ArrayList<>();
+        //scoreAll = new ArrayList<>();
         abundanceAll = new ArrayList<>();
+
+        doubleInfoMax = new ArrayList<>();
+        doubleInfoMin = new ArrayList<>();
+        doubleInfoCutHigh = new ArrayList<>();
+        doubleInfoCutLow = new ArrayList<>();
+        doubleInfoCutPerHigh = new ArrayList<>();
+        doubleInfoCutPerLow = new ArrayList<>();
+
+        doubleInfoAll = new ArrayList<>();
+        doubleInfoName = new ArrayList<>();
 
         /*
         chargeMax = Integer.MIN_VALUE;
@@ -479,6 +673,7 @@ public class Protein implements Serializable {
                 pepEnd.add(indexF + pep.getLength() - 1);
                 pepShow.add(1);
 
+                /*
                 if(pep.getCharge() == null){
                     chargeAll.add(-100);
                 } else {
@@ -496,6 +691,7 @@ public class Protein implements Serializable {
                 } else {
                     scoreAll.add(pep.getScore());
                 }
+                */
 
                 if(pep.getAbundance() == null){
                     abundanceAll.add(-100.0);
@@ -503,6 +699,25 @@ public class Protein implements Serializable {
                     abundanceAll.add(pep.getAbundance());
                 }
 
+                TreeMap<String, Double> dInfo = pep.getDoubleInfo();
+                if(doubleInfoName.size() == 0){
+                    doubleInfoName.addAll(dInfo.keySet());
+                    for(int i = 0; i<dInfo.size(); i++){
+                        ArrayList<Double> dTmp = new ArrayList<>();
+                        doubleInfoAll.add(dTmp);
+                    }
+                    int idx = 0;
+                    for(Double v : dInfo.values()){
+                        doubleInfoAll.get(idx).add(v);
+                        idx++;
+                    }
+                } else {
+                    int idx = 0;
+                    for(Double v : dInfo.values()){
+                        doubleInfoAll.get(idx).add(v);
+                        idx++;
+                    }
+                }
 
                 /*
                 if(pep.getCharge() > chargeMax){
@@ -533,16 +748,6 @@ public class Protein implements Serializable {
                 if(pep.getScore() < scoreMin){
                     scoreMin = pep.getScore();
                     scoreCutLow = scoreMin;
-                }
-
-                if(pep.getAbundance() > abundanceMax){
-                    abundanceMax = pep.getAbundance();
-                    abundanceCutHigh = abundanceMax;
-                }
-
-                if(pep.getAbundance() < abundanceMin){
-                    abundanceMin = pep.getAbundance();
-                    abundanceCutLow = abundanceMin;
                 }
                 */
 

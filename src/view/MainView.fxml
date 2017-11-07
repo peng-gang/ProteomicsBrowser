@@ -75,7 +75,7 @@
             </Menu>
             <Menu fx:id="menuExport" mnemonicParsing="false" text="Export" visible="false">
               <items>
-                  <Menu fx:id="menuExportModiCys" mnemonicParsing="false" text="Export Modified Cys">
+                  <Menu fx:id="menuExportModiCys" mnemonicParsing="false" text="Export Sequences Containing PTMs">
                     <items>
                         <MenuItem mnemonicParsing="false" onAction="#exportModifiedCysText" text="Export Text File" />
                       <MenuItem mnemonicParsing="false" onAction="#showModifiedCysFigure" text="Show Figure" />
