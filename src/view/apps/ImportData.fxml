@@ -19,7 +19,7 @@
                      <children>
                         <VBox alignment="CENTER_LEFT" prefHeight="200.0" prefWidth="100.0" spacing="5.0">
                            <children>
-                              <Label text="Proteomics Data" />
+                              <Label text="Peptide Data" />
                               <HBox prefHeight="100.0" prefWidth="200.0">
                                  <children>
                                     <TextField fx:id="txtPtDataFile" prefWidth="300.0" />
@@ -58,7 +58,7 @@
                      <children>
                         <VBox alignment="CENTER_LEFT" prefHeight="200.0" prefWidth="100.0" spacing="5.0">
                            <children>
-                              <Label text="Proteomics Data" />
+                              <Label text="Peptide Data" />
                               <HBox prefHeight="100.0" prefWidth="200.0">
                                  <children>
                                     <TextField fx:id="txtPtDataFile1" prefWidth="300.0" />

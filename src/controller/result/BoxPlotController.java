@@ -213,6 +213,7 @@ public class BoxPlotController {
 
             Text t = new Text(st + paintWidth/4, height + 50, name.get(i));
             t.setTextAlignment(TextAlignment.CENTER);
+
             root.getChildren().addAll(t);
         }
         return root;

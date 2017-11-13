@@ -566,65 +566,67 @@ public class MainController implements Initializable{
 
         //set into different groups
         ArrayList<String> sampleId = new ArrayList<>(sampleGroup.getSampleId());
-        ArrayList<String> g1 = new ArrayList<>();
-        ArrayList<String> g2 = new ArrayList<>();
-        ArrayList<String> gpName = new ArrayList<>();
-        boolean added = false;
+
+        //sample ids in different groups
+        ArrayList<ArrayList<String> > sampleIdGroups = new ArrayList<>();
+        //name for each group
+        Set<String> groupName = new TreeSet<>();
         if(low == null){
-            String g1Str = sampleGroup.getStrInfo(sampleId.get(0), groupId);
-            gpName.add(g1Str);
             for(String sp : sampleId){
-                if(sampleGroup.getStrInfo(sp, groupId).equals(g1Str)){
-                    g1.add(sp);
-                } else {
-                    g2.add(sp);
-                    if(!added){
-                        gpName.add(sampleGroup.getStrInfo(sp, groupId));
-                        added = true;
+                groupName.add(sampleGroup.getStrInfo(sp, groupId));
+            }
+
+            int numGroup = groupName.size();
+            for(int i=0; i<numGroup; i++){
+                ArrayList<String> sIG = new ArrayList<>();
+                sampleIdGroups.add(sIG);
+            }
+            ArrayList<String> gn = new ArrayList<>(groupName);
+            for(String sp : sampleId){
+                String gnTmp = sampleGroup.getStrInfo(sp, groupId);
+                for(int i=0; i<numGroup; i++){
+                    if(gnTmp.equals(gn.get(i))){
+                        sampleIdGroups.get(i).add(sp);
+                        break;
                     }
                 }
             }
         } else {
-            gpName.add("Low");
-            gpName.add("High");
-            for(String sp: sampleId){
+            groupName.add("Low");
+            groupName.add("High");
+            sampleIdGroups.add(new ArrayList<>());
+            sampleIdGroups.add(new ArrayList<>());
+            for(String sp : sampleId){
                 if(sampleGroup.getNumInfo(sp, groupId) < low){
-                    g1.add(sp);
+                    sampleIdGroups.get(0).add(sp);
                 }
 
-                if(sampleGroup.getNumInfo(sp, groupId) > high){
-                    g2.add(sp);
+                if(sampleGroup.getNumInfo(sp, groupId) >= high){
+                    sampleIdGroups.get(1).add(sp);
                 }
             }
         }
 
-        ArrayList<Double> t1 = new ArrayList<>();
-        ArrayList<Double> t2 = new ArrayList<>();
+        ArrayList<ArrayList<Double> > boxData = new ArrayList<>();
+        for(int i=0; i<sampleIdGroups.size(); i++){
+            boxData.add(new ArrayList<>());
+        }
 
         if(tabSel.equals("Peptide")){
-            for(int i=0; i<g1.size(); i++){
-                t1.add(sampleGroup.getPepData(g1.get(i), dataId));
-            }
-
-            for(int i=0; i<g2.size(); i++){
-                t2.add(sampleGroup.getPepData(g2.get(i), dataId));
+            for(int i=0; i<sampleIdGroups.size(); i++){
+                for(int j=0; j<sampleIdGroups.get(i).size(); j++){
+                    boxData.get(i).add(sampleGroup.getPepData(sampleIdGroups.get(i).get(j), dataId));
+                }
             }
         } else if(tabSel.equals("Protein")){
-            for(int i=0; i<g1.size(); i++){
-                t1.add(sampleGroup.getProteinData(g1.get(i), dataId));
-            }
-
-            for(int i=0; i<g2.size(); i++){
-                t2.add(sampleGroup.getProteinData(g2.get(i), dataId));
+            for(int i=0; i<sampleIdGroups.size(); i++){
+                for(int j=0; j<sampleIdGroups.get(i).size(); j++){
+                    boxData.get(i).add(sampleGroup.getProteinData(sampleIdGroups.get(i).get(j), dataId));
+                }
             }
         } else {
             System.err.println("Wrong Tab");
         }
-
-        ArrayList<ArrayList<Double>> dataAll = new ArrayList<>();
-        dataAll.add(t1);
-        dataAll.add(t2);
-
 
         FXMLLoader loaderBP = new FXMLLoader(getClass().getResource("/view/result/BoxPlot.fxml"));
         Parent rootBP = null;
@@ -641,8 +643,7 @@ public class MainController implements Initializable{
         boxPlotDataSelectStageBP.initOwner(menuBar.getScene().getWindow());
 
         BoxPlotController controllerBP = loaderBP.getController();
-        controllerBP.init(dataAll, gpName);
-
+        controllerBP.init(boxData, new ArrayList<>(groupName));
 
         boxPlotDataSelectStageBP.showAndWait();
 
@@ -1189,24 +1190,36 @@ public class MainController implements Initializable{
         proteinDB = new ProteinDB();
         proteinDB.setSpecies(type);
         //proteinSeq = new TreeMap<>();
-        String proteinDBFile = "db/" + type + ".txt";
+        String proteinDBFile = "db/" + type + ".fasta";
         File dbFile = new File(proteinDBFile);
         BufferedReader bufferedReader;
         try {
             bufferedReader = new BufferedReader(new FileReader(dbFile));
 
             String fline;
+            String seq = "";
+            String name = "";
+            String id = "";
             while((fline = bufferedReader.readLine()) != null){
-                String[] vslines = fline.split("\t");
-                //proteinSeq.put(vslines[0], vslines[1]);
-                if(vslines.length != 3){
-                    System.out.println(fline);
-                    for(int i =0; i< vslines.length;i++){
-                        System.out.println(vslines[i]);
+                if(fline.charAt(0) == '>'){
+                    if(seq.equals("")){
+                        String[] vsline = fline.split("\\|");
+                        id = vsline[1];
+                        String[] vsName = vsline[2].split("_");
+                        name = vsName[0];
+                    } else {
+                        proteinDB.add(name, id, seq);
+                        seq = "";
+                        String[] vsline = fline.split("\\|");
+                        id = vsline[1];
+                        String[] vsName = vsline[2].split("_");
+                        name = vsName[0];
                     }
+                } else {
+                    seq = seq + fline.replaceAll("\\s+", "");
                 }
-                proteinDB.add(vslines[1], vslines[0], vslines[2]);
             }
+            proteinDB.add(name, id, seq);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -1659,139 +1672,6 @@ public class MainController implements Initializable{
         } catch (NumberFormatException e) {
             return null;
         }
-    }
-
-    private Group boxPlot(ArrayList<ArrayList<Double>> dataAll, ArrayList<String> name, double width, double height, double top, double left){
-        int numGroup = dataAll.size();
-
-        Group root = new Group();
-
-        double cellWidth = width / numGroup;
-
-        ArrayList<Double> maxEach = new ArrayList<>();
-        ArrayList<Double> minEach = new ArrayList<>();
-        for(int i =0; i < numGroup; i++){
-            maxEach.add(Collections.max(dataAll.get(i)));
-            minEach.add(Collections.min(dataAll.get(i)));
-        }
-
-        double maxAll = Collections.max(maxEach);
-        double minAll = Collections.min(minEach);
-
-        double range = maxAll - minAll;
-
-        double unit = height/range;
-
-        double cellLeft = cellWidth/8;
-        double cellRight = cellWidth/8;
-        if(cellLeft < 2){
-            cellLeft = 2;
-        }
-
-        if(cellRight < 2){
-            cellRight = 2;
-        }
-
-        double paintWidth = cellWidth- cellLeft - cellRight;
-        double widthFence = paintWidth/3;
-
-
-        for(int i= 0; i < numGroup; i++){
-            ArrayList<Double> data = dataAll.get(i);
-            Collections.sort(data);
-
-            int idx = data.size()/4;
-            double q1 = data.get(idx);
-            double q2 = data.get(idx*2);
-            double q3 = data.get(idx*3);
-            double IQR = q3 - q1;
-            double innerFenceLow = q1 - IQR * 1.58;
-            double innerFenceHigh = q3 + IQR * 1.58;
-            double min = data.get(0);
-            double max = data.get(data.size()-1);
-
-            if(innerFenceHigh > max){
-                innerFenceHigh = max;
-            }
-
-            if(innerFenceLow < min){
-                innerFenceLow = min;
-            }
-
-            double st = left + i*cellWidth + cellLeft;
-
-            Rectangle r = new Rectangle();
-            r.setX(st);
-            r.setY(transferY(q3, top, height, minAll, maxAll));
-            r.setWidth(paintWidth);
-            r.setHeight(unit*IQR);
-            r.setFill(Color.TRANSPARENT);
-            r.setStroke(Color.BLACK);
-
-
-            Line md = new Line();
-            md.setStartX(st);
-            md.setStartY(transferY(q2, top, height, minAll, maxAll));
-            md.setEndX(st+paintWidth);
-            md.setEndY(transferY(q2, top, height, minAll, maxAll));
-
-            Line h1 = new Line();
-            h1.setStartX(st + (paintWidth-widthFence)/2);
-            h1.setStartY(transferY(innerFenceLow, top, height, minAll, maxAll));
-            h1.setEndX(st + (paintWidth+widthFence)/2);
-            h1.setEndY(transferY(innerFenceLow, top, height, minAll, maxAll));
-
-            Line h2 = new Line();
-            h2.setStartX(st + (paintWidth-widthFence)/2);
-            h2.setStartY(transferY(innerFenceHigh, top, height, minAll, maxAll));
-            h2.setEndX(st + (paintWidth+widthFence)/2);
-            h2.setEndY(transferY(innerFenceHigh, top, height, minAll, maxAll));
-
-            Line v1 = new Line();
-            v1.setStartX(st + paintWidth/2);
-            v1.setStartY(transferY(innerFenceLow, top, height, minAll, maxAll));
-            v1.setEndX(st + paintWidth/2);
-            v1.setEndY(transferY(q1, top, height, minAll, maxAll));
-
-            Line v2 = new Line();
-            v2.setStartX(st + paintWidth/2);
-            v2.setStartY(transferY(innerFenceHigh, top, height, minAll, maxAll));
-            v2.setEndX(st + paintWidth/2);
-            v2.setEndY(transferY(q3, top, height, minAll, maxAll));
-
-            root.getChildren().addAll(r,md, h1, h2, v1, v2);
-
-            for(int j=data.size()/4;j>=0;j--){
-                if(data.get(j) < innerFenceLow){
-                    Circle pt = new Circle();
-                    pt.setCenterX(st + paintWidth/2);
-                    pt.setCenterY(transferY(data.get(j), top, height, minAll, maxAll));
-                    pt.setRadius(1);
-
-                    root.getChildren().add(pt);
-                }
-            }
-
-            for(int j=data.size()*3/4;j< data.size();j++){
-                if(data.get(j) > innerFenceHigh){
-                    Circle pt = new Circle();
-                    pt.setCenterX(st + paintWidth/2);
-                    pt.setCenterY(transferY(data.get(j), top, height, minAll, maxAll));
-                    pt.setRadius(1);
-
-                    root.getChildren().add(pt);
-                }
-            }
-
-            Text t = new Text(st + paintWidth/4, height + 50, name.get(i));
-            t.setTextAlignment(TextAlignment.CENTER);
-            root.getChildren().addAll(t);
-        }
-        return root;
-    }
-
-    private double transferY(double y, double top, double height, double min, double max){
-        return (top + (max-y)*height/(max-min));
     }
 
 }

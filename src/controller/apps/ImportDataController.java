@@ -108,8 +108,8 @@ public class ImportDataController implements Initializable {
         for(File file : files){
             if(file.isFile()){
                 String fileName = file.getName();
-                if(fileName.charAt(0) != '.' && fileName.substring(fileName.length()-3).equals("txt")){
-                    types.add(fileName.substring(0, fileName.length()-4));
+                if(fileName.charAt(0) != '.' && fileName.substring(fileName.length()-5).equals("fasta")){
+                    types.add(fileName.substring(0, fileName.length()-6));
                 }
             }
             System.out.println(file.getName());
