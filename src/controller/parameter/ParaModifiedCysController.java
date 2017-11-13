@@ -6,7 +6,10 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
 import javafx.scene.control.*;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import java.io.File;
@@ -24,17 +27,15 @@ public class ParaModifiedCysController{
 
     private SampleGroup sampleGroup;
 
+    private String modificationSel;
+
 
     @FXML private ComboBox<String> cmbSample;
     @FXML private TextField textNumResidual;
     @FXML private TextField textTextFile;
-    //@FXML private TextField textFigureFile;
     @FXML private Button btnTextFile;
-    //@FXML private Button btnFigureFile;
-    @FXML private CheckBox cbAcetylation;
-    @FXML private CheckBox cbCarbamidomethylation;
-    @FXML private CheckBox cbPhosphorylation;
-    @FXML private CheckBox cbOxidation;
+    @FXML private VBox vbModification;
+    @FXML private Button btnExportFile;
 
 
     /*
@@ -110,33 +111,17 @@ public class ParaModifiedCysController{
             return;
         }
 
-        ArrayList<Modification.ModificationType> modiSelect = new ArrayList<>();
-        if(cbAcetylation.isSelected()){
-            modiSelect.add(Modification.ModificationType.Acetylation);
-        }
-
-        if(cbCarbamidomethylation.isSelected()){
-            modiSelect.add(Modification.ModificationType.Carbamidomethylation);
-        }
-
-        if(cbOxidation.isSelected()){
-            modiSelect.add(Modification.ModificationType.Oxidation);
-        }
-
-        if(cbPhosphorylation.isSelected()){
-            modiSelect.add(Modification.ModificationType.Phosphorylation);
-        }
-
-        if(modiSelect.size()==0){
+        if(modificationSel == null){
             Alert alert = new Alert(Alert.AlertType.WARNING);
             alert.setTitle("Modification Selection");
             alert.setHeaderText(null);
-            alert.setContentText("Please select one type of modification at least");
+            alert.setContentText("Please select one type of modification");
             alert.showAndWait();
-            cbAcetylation.requestFocus();
             return;
         }
 
+        ArrayList<String> modiSelect = new ArrayList<>();
+        modiSelect.add(modificationSel);
         sampleGroup.outputModiResText(textFile, sample, modiSelect, numResidual);
 
         Stage stage = (Stage) textNumResidual.getScene().getWindow();
@@ -147,10 +132,76 @@ public class ParaModifiedCysController{
     public void init(SampleGroup sampleGroup){
         this.sampleGroup = sampleGroup;
         samples =  new ArrayList<>(sampleGroup.getSampleId());
+        btnExportFile.setDisable(true);
 
         cmbSample.getItems().add("");
         cmbSample.getItems().addAll(samples);
         textNumResidual.setText("15");
+
+        modificationSel = null;
+
+        cmbSample.valueProperty().addListener(new ChangeListener<String>() {
+            @Override
+            public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+                if(newValue.equals("")){
+                    vbModification.getChildren().clear();
+                    btnExportFile.setDisable(true);
+                    return;
+                }
+
+                ToggleGroup group = new ToggleGroup();
+                ArrayList<String> modiTypeAll = new ArrayList<String>(sampleGroup.getModificationTypeSample(newValue));
+                int numModiTypeAll = modiTypeAll.size();
+                int idx = 0;
+                for(int i=0; i<(int) (numModiTypeAll/3); i++){
+                    HBox hBox = new HBox();
+                    hBox.setPrefHeight(400);
+                    hBox.setSpacing(20);
+                    hBox.setAlignment(Pos.CENTER_LEFT);
+
+                    for(int j=0; j<3; j++){
+                        RadioButton radioButton = new RadioButton(modiTypeAll.get(idx));
+                        radioButton.setUserData(modiTypeAll.get(idx));
+                        radioButton.setPrefWidth(160);
+                        radioButton.setToggleGroup(group);
+                        hBox.getChildren().add(radioButton);
+                        idx++;
+                    }
+
+                    vbModification.getChildren().addAll(hBox);
+                }
+
+                int residual = numModiTypeAll % 3;
+                if(residual > 0){
+                    HBox hBox = new HBox();
+                    hBox.setPrefHeight(400);
+                    hBox.setSpacing(20);
+                    hBox.setAlignment(Pos.CENTER_LEFT);
+
+                    for(int i=0; i<residual; i++){
+                        RadioButton radioButton = new RadioButton(modiTypeAll.get(idx));
+                        radioButton.setUserData(modiTypeAll.get(idx));
+                        radioButton.setPrefWidth(160);
+                        radioButton.setToggleGroup(group);
+                        hBox.getChildren().add(radioButton);
+                        idx++;
+                    }
+
+                    vbModification.getChildren().addAll(hBox);
+                }
+
+                group.selectedToggleProperty().addListener(new ChangeListener<Toggle>() {
+                    @Override
+                    public void changed(ObservableValue<? extends Toggle> observable, Toggle oldValue, Toggle newValue) {
+                        if(group.getSelectedToggle() != null){
+                            modificationSel = group.getSelectedToggle().getUserData().toString();
+                        }
+                    }
+                });
+
+                btnExportFile.setDisable(false);
+            }
+        });
 
         textNumResidual.textProperty().addListener(new ChangeListener<String>() {
             @Override

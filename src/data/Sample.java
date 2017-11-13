@@ -40,6 +40,8 @@ public class Sample implements Serializable {
      */
     private TreeMap<String, Protein> proteins;
 
+    private Set<String> modificationTypeAll;
+
     public Sample(String id){
         this.id = id;
         numInfo = new TreeMap();
@@ -47,6 +49,13 @@ public class Sample implements Serializable {
         pepData = new TreeMap<>();
         proteinData = new TreeMap<>();
         proteins = new TreeMap<>();
+        modificationTypeAll = new TreeSet<>();
+    }
+
+    public Set<String> getModificationTypeAll() { return modificationTypeAll; }
+
+    public void addModificationType(String modificationType){
+        modificationTypeAll.add(modificationType);
     }
 
     public void addNumInfo(String name, double value){
@@ -81,6 +90,7 @@ public class Sample implements Serializable {
         } else {
             proteins.get(proteinName).addPeptide(pep);
         }
+        modificationTypeAll.addAll(pep.getModificationTypes());
     }
 
     public void updatePepShow(){

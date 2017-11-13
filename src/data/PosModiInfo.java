@@ -9,24 +9,24 @@ import java.util.TreeMap;
  * Created by gpeng on 2/18/17.
  */
 public class PosModiInfo implements Serializable {
-    private TreeMap<Modification.ModificationType, ArrayList<Double>> modifications;
+    private TreeMap<String, ArrayList<Double>> modifications;
 
 
     public PosModiInfo(){
         modifications = new TreeMap<>();
     }
 
-    public TreeMap<Modification.ModificationType, ArrayList<Double>> getModifications() { return  modifications; }
+    public TreeMap<String, ArrayList<Double>> getModifications() { return  modifications; }
 
-    public PosModiInfo(Modification.ModificationType mt, double percent){
+    public PosModiInfo(String mt, double percent){
         modifications = new TreeMap<>();
         ArrayList<Double> tmp = new ArrayList<>();
         tmp.add(percent);
         modifications.put(mt, tmp);
     }
 
-    public boolean modiExist(ArrayList<Modification.ModificationType> mTypes){
-        for(Modification.ModificationType mt : mTypes){
+    public boolean modiExist(ArrayList<String> mTypes){
+        for(String mt : mTypes){
             if((modifications.keySet()).contains(mt)){
                 return true;
             }
@@ -34,7 +34,7 @@ public class PosModiInfo implements Serializable {
         return false;
     }
 
-    public boolean modiExist(Modification.ModificationType mt){
+    public boolean modiExist(String mt){
         if(modifications.keySet().contains(mt)){
             return true;
         } else {
@@ -42,7 +42,7 @@ public class PosModiInfo implements Serializable {
         }
     }
 
-    public void addModi(Modification.ModificationType mt, double percent){
+    public void addModi(String mt, double percent){
         ArrayList<Double> tmp = modifications.get(mt);
         if(tmp == null){
             ArrayList<Double> val = new ArrayList<>();
@@ -53,7 +53,7 @@ public class PosModiInfo implements Serializable {
         }
     }
 
-    public ArrayList<Double> getPercent(Modification.ModificationType mt){
+    public ArrayList<Double> getPercent(String mt){
         return modifications.get(mt);
     }
 }

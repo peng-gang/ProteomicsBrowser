@@ -70,6 +70,14 @@ public class Peptide implements Serializable {
         this.modifications = modifications;
     }
 
+    public Set<String> getModificationTypes(){
+        Set<String> rlt = new HashSet<>();
+        for(Modification modi : modifications){
+            rlt.add(modi.getModificationType());
+        }
+        return rlt;
+    }
+
     /*
     public Peptide(String id, String sequence, Integer charge, Double mz, Double score, Double abundance){
         this.id = id;
@@ -117,7 +125,7 @@ public class Peptide implements Serializable {
         } else {
             rlt += "Modification: \n";
             for(Modification md : modifications){
-                rlt += "\t" + md.getType() + ": ";
+                rlt += "\t" + md.getModificationType() + ": ";
                 rlt += (md.getPos().get(0) + 1) + "(" + md.getPercent().get(0) + ")";
                 for(int i=1; i<md.getPos().size();i++){
                     rlt += ";" + md.getPos().get(i) + "(" + md.getPercent().get(i) + ")";
@@ -129,7 +137,7 @@ public class Peptide implements Serializable {
         return rlt;
     }
 
-    public String getModiInfo(ArrayList<Modification.ModificationType> modiSelected){
+    public String getModiInfo(ArrayList<String> modiSelected){
         if(modifications.size() == 0){
             return null;
         }
@@ -137,11 +145,11 @@ public class Peptide implements Serializable {
         String rlt = sequence;
         rlt = rlt + "\t";
 
-        TreeMap<Integer, Modification.ModificationType> modiPosAll = new TreeMap<>();
+        TreeMap<Integer, String> modiPosAll = new TreeMap<>();
         for(Modification modification : modifications){
-            if(modiSelected.contains(modification.getType())){
+            if(modiSelected.contains(modification.getModificationType())){
                 for(int i=0; i<modification.getPos().size();i++){
-                    modiPosAll.put(modification.getPos().get(i), modification.getType());
+                    modiPosAll.put(modification.getPos().get(i), modification.getModificationType());
                 }
             }
         }
@@ -150,7 +158,7 @@ public class Peptide implements Serializable {
             return null;
         }
 
-        for(Map.Entry<Integer, Modification.ModificationType> entry : modiPosAll.entrySet()){
+        for(Map.Entry<Integer, String> entry : modiPosAll.entrySet()){
             rlt = rlt + "[" + (entry.getKey() + 1) + "]" + entry.getValue() + "(" + sequence.charAt(entry.getKey()) + ")";
             if(!entry.equals(modiPosAll.lastEntry())){
                 rlt = rlt + "|";
@@ -161,14 +169,14 @@ public class Peptide implements Serializable {
     }
 
     //get modified positions in a peptide
-    public ArrayList<Integer> getModiPos(ArrayList<Modification.ModificationType> modiSelected){
+    public ArrayList<Integer> getModiPos(ArrayList<String> modiSelected){
         if(modifications.size() == 0){
             return null;
         }
 
         Set<Integer> pos = new TreeSet<>();
         for(Modification modification : modifications){
-            if(modiSelected.contains(modification.getType())){
+            if(modiSelected.contains(modification.getModificationType())){
                 for(int i=0; i<modification.getPos().size();i++){
                     pos.add(modification.getPos().get(i));
                 }

@@ -48,14 +48,10 @@
                               <Insets left="20.0" />
                            </VBox.margin>
                         </Label>
-                        <AnchorPane prefHeight="200.0" prefWidth="200.0">
-                           <children>
-                              <CheckBox fx:id="cbOxidation" layoutX="160.0" layoutY="80.0" mnemonicParsing="false" text="Oxidation" />
-                              <CheckBox fx:id="cbAcetylation" layoutX="20.0" layoutY="20.0" mnemonicParsing="false" text="Acetylation" />
-                              <CheckBox fx:id="cbCarbamidomethylation" layoutX="160.0" layoutY="20.0" mnemonicParsing="false" text="Carbamidomethylation" />
-                              <CheckBox fx:id="cbPhosphorylation" layoutX="20.0" layoutY="80.0" mnemonicParsing="false" text="Phosphorylation" />
-                           </children>
-                        </AnchorPane>
+                        <VBox fx:id="vBoxModification" prefHeight="200.0" prefWidth="100.0" spacing="10.0">
+                           <VBox.margin>
+                              <Insets left="20.0" />
+                           </VBox.margin></VBox>
                      </children>
                   </VBox>
                   <VBox prefHeight="100.0" prefWidth="100.0">

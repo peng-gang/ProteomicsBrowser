@@ -20,12 +20,12 @@ public class Protein implements Serializable {
     // index from 0
     private ArrayList<Integer> pepStart;
     private ArrayList<Integer> pepEnd;
-    private TreeSet<Modification.ModificationType> modiTypeAll;
+    private TreeSet<String> modiTypeAll;
     private TreeMap<Integer, PosModiInfo> modiInfo;
     // <= 0, not show
     private ArrayList<Integer> pepShow;
     //Modification information for selected peptides
-    private TreeSet<Modification.ModificationType> modiTypeAllSel;
+    private TreeSet<String> modiTypeAllSel;
     private TreeMap<Integer, PosModiInfo> modiInfoSel;
 
 
@@ -110,10 +110,10 @@ public class Protein implements Serializable {
     public ArrayList<Peptide> getPeptides() { return peptides; }
     public ArrayList<Integer> getPepStart() { return  pepStart; }
     public ArrayList<Integer> getPepEnd() { return pepEnd; }
-    public TreeSet<Modification.ModificationType> getModiTypeAll() { return modiTypeAll; }
+    public TreeSet<String> getModiTypeAll() { return modiTypeAll; }
     public Set<Integer> getModiPos() { return  modiInfo.keySet(); }
     public TreeMap<Integer, PosModiInfo> getModiInfo() { return  modiInfo; }
-    public TreeSet<Modification.ModificationType> getModiTypeAllSel() { return  modiTypeAllSel; }
+    public TreeSet<String> getModiTypeAllSel() { return  modiTypeAllSel; }
     public Set<Integer> getModiPosSel() { return  modiInfoSel.keySet(); }
     public TreeMap<Integer, PosModiInfo> getModiInfoSel() { return modiInfoSel; }
     public ArrayList<Integer> getPepShow() { return  pepShow; }
@@ -123,7 +123,7 @@ public class Protein implements Serializable {
     public void setPepShow(ArrayList<Integer> pepShow) { this.pepShow = pepShow; }
 
 
-    public ArrayList<Integer> getModiPos(Modification.ModificationType mt) {
+    public ArrayList<Integer> getModiPos(String mt) {
         ArrayList<Integer> rlt = new ArrayList<>();
         for(Map.Entry<Integer, PosModiInfo> entry : modiInfo.entrySet()){
             Integer key = entry.getKey();
@@ -136,7 +136,7 @@ public class Protein implements Serializable {
     }
 
 
-    public ArrayList<Integer> getModiPos(ArrayList<Modification.ModificationType> mts) {
+    public ArrayList<Integer> getModiPos(ArrayList<String> mts) {
         ArrayList<Integer> rlt = new ArrayList<>();
         for(Map.Entry<Integer, PosModiInfo> entry : modiInfo.entrySet()){
             Integer key = entry.getKey();
@@ -148,7 +148,7 @@ public class Protein implements Serializable {
         return rlt;
     }
 
-    public ArrayList<Integer> getModiPosSel(Modification.ModificationType mt){
+    public ArrayList<Integer> getModiPosSel(String mt){
         ArrayList<Integer> rlt = new ArrayList<>();
         for(Map.Entry<Integer, PosModiInfo> entry : modiInfoSel.entrySet()){
             Integer key = entry.getKey();
@@ -160,7 +160,7 @@ public class Protein implements Serializable {
         return rlt;
     }
 
-    public ArrayList<Integer> getModiPosSel(ArrayList<Modification.ModificationType> mts){
+    public ArrayList<Integer> getModiPosSel(ArrayList<String> mts){
         ArrayList<Integer> rlt = new ArrayList<>();
         for(Map.Entry<Integer, PosModiInfo> entry : modiInfoSel.entrySet()){
             Integer key = entry.getKey();
@@ -173,7 +173,7 @@ public class Protein implements Serializable {
     }
 
 
-    public ArrayList<Integer> getModiPosSel1(Modification.ModificationType mt){
+    public ArrayList<Integer> getModiPosSel1(String mt){
         ArrayList<Integer> rlt = new ArrayList<>();
         for(Map.Entry<Integer, PosModiInfo> entry : modiInfoSel.entrySet()){
             Integer key = entry.getKey();
@@ -185,7 +185,7 @@ public class Protein implements Serializable {
         return rlt;
     }
 
-    public ArrayList<Integer> getModiPosSel1(ArrayList<Modification.ModificationType> mts){
+    public ArrayList<Integer> getModiPosSel1(ArrayList<String> mts){
         ArrayList<Integer> rlt = new ArrayList<>();
         for(Map.Entry<Integer, PosModiInfo> entry : modiInfoSel.entrySet()){
             Integer key = entry.getKey();
@@ -753,15 +753,15 @@ public class Protein implements Serializable {
 
                 if(pep.isModified()){
                     for(Modification m : pep.getModifications()){
-                        modiTypeAll.add(m.getType());
+                        modiTypeAll.add(m.getModificationType());
                         for(int i = 0; i < m.getPos().size(); i++){
                             int modiPos = m.getPos().get(i) + indexF;
                             PosModiInfo tmp = modiInfo.get(modiPos);
                             if(tmp == null){
-                                PosModiInfo posModiInfo = new PosModiInfo(m.getType(), m.getPercent().get(i));
+                                PosModiInfo posModiInfo = new PosModiInfo(m.getModificationType(), m.getPercent().get(i));
                                 modiInfo.put(modiPos, posModiInfo);
                             } else {
-                                tmp.addModi(m.getType(), m.getPercent().get(i));
+                                tmp.addModi(m.getModificationType(), m.getPercent().get(i));
                             }
                         }
                     }
@@ -779,15 +779,15 @@ public class Protein implements Serializable {
             if(pepShow.get(i) > 0){
                 if(peptides.get(i).isModified()){
                     for(Modification m : peptides.get(i).getModifications()){
-                        modiTypeAllSel.add(m.getType());
+                        modiTypeAllSel.add(m.getModificationType());
                         for(int j=0; j<m.getPos().size();j++){
                             int modiPos = m.getPos().get(j) + pepStart.get(i);
                             PosModiInfo tmp = modiInfoSel.get(modiPos);
                             if(tmp == null){
-                                PosModiInfo posModiInfo = new PosModiInfo(m.getType(), m.getPercent().get(j));
+                                PosModiInfo posModiInfo = new PosModiInfo(m.getModificationType(), m.getPercent().get(j));
                                 modiInfoSel.put(modiPos, posModiInfo);
                             } else {
-                                tmp.addModi(m.getType(), m.getPercent().get(j));
+                                tmp.addModi(m.getModificationType(), m.getPercent().get(j));
                             }
                         }
                     }
@@ -918,12 +918,12 @@ public class Protein implements Serializable {
             }
 
             PosModiInfo posModiInfo = modiInfo.get(pos);
-            TreeMap<Modification.ModificationType, ArrayList<Double>> modis = posModiInfo.getModifications();
+            TreeMap<String, ArrayList<Double>> modis = posModiInfo.getModifications();
             Set modiTypeSet = modis.entrySet();
             Iterator it = modiTypeSet.iterator();
             while(it.hasNext()){
                 Map.Entry me = (Map.Entry) it.next();
-                Modification.ModificationType mt = (Modification.ModificationType) me.getKey();
+                String mt = (String) me.getKey();
                 ArrayList<Double> pc = (ArrayList<Double>) me.getValue();
                 ArrayList<Double> pcCutOff = new ArrayList<>();
                 for(int i=0; i<pc.size(); i++){
@@ -949,7 +949,7 @@ public class Protein implements Serializable {
     }
 
 
-    public ArrayList<String> getModiResInfo(ArrayList<Modification.ModificationType> modiSelected, int numResidual){
+    public ArrayList<String> getModiResInfo(ArrayList<String> modiSelected, int numResidual){
         ArrayList<String> rlt = new ArrayList<>();
 
         for(int i=0; i<peptides.size();i++){
@@ -984,7 +984,7 @@ public class Protein implements Serializable {
         return rlt;
     }
 
-    public ArrayList<Pair<String, Integer> > getModiRes(ArrayList<Modification.ModificationType> modiSelected, int numResidual){
+    public ArrayList<Pair<String, Integer> > getModiRes(ArrayList<String> modiSelected, int numResidual){
         ArrayList<Pair<String, Integer> > rlt = new ArrayList<>();
         for(int i=0; i<peptides.size(); i++){
             if(pepShow.get(i) > 0){

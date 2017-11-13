@@ -28,10 +28,6 @@ public class PBrowserController implements Initializable {
     // controllers in view
     @FXML private Canvas canvas;
     @FXML private Slider sliderZoom;
-    @FXML private CheckBox cbAcetylation;
-    @FXML private CheckBox cbCarbamidomethylation;
-    @FXML private CheckBox cbPhosphorylation;
-    @FXML private CheckBox cbOxidation;
     @FXML private Label lblPep;
     @FXML private Label lblPos;
     @FXML private ComboBox<String> combSample;
@@ -41,10 +37,12 @@ public class PBrowserController implements Initializable {
     @FXML private ComboBox<Integer> combModiPos;
     @FXML private Label lblStart;
     @FXML private Label lblEnd;
+    @FXML private VBox vBoxModification;
 
 
     private boolean initialized = false;
 
+    /*
     //Legend 1
     private HBox hbAcetylation;
     private Label lbAcetylation1;
@@ -61,6 +59,7 @@ public class PBrowserController implements Initializable {
     private HBox hbOxidation;
     private Label lbOxidation1;
     private Label lbOxidation2;
+    */
 
 
     //Legend 2
@@ -81,6 +80,7 @@ public class PBrowserController implements Initializable {
     private Label lbAbundance42;
 
 
+
     private GraphicsContext gc;
 
 
@@ -94,6 +94,7 @@ public class PBrowserController implements Initializable {
     private String selectedSample = null;
     private String selectedProtein = null;
     private Protein protein = null;
+    private ArrayList<String> modificationTypeAll;
 
     private double scaleX = 1;
     private double scaleY = 1;
@@ -116,7 +117,7 @@ public class PBrowserController implements Initializable {
     private ArrayList<PepPos> arrangePep;
 
     //selected modifications to show
-    private ArrayList<Modification.ModificationType> modiSelected;
+    private ArrayList<String> modiSelected;
 
     public Protein getProtein() { return  protein; }
     public boolean getInitialized() { return initialized; }
@@ -144,14 +145,89 @@ public class PBrowserController implements Initializable {
         draw();
     }
 
+    private void initModification(){
+        vBoxModification.getChildren().clear();
+        modiSelected.clear();
+        modiSelected.addAll(modificationTypeAll);
+
+        int numModi = modificationTypeAll.size();
+        for(int i=0; i<(int)(numModi/2); i++){
+            HBox hb = new HBox();
+            hb.setSpacing(20);
+
+            CheckBox checkBox1 = new CheckBox(modificationTypeAll.get(i*2));
+            CheckBox checkBox2 = new CheckBox(modificationTypeAll.get(i*2+1));
+
+            checkBox1.setSelected(true);
+            checkBox2.setSelected(true);
+            checkBox1.selectedProperty().addListener(new ChangeListener<Boolean>() {
+                @Override
+                public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+                    if(modiSelected.contains(checkBox1.getText())){
+                        if(!newValue){
+                            modiSelected.remove(checkBox1.getText());
+                        }
+                    } else {
+                        if(newValue){
+                            modiSelected.add(checkBox1.getText());
+                        }
+                    }
+                    updateCombModiPos();
+                    draw();
+                }
+            });
+
+            checkBox2.selectedProperty().addListener(new ChangeListener<Boolean>() {
+                @Override
+                public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+                    if(modiSelected.contains(checkBox2.getText())){
+                        if(!newValue){
+                            modiSelected.remove(checkBox2.getText());
+                        }
+                    } else {
+                        if(newValue){
+                            modiSelected.add(checkBox2.getText());
+                        }
+                    }
+                    updateCombModiPos();
+                    draw();
+                }
+            });
+
+            hb.getChildren().addAll(checkBox1, checkBox2);
+            vBoxModification.getChildren().add(hb);
+        }
+
+        if(numModi%2 == 1){
+            HBox hb = new HBox();
+            CheckBox checkBox = new CheckBox(modificationTypeAll.get(modificationTypeAll.size()-1));
+            checkBox.setSelected(true);
+
+            checkBox.selectedProperty().addListener(new ChangeListener<Boolean>() {
+                @Override
+                public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+                    if(modiSelected.contains(checkBox.getText())){
+                        if(!newValue){
+                            modiSelected.remove(checkBox.getText());
+                        }
+                    } else {
+                        if(newValue){
+                            modiSelected.add(checkBox.getText());
+                        }
+                    }
+                    updateCombModiPos();
+                    draw();
+                }
+            });
+
+            hb.getChildren().add(checkBox);
+            vBoxModification.getChildren().add(hb);
+        }
+    }
+
     public void show(){
         combSample.getItems().addAll(sampleId);
         combProtein.getItems().addAll(proteinId);
-
-        modiSelected.add(Modification.ModificationType.Acetylation);
-        modiSelected.add(Modification.ModificationType.Carbamidomethylation);
-        modiSelected.add(Modification.ModificationType.Oxidation);
-        modiSelected.add(Modification.ModificationType.Phosphorylation);
 
         combSample.valueProperty().addListener(new ChangeListener<String>() {
             @Override
@@ -159,6 +235,12 @@ public class PBrowserController implements Initializable {
                 selectedSample = newValue;
                 if(selectedProtein != null && selectedSample !=null){
                     protein = sampleGroup.getProtein(selectedSample, selectedProtein);
+                    //init modification selection
+                    modificationTypeAll = new ArrayList<>(protein.getModiTypeAll());
+
+                    vBoxModification.getChildren().clear();
+                    initModification();
+
                     //clear combModiPos first
                     combModiPos.getSelectionModel().clearSelection();
                     combModiPos.getItems().clear();
@@ -186,6 +268,10 @@ public class PBrowserController implements Initializable {
                 selectedProtein = newValue;
                 if(selectedProtein != null && selectedSample !=null){
                     protein = sampleGroup.getProtein(selectedSample, selectedProtein);
+                    modificationTypeAll = new ArrayList<String>(protein.getModiTypeAll());
+                    vBoxModification.getChildren().clear();
+                    initModification();
+
                     combModiPos.getSelectionModel().clearSelection();
                     combModiPos.getItems().clear();
                     combModiPos.getItems().addAll(protein.getModiPosSel1(modiSelected));
@@ -225,6 +311,7 @@ public class PBrowserController implements Initializable {
         });
 
 
+        /*
         cbAcetylation.selectedProperty().addListener(new ChangeListener<Boolean>() {
             @Override
             public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
@@ -292,6 +379,7 @@ public class PBrowserController implements Initializable {
                 draw();
             }
         });
+        */
 
 
         combModiPos.valueProperty().addListener(new ChangeListener<Integer>() {
@@ -326,9 +414,36 @@ public class PBrowserController implements Initializable {
         }
     }
 
+    private String computeRgbString(Color color) {
+        String rlt = "rgb(" + (int) (255 * color.getRed()) + ","
+                + (int) (255 * color.getGreen()) + ","
+                + (int) (255 * color.getBlue()) + ")";
+        return rlt;
+    }
+
     private void legend(){
         vbLegend.getChildren().clear();
 
+        for(String modiType : modiSelected){
+            HBox hbLegend = new HBox();
+            hbLegend.setAlignment(Pos.CENTER_LEFT);
+            hbLegend.setSpacing(5);
+            Label l1 = new Label("");
+            String st = "-fx-background-color: " + computeRgbString(sampleGroup.getModificationColor(modiType));
+            l1.setStyle(st);
+            l1.setPrefHeight(10);
+            l1.setPrefWidth(10);
+            Label l2;
+            if(modiType.length() > 12){
+                l2 = new Label(modiType.substring(0, 10) + "...");
+            } else {
+                l2 = new Label(modiType);
+            }
+
+            hbLegend.getChildren().addAll(l1, l2);
+            vbLegend.getChildren().add(hbLegend);
+        }
+        /*
         if(cbAcetylation.isSelected()){
             vbLegend.getChildren().add(hbAcetylation);
         }
@@ -346,6 +461,7 @@ public class PBrowserController implements Initializable {
         vbLegend.getChildren().add(hbAbundance2);
         vbLegend.getChildren().add(hbAbundance3);
         vbLegend.getChildren().add(hbAbundance4);
+        */
     }
 
     private void initSBar(double val){
@@ -407,6 +523,29 @@ public class PBrowserController implements Initializable {
 
             if(pp.getPep().isModified()){
                 ArrayList<Modification> modifications = pp.getPep().getModifications();
+                for(String modiType:modiSelected){
+                    gc.setFill(sampleGroup.getModificationColor(modiType));
+                    for(Modification modi : modifications){
+                        if(modi.getModificationType().equals(modiType)){
+                            for(int i=0; i<modi.getPos().size(); i++){
+                                double leftX = leftPix + (modi.getPos().get(i) + pp.getStart()) * pixPerLocus * scaleX + 0.5;
+                                double topY = tlY + (1.0-modi.getPercent().get(i)/100.0) * pixPerPep * scaleY;
+                                double width = pixPerLocus * scaleX - 0.5;
+                                double height = scaleY * pixPerPep * modi.getPercent().get(i)/100.0;
+
+                                leftX = leftX - st;
+                                double rightX = leftX + width;
+                                if(leftX < canvasWidth && rightX > 0){
+                                    leftX = Math.max(leftX, 0);
+                                    rightX = Math.min(rightX, canvasWidth);
+                                    gc.fillRect(leftX, topY, (rightX-leftX), height);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                /*
                 if(cbAcetylation.isSelected()){
                     gc.setFill(Color.MAGENTA);
                     for(Modification modi : modifications){
@@ -494,6 +633,7 @@ public class PBrowserController implements Initializable {
                         }
                     }
                 }
+                */
             }
         }
 
@@ -599,10 +739,10 @@ public class PBrowserController implements Initializable {
         arrangePep = new ArrayList();
         modiSelected = new ArrayList<>();
 
-        cbAcetylation.setSelected(true);
-        cbCarbamidomethylation.setSelected(true);
-        cbOxidation.setSelected(true);
-        cbPhosphorylation.setSelected(true);
+        //cbAcetylation.setSelected(true);
+        //cbCarbamidomethylation.setSelected(true);
+        //cbOxidation.setSelected(true);
+        //cbPhosphorylation.setSelected(true);
         sbarCanvas.setVisible(false);
         combModiPos.setDisable(true);
 
@@ -621,6 +761,7 @@ public class PBrowserController implements Initializable {
         sliderZoom.setMajorTickUnit(0.25);
 
 
+        /*
         hbAcetylation = new HBox();
         hbAcetylation.setAlignment(Pos.CENTER_LEFT);
         hbAcetylation.setSpacing(5);
@@ -661,6 +802,7 @@ public class PBrowserController implements Initializable {
         lbOxidation1.setPrefWidth(10);
         lbOxidation2 = new Label("Oxidation");
         hbOxidation.getChildren().addAll(lbOxidation1, lbOxidation2);
+        */
 
 
 
@@ -754,12 +896,12 @@ public class PBrowserController implements Initializable {
 
                     String txtShow = "Modifications at position: " + (idxX +1) + "\nTotal peptides: " + numTotal + "\n";
 
-                    TreeMap<Modification.ModificationType, ArrayList<Double>> modis =  posModiInfo.getModifications();
+                    TreeMap<String, ArrayList<Double>> modis =  posModiInfo.getModifications();
                     Set set = modis.entrySet();
                     Iterator it = set.iterator();
                     while(it.hasNext()){
                         Map.Entry me = (Map.Entry) it.next();
-                        Modification.ModificationType mt = (Modification.ModificationType) me.getKey();
+                        String mt = (String) me.getKey();
                         ArrayList<Double> pc = (ArrayList<Double>) me.getValue();
                         txtShow += mt + ": " + pc.size() + "\n";
                         txtShow += pc.get(0);

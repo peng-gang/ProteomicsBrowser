@@ -1640,6 +1640,7 @@ public class MainController implements Initializable{
         sampleGroup.initPepCutoff();
         sampleGroup.updatePepShow();
         sampleGroup.rawAbundance();
+        sampleGroup.initModificationColor();
         return true;
     }
 

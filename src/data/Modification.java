@@ -10,20 +10,23 @@ import java.util.IntSummaryStatistics;
  * Created by gpeng on 2/10/17.
  */
 public class Modification implements Serializable {
+    /*
     public enum ModificationType {
         Acetylation, Carbamidomethylation, Phosphorylation, Oxidation
     }
+    */
 
-    private ModificationType type;
+    //private ModificationType type;
+    private String modificationType;
     private ArrayList<Integer> pos;
     private ArrayList<Double>  percent;
 
-    public ModificationType getType() { return type; }
+    public String getModificationType() { return modificationType; }
     public ArrayList<Integer> getPos() { return  pos; }
     public ArrayList<Double> getPercent() { return percent; }
 
-    public Modification(ModificationType type, ArrayList<Integer> pos, ArrayList<Double> percent){
-        this.type = type;
+    public Modification(String modificationType, ArrayList<Integer> pos, ArrayList<Double> percent){
+        this.modificationType = modificationType;
         this.pos = pos;
         this.percent = percent;
     }
@@ -49,6 +52,9 @@ public class Modification implements Serializable {
             }
         }
 
+        modificationType = typeTmp;
+
+        /*
         switch (typeTmp){
             case "acetylation":
                 type = ModificationType.Acetylation;
@@ -66,5 +72,6 @@ public class Modification implements Serializable {
                 System.err.println("Cannot find " + typeTmp);
                 break;
         }
+        */
     }
 }

@@ -1,5 +1,6 @@
 package data;
 
+import javafx.scene.paint.Color;
 import javafx.util.Pair;
 import project.PublicInfo;
 
@@ -34,8 +35,13 @@ public class SampleGroup implements Serializable {
     private boolean flagiBAQ = false;
     private boolean flagiBAQMedianNorm = false;
 
-
     private boolean flagAbundanceRange = false;
+
+    //all kinds of modifications in data
+    private Set<String> modificationTypeAll;
+
+    private Map<String, Double> modificationColor;
+
 
 
     public SampleGroup(){
@@ -49,6 +55,34 @@ public class SampleGroup implements Serializable {
         proteinIntegrationType = PublicInfo.ProteinIntegrationType.Raw;
         proteinStatus = PublicInfo.ProteinStatus.Unnormalized;
         selProteinNorm = null;
+
+        modificationTypeAll = new TreeSet<>();
+        modificationColor = new TreeMap<>();
+    }
+
+    public void initModificationColor(){
+        modificationColor.clear();
+        int numModi = modificationTypeAll.size();
+        int idx = 0;
+        double div = 360.0/numModi;
+        for(String modi:modificationTypeAll){
+            modificationColor.put(modi, (div * idx + 15) % 360);
+            idx++;
+        }
+    }
+
+    public Color getModificationColor(String modi){
+        return Color.hsb(modificationColor.get(modi), 0.85, 0.99);
+    }
+
+    public Set<String> getModificationTypeAll() { return modificationTypeAll; }
+
+    public Set<String> getModificationTypeSample(String sampleId) {
+        return samples.get(sampleId).getModificationTypeAll();
+    }
+
+    public void addModificationType(String modificationType){
+        modificationTypeAll.add(modificationType);
     }
 
 
@@ -135,6 +169,7 @@ public class SampleGroup implements Serializable {
             samples.get(sample).addPeptide(proteinName, proteinSequence, pep);
             this.proteinName.add(proteinName);
         }
+        this.modificationTypeAll.addAll(pep.getModificationTypes());
     }
 
     public void setProteinIntegrationType(PublicInfo.ProteinIntegrationType proteinIntegrationType){
@@ -503,7 +538,7 @@ public class SampleGroup implements Serializable {
     }
 
 
-    public void outputModiResText(File textFile,  String sample, ArrayList<Modification.ModificationType> modiSelected, int numResidual){
+    public void outputModiResText(File textFile,  String sample, ArrayList<String> modiSelected, int numResidual){
 
         FileWriter fileWriter= null;
         try {
@@ -536,7 +571,7 @@ public class SampleGroup implements Serializable {
         }
     }
 
-    public ArrayList<Map<Character, Double>> outputModiResFreq(String sample, ArrayList<Modification.ModificationType> modiSelected, int numResidual){
+    public ArrayList<Map<Character, Double>> outputModiResFreq(String sample, ArrayList<String> modiSelected, int numResidual){
         ArrayList<Pair<String, Integer> > modiRes = new ArrayList<>();
         for(Protein protein : samples.get(sample).getProteins()){
             modiRes.addAll(protein.getModiRes(modiSelected, numResidual));
