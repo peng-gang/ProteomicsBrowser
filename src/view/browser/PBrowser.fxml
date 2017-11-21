@@ -10,9 +10,9 @@
 
 <HBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="1100.0" prefWidth="1300.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.browser.PBrowserController">
    <children>
-      <VBox prefHeight="1100.0" prefWidth="350.0" spacing="10.0">
+      <VBox prefHeight="1100.0" prefWidth="350.0" spacing="30.0">
          <children>
-            <VBox spacing="5.0">
+            <VBox prefHeight="331.0" prefWidth="350.0" spacing="5.0">
                <children>
                   <Label text="Figure Options">
                      <font>
@@ -38,7 +38,7 @@
                            </VBox.margin></Slider>
                      </children>
                   </VBox>
-                  <VBox prefHeight="200.0" prefWidth="100.0">
+                  <VBox prefHeight="148.0" prefWidth="350.0">
                      <children>
                         <Label text="Modification To Show">
                            <font>
@@ -48,13 +48,13 @@
                               <Insets left="20.0" />
                            </VBox.margin>
                         </Label>
-                        <VBox fx:id="vBoxModification" prefHeight="200.0" prefWidth="100.0" spacing="10.0">
+                        <VBox fx:id="vBoxModification" prefHeight="142.0" prefWidth="330.0" spacing="10.0">
                            <VBox.margin>
                               <Insets left="20.0" />
                            </VBox.margin></VBox>
                      </children>
                   </VBox>
-                  <VBox prefHeight="100.0" prefWidth="100.0">
+                  <VBox prefHeight="69.0" prefWidth="350.0">
                      <children>
                         <Label text="Position With Modification">
                            <font>
@@ -73,9 +73,9 @@
                   </VBox>
                </children>
             </VBox>
-            <VBox prefHeight="200.0" prefWidth="100.0">
+            <VBox prefHeight="108.0" prefWidth="350.0">
                <children>
-                  <Label text="Selection Option">
+                  <Label text="Selection Options">
                      <font>
                         <Font size="24.0" />
                      </font>
@@ -108,6 +108,54 @@
                      <VBox.margin>
                         <Insets left="20.0" />
                      </VBox.margin>
+                  </HBox>
+               </children>
+            </VBox>
+            <VBox prefWidth="100.0" spacing="5.0">
+               <VBox.margin>
+                  <Insets />
+               </VBox.margin>
+               <children>
+                  <Label text="Peptides Combination">
+                     <VBox.margin>
+                        <Insets left="10.0" />
+                     </VBox.margin>
+                     <font>
+                        <Font size="24.0" />
+                     </font>
+                  </Label>
+                  <HBox alignment="BOTTOM_LEFT" prefHeight="38.0" prefWidth="350.0" spacing="20.0">
+                     <children>
+                        <RadioButton fx:id="rbYes" disable="true" mnemonicParsing="false" onAction="#pepCombineYes" text="Yes">
+                           <font>
+                              <Font size="18.0" />
+                           </font>
+                           <toggleGroup>
+                              <ToggleGroup fx:id="groupPepCombine" />
+                           </toggleGroup></RadioButton>
+                        <RadioButton fx:id="rbNo" disable="true" mnemonicParsing="false" onAction="#pepCombineNo" selected="true" text="No" toggleGroup="$groupPepCombine">
+                           <font>
+                              <Font size="18.0" />
+                           </font></RadioButton>
+                     </children>
+                     <VBox.margin>
+                        <Insets left="20.0" />
+                     </VBox.margin>
+                  </HBox>
+                  <VBox fx:id="vbCriteria" prefHeight="200.0" prefWidth="100.0">
+                     <VBox.margin>
+                        <Insets left="10.0" />
+                     </VBox.margin>
+                     <children>
+                        <VBox fx:id="vbPepDoubleInfo" prefWidth="100.0" />
+                        <VBox fx:id="vbPepStrInfo" prefWidth="100.0" />
+                        <VBox fx:id="vbModification" prefWidth="100.0" />
+                     </children>
+                  </VBox>
+                  <HBox alignment="CENTER" prefHeight="50.0" prefWidth="200.0">
+                     <children>
+                        <Button fx:id="btnCombine" disable="true" mnemonicParsing="false" onAction="#combine" text="Combine" />
+                     </children>
                   </HBox>
                </children>
             </VBox>

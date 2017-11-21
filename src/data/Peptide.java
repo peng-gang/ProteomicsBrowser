@@ -1,6 +1,8 @@
 package data;
 
 
+import apple.laf.JRSUIUtils;
+
 import java.io.Serializable;
 import java.util.*;
 import java.util.function.DoubleToLongFunction;
@@ -34,6 +36,20 @@ public class Peptide implements Serializable {
     public Double getAbundance() { return  abundance;}
     public int getNumModi() { return modifications.size();}
     public ArrayList<Modification> getModifications() { return  modifications;}
+    public ArrayList<Modification> getModifications(ArrayList<String> modiType) {
+        ArrayList<Modification> rlt = new ArrayList<>();
+        if(modiType.size()==0){
+            return rlt;
+        }
+
+        for(Modification modi : modifications){
+            if(modiType.contains(modi.getModificationType())){
+                rlt.add(modi);
+            }
+        }
+
+        return rlt;
+    }
 
     public TreeMap<String, Double> getDoubleInfo() { return doubleInfo; }
     public TreeMap<String, String> getStrInfo() { return strInfo; }
@@ -50,6 +66,18 @@ public class Peptide implements Serializable {
         this.modifications.add(modi);
     }
     public void setModification(ArrayList<Modification> modi) { this.modifications = modi; }
+
+    public TreeSet<Integer> getModificationPos(String modiType) {
+        TreeSet<Integer> rlt = new TreeSet<>();
+        for(Modification modi : modifications){
+            if(modi.getModificationType().equals(modiType)){
+                rlt.addAll(modi.getPos());
+            }
+        }
+        return rlt;
+    }
+
+
 
     public Peptide(String id, String sequence, Double abundance, TreeMap<String, Double> doubleInfo, TreeMap<String, String> strInfo){
         this.id = id;
@@ -103,6 +131,33 @@ public class Peptide implements Serializable {
 
     public boolean isModified() {
         return modifications.size() > 0;
+    }
+
+    // check whether the two peptides are similar
+    public boolean isSimilar(Peptide pep, ArrayList<String> doubleInfoCriteria, ArrayList<String> strInfoCriteria, ArrayList<String> modiCriteria) {
+        if(!this.sequence.equals(pep.getSequence())){
+            return false;
+        }
+
+        for(String criterion : doubleInfoCriteria){
+            if(!this.doubleInfo.get(criterion).equals(pep.getDoubleInfo(criterion))){
+                return false;
+            }
+        }
+
+        for(String criterion : strInfoCriteria){
+            if(!this.strInfo.get(criterion).equals(pep.getStrInfo(criterion))){
+                return false;
+            }
+        }
+
+        for(String modiType : modiCriteria){
+            if(!this.getModificationPos(modiType).equals(pep.getModificationPos(modiType))){
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public String toString(){

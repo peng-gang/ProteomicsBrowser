@@ -2,6 +2,7 @@ package data;
 
 import javafx.util.Pair;
 import project.PublicInfo;
+import sun.reflect.generics.tree.Tree;
 import sun.rmi.server.InactiveGroupException;
 
 import java.io.Serializable;
@@ -11,6 +12,8 @@ import java.util.*;
  * protein or gene information
  * Created by gpeng on 2/10/17.
  */
+@SuppressWarnings("Duplicates")
+
 public class Protein implements Serializable {
     private String name;
     private String sequence;
@@ -27,6 +30,13 @@ public class Protein implements Serializable {
     //Modification information for selected peptides
     private TreeSet<String> modiTypeAllSel;
     private TreeMap<Integer, PosModiInfo> modiInfoSel;
+
+    private boolean pepCombined = false;
+    private ArrayList<Peptide> peptidesCombined;
+    private ArrayList<Integer> pepStartCombined;
+    private ArrayList<Integer> pepEndCombined;
+    private TreeMap<Integer, PosModiInfo> modiInfoCombined;
+    private TreeSet<String> modiTypeAllCombined;
 
 
     // range of peptide data
@@ -86,6 +96,8 @@ public class Protein implements Serializable {
 
     private ArrayList<String> doubleInfoName;
 
+    private ArrayList<Double> abundanceAllCombined;
+
 
     //before normalization
     /**
@@ -108,19 +120,32 @@ public class Protein implements Serializable {
     public String getSequence() { return sequence;}
     public int getLength() {return sequence.length(); }
     public ArrayList<Peptide> getPeptides() { return peptides; }
+    public ArrayList<Peptide> getPeptidesCombined() {return peptidesCombined; }
     public ArrayList<Integer> getPepStart() { return  pepStart; }
     public ArrayList<Integer> getPepEnd() { return pepEnd; }
+    public ArrayList<Integer> getPepStartCombined() { return pepStartCombined;}
+    public ArrayList<Integer> getPepEndCombined() { return pepEndCombined; }
     public TreeSet<String> getModiTypeAll() { return modiTypeAll; }
     public Set<Integer> getModiPos() { return  modiInfo.keySet(); }
     public TreeMap<Integer, PosModiInfo> getModiInfo() { return  modiInfo; }
     public TreeSet<String> getModiTypeAllSel() { return  modiTypeAllSel; }
     public Set<Integer> getModiPosSel() { return  modiInfoSel.keySet(); }
     public TreeMap<Integer, PosModiInfo> getModiInfoSel() { return modiInfoSel; }
+    public TreeMap<Integer, PosModiInfo> getModiInfoCombined() { return  modiInfoCombined; }
     public ArrayList<Integer> getPepShow() { return  pepShow; }
     public Integer getPepShow(int i) { return pepShow.get(i); }
+    public  TreeSet<String> getModiTypeAllCombined() { return modiTypeAllCombined; }
 
     public void setPepShow(int i, int val) { pepShow.set(i,val); }
     public void setPepShow(ArrayList<Integer> pepShow) { this.pepShow = pepShow; }
+
+    public Set<String> getPepStrInfo(){
+        return peptides.get(0).getStrInfo().keySet();
+    }
+
+    public Set<String> getPepDoubleInfo(){
+        return peptides.get(0).getDoubleInfo().keySet();
+    }
 
 
     public ArrayList<Integer> getModiPos(String mt) {
@@ -139,6 +164,18 @@ public class Protein implements Serializable {
     public ArrayList<Integer> getModiPos(ArrayList<String> mts) {
         ArrayList<Integer> rlt = new ArrayList<>();
         for(Map.Entry<Integer, PosModiInfo> entry : modiInfo.entrySet()){
+            Integer key = entry.getKey();
+            PosModiInfo value = entry.getValue();
+            if(value.modiExist(mts)){
+                rlt.add(key);
+            }
+        }
+        return rlt;
+    }
+
+    public ArrayList<Integer> getModiCombinedPos(ArrayList<String> mts){
+        ArrayList<Integer> rlt = new ArrayList<>();
+        for(Map.Entry<Integer, PosModiInfo> entry : modiInfoCombined.entrySet()){
             Integer key = entry.getKey();
             PosModiInfo value = entry.getValue();
             if(value.modiExist(mts)){
@@ -197,6 +234,18 @@ public class Protein implements Serializable {
         return rlt;
     }
 
+    public ArrayList<Integer> getModiCombinedPos1(ArrayList<String> mts){
+        ArrayList<Integer> rlt = new ArrayList<>();
+        for(Map.Entry<Integer, PosModiInfo> entry : modiInfoCombined.entrySet()){
+            Integer key = entry.getKey();
+            PosModiInfo value = entry.getValue();
+            if(value.modiExist(mts)){
+                rlt.add(key+1);
+            }
+        }
+        return rlt;
+    }
+
     public ArrayList<String> getDoubleInfoName(){
         return doubleInfoName;
     }
@@ -236,6 +285,115 @@ public class Protein implements Serializable {
     public double getAbundanceCutPerLow() { return abundanceCutPerLow; }
     public double getDoubleInfoCutPerHigh(int i) { return doubleInfoCutPerHigh.get(i);}
     public double getDoubleInfoCutPerLow(int i) { return doubleInfoCutPerLow.get(i);}
+
+
+    public void combinePep(ArrayList<String> doubleInfoCriteria, ArrayList<String> strInfoCriteria, ArrayList<String> modiCriteria){
+        if(pepCombined){
+            if(peptides.size()==0){
+                return;
+            }
+
+            peptidesCombined.clear();
+            pepStartCombined.clear();
+            pepEndCombined.clear();
+            modiInfoCombined.clear();
+            modiTypeAllCombined.clear();
+            abundanceAllCombined.clear();
+
+        } else {
+            peptidesCombined = new ArrayList<>();
+            pepStartCombined = new ArrayList<>();
+            pepEndCombined = new ArrayList<>();
+            modiInfoCombined = new TreeMap<>();
+            modiTypeAllCombined = new TreeSet<>();
+
+            if(peptides.size()==0){
+                return;
+            }
+        }
+
+        ArrayList<Integer> flag = new ArrayList<>();
+        for(int i=0; i<peptides.size(); i++){
+            flag.add(i);
+        }
+
+        ArrayList<ArrayList<Integer> > groupIndex = new ArrayList<>();
+        while(true){
+            if(flag.size()==0){
+                break;
+            }
+
+            ArrayList<Integer> giTmp = new ArrayList<>();
+            giTmp.add(flag.get(0));
+            Peptide pep = peptides.get(flag.get(0));
+            for(int i=1; i<flag.size();i++){
+                if(pep.isSimilar(peptides.get(flag.get(i)), doubleInfoCriteria, strInfoCriteria, modiCriteria)){
+                    giTmp.add(flag.get(i));
+                }
+            }
+
+            for(Integer idx : giTmp){
+                flag.remove(idx);
+            }
+
+            groupIndex.add(giTmp);
+
+            if(flag.size()==0){
+                break;
+            }
+        }
+
+        abundanceAllCombined.clear();
+
+        for(int i=0; i<groupIndex.size(); i++){
+            ArrayList<Integer> giTmp = groupIndex.get(i);
+            String id = peptides.get(giTmp.get(0)).getId();
+            String sequence = peptides.get(giTmp.get(0)).getSequence();
+            Double abundance = peptides.get(giTmp.get(0)).getAbundance();
+            TreeMap<String, Double> doubleInfo = new TreeMap<>();
+            TreeMap<String, String> strInfo = new TreeMap<>();
+            ArrayList<Modification> modifications = peptides.get(giTmp.get(0)).getModifications(modiCriteria);
+
+            for(String dic : doubleInfoCriteria){
+                doubleInfo.put(dic, peptides.get(giTmp.get(0)).getDoubleInfo(dic));
+            }
+
+            for(String sic : strInfoCriteria){
+                strInfo.put(sic, peptides.get(giTmp.get(0)).getStrInfo(sic));
+            }
+
+            for(int j=1; j<giTmp.size(); j++){
+                id = id + "_" + peptides.get(giTmp.get(j)).getId();
+                abundance = abundance + peptides.get(giTmp.get(j)).getAbundance();
+            }
+
+            Peptide pep = new Peptide(id, sequence, abundance, doubleInfo, strInfo, modifications);
+            peptidesCombined.add(pep);
+            pepStartCombined.add(pepStart.get(giTmp.get(0)));
+            pepEndCombined.add(pepEnd.get(giTmp.get(0)));
+            abundanceAllCombined.add(abundance);
+            //modiInfoCombined
+            if(pep.isModified()){
+                for(Modification m : pep.getModifications()){
+                    modiTypeAllCombined.add(m.getModificationType());
+                    for(int j=0; j<m.getPos().size(); j++){
+                        int modiPos = m.getPos().get(j) + pepStart.get(giTmp.get(0));
+                        PosModiInfo tmp = modiInfoCombined.get(modiPos);
+                        if(tmp == null){
+                            PosModiInfo posModiInfo = new PosModiInfo(m.getModificationType(), m.getPercent().get(j));
+                            modiInfoCombined.put(modiPos, posModiInfo);
+                        } else {
+                            tmp.addModi(m.getModificationType(), m.getPercent().get(j));
+                        }
+                    }
+                }
+            }
+        }
+
+        pepCombined = true;
+        Collections.sort(abundanceAllCombined);
+        return;
+    }
 
     /*
     public void setChargeCutHigh(int chargeCutHigh){
@@ -632,6 +790,7 @@ public class Protein implements Serializable {
         //mzAll = new ArrayList<>();
         //scoreAll = new ArrayList<>();
         abundanceAll = new ArrayList<>();
+        abundanceAllCombined = new ArrayList<>();
 
         doubleInfoMax = new ArrayList<>();
         doubleInfoMin = new ArrayList<>();
@@ -900,6 +1059,20 @@ public class Protein implements Serializable {
 
         for(Peptide pt : peptides){
             pt.setAbundanceRange(cutoff);
+        }
+    }
+
+    public void setAbundanceCombinedRange(){
+        ArrayList<Double> cutoffCombined = new ArrayList<>();
+        int idx = abundanceAllCombined.size()/4;
+        cutoffCombined.add(abundanceAllCombined.get(idx));
+        idx = abundanceAllCombined.size()/2;
+        cutoffCombined.add(abundanceAllCombined.get(idx));
+        idx = abundanceAllCombined.size()*3/4;
+        cutoffCombined.add(abundanceAllCombined.get(idx));
+
+        for(Peptide pt : peptidesCombined){
+            pt.setAbundanceRange(cutoffCombined);
         }
     }
 

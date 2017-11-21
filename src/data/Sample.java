@@ -105,6 +105,14 @@ public class Sample implements Serializable {
         }
     }
 
+    public Set<String> getPepStrInfo(){
+        return proteins.get(proteins.firstKey()).getPepStrInfo();
+    }
+
+    public Set<String> getPepDoubleInfo(){
+        return proteins.get(proteins.firstKey()).getPepDoubleInfo();
+    }
+
     public Double getNumInfo(String name){
         return numInfo.get(name);
     }

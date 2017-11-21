@@ -90,6 +90,9 @@ public class MainController implements Initializable{
     @FXML private MenuItem menuExportModificationInfo;
     @FXML private Menu menuExportModiCys;
 
+    //Data Filter
+    @FXML private MenuItem menuPepFilter;
+
     //TreeView
     @FXML private TreeView treeView;
 
@@ -144,6 +147,14 @@ public class MainController implements Initializable{
 
 
 
+    //disable/enable menu
+    //menuPepFilter
+    public void pepFilterSetDisable(boolean value){
+        menuPepFilter.setDisable(value);
+    }
+
+
+
     //Menu functions
     @FXML private void close(ActionEvent event){
         System.out.println("Menu Close");
@@ -163,6 +174,9 @@ public class MainController implements Initializable{
         Stage stage = (Stage) menuBar.getScene().getWindow();
         File file = fileChooser.showSaveDialog(stage);
         String fileName = file.getName();
+        if(fileName == null){
+            return;
+        }
         String projName = fileName.substring(0, fileName.length()-7);
 
         if(file != null){
@@ -1173,7 +1187,7 @@ public class MainController implements Initializable{
         }
         tabBrowser.setText("Browser");
         pBrowserController = loader.getController();
-        pBrowserController.setData(sampleGroup);
+        pBrowserController.setData(sampleGroup, this);
         pBrowserController.show();
     }
 

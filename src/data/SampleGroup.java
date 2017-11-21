@@ -198,6 +198,14 @@ public class SampleGroup implements Serializable {
         }
     }
 
+    public Set<String> getPepDoubleInfo(){
+        return samples.get(samples.firstKey()).getPepDoubleInfo();
+    }
+
+    public Set<String> getPepStrInfo(){
+        return samples.get(samples.firstKey()).getPepStrInfo();
+    }
+
     public void updateProtein(){
         switch (proteinIntegrationType){
             case Raw:
