@@ -11,8 +11,13 @@ import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Map;
@@ -26,6 +31,7 @@ public class ParaModifiedCysFigureController implements Initializable{
     private String sample;
     private int numResidual;
     private ArrayList<String> samples;
+    private String selProteinFileName;
 
     private SampleGroup sampleGroup;
     private ArrayList<Map<Character, Double>> residualFreq;
@@ -39,6 +45,8 @@ public class ParaModifiedCysFigureController implements Initializable{
     @FXML private TextField textNumResidual;
     @FXML private VBox vbModification;
     @FXML private Button btnShowFigure;
+    @FXML private ComboBox<String> comboProtein;
+    @FXML private Label lblSelProtein;
 
 
     @FXML private void export(ActionEvent event){
@@ -77,7 +85,29 @@ public class ParaModifiedCysFigureController implements Initializable{
 
         ArrayList<String> modiSelect = new ArrayList<>();
         modiSelect.add(modificationSel);
-        residualFreq = sampleGroup.outputModiResFreq(sample, modiSelect, numResidual);
+
+        ArrayList<String> selProteinName = new ArrayList<>();
+
+        if(selProteinFileName==null || selProteinFileName.equals("")){
+            residualFreq = sampleGroup.outputModiResFreq(sample, modiSelect, numResidual, null);
+        } else {
+            FileReader fileReader = null;
+            try {
+                fileReader = new FileReader(selProteinFileName);
+                BufferedReader bufferedReader = new BufferedReader(fileReader);
+                String fline = null;
+                while((fline = bufferedReader.readLine()) != null){
+                    selProteinName.add(fline);
+                }
+
+                bufferedReader.close();
+                fileReader.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            residualFreq = sampleGroup.outputModiResFreq(sample, modiSelect, numResidual, selProteinName);
+        }
 
         Stage stage = (Stage) textNumResidual.getScene().getWindow();
         stage.close();
@@ -86,6 +116,7 @@ public class ParaModifiedCysFigureController implements Initializable{
 
     public void init(SampleGroup sampleGroup){
         this.sampleGroup = sampleGroup;
+        selProteinFileName = null;
         samples =  new ArrayList<>(sampleGroup.getSampleId());
         btnShowFigure.setDisable(true);
 
@@ -93,6 +124,10 @@ public class ParaModifiedCysFigureController implements Initializable{
         cmbSample.getItems().addAll(samples);
 
         modificationSel = null;
+
+        comboProtein.getItems().addAll("All Proteins");
+        comboProtein.getItems().addAll("Select Proteins:");
+        comboProtein.setValue("All Proteins");
 
         cmbSample.valueProperty().addListener(new ChangeListener<String>() {
             @Override
@@ -154,6 +189,39 @@ public class ParaModifiedCysFigureController implements Initializable{
                     }
                 });
                 btnShowFigure.setDisable(false);
+            }
+        });
+
+        comboProtein.valueProperty().addListener(new ChangeListener<String>() {
+            @Override
+            public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+                if(newValue.equals("All Proteins")){
+                    lblSelProtein.setText("");
+                    selProteinFileName = null;
+                } else {
+                    FileChooser fileChooser = new FileChooser();
+                    fileChooser.setTitle("Select Proteins");
+                    fileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
+                    fileChooser.getExtensionFilters().add(
+                            new FileChooser.ExtensionFilter("Protein Name File", "*.txt")
+                    );
+
+                    Stage stage = (Stage) cmbSample.getScene().getWindow();
+                    File selProteinNameFile = fileChooser.showOpenDialog(stage);
+                    if(selProteinNameFile == null){
+                        lblSelProtein.setText("");
+                        comboProtein.setValue("All Proteins");
+                        return;
+                    }
+                    selProteinFileName = selProteinNameFile.toString();
+                    if(selProteinFileName.equals("")){
+                        lblSelProtein.setText("");
+                        comboProtein.setValue("All Proteins");
+                        return;
+                    }
+
+                    lblSelProtein.setText(selProteinFileName);
+                }
             }
         });
 

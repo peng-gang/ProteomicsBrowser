@@ -118,6 +118,7 @@ public class Protein implements Serializable {
 
     public String getName() { return  name;}
     public String getSequence() { return sequence;}
+    public String getSequence(int st, int ed) { return sequence.substring(st, ed);}
     public int getLength() {return sequence.length(); }
     public ArrayList<Peptide> getPeptides() { return peptides; }
     public ArrayList<Peptide> getPeptidesCombined() {return peptidesCombined; }
@@ -134,7 +135,11 @@ public class Protein implements Serializable {
     public TreeMap<Integer, PosModiInfo> getModiInfoCombined() { return  modiInfoCombined; }
     public ArrayList<Integer> getPepShow() { return  pepShow; }
     public Integer getPepShow(int i) { return pepShow.get(i); }
-    public  TreeSet<String> getModiTypeAllCombined() { return modiTypeAllCombined; }
+    public TreeSet<String> getModiTypeAllCombined() { return modiTypeAllCombined; }
+    public Integer getPepStart(int idx) { return pepStart.get(idx); }
+    public Integer getPepEnd(int idx) { return pepEnd.get(idx); }
+
+    public Peptide getPeptide(int idx) { return peptides.get(idx); }
 
     public void setPepShow(int i, int val) { pepShow.set(i,val); }
     public void setPepShow(ArrayList<Integer> pepShow) { this.pepShow = pepShow; }
@@ -286,7 +291,126 @@ public class Protein implements Serializable {
     public double getDoubleInfoCutPerHigh(int i) { return doubleInfoCutPerHigh.get(i);}
     public double getDoubleInfoCutPerLow(int i) { return doubleInfoCutPerLow.get(i);}
 
+    public void combinePep(boolean isCharge, ArrayList<String> modiCriteria){
+        if(pepCombined){
+            if(peptides.size()==0){
+                return;
+            }
 
+            peptidesCombined.clear();
+            pepStartCombined.clear();
+            pepEndCombined.clear();
+            modiInfoCombined.clear();
+            modiTypeAllCombined.clear();
+            abundanceAllCombined.clear();
+
+        } else {
+            peptidesCombined = new ArrayList<>();
+            pepStartCombined = new ArrayList<>();
+            pepEndCombined = new ArrayList<>();
+            modiInfoCombined = new TreeMap<>();
+            modiTypeAllCombined = new TreeSet<>();
+
+            if(peptides.size()==0){
+                return;
+            }
+        }
+
+        ArrayList<Integer> flag = new ArrayList<>();
+        for(int i=0; i<peptides.size(); i++){
+            flag.add(i);
+        }
+
+        ArrayList<ArrayList<Integer> > groupIndex = new ArrayList<>();
+        while(true){
+            if(flag.size()==0){
+                break;
+            }
+
+            ArrayList<Integer> giTmp = new ArrayList<>();
+            giTmp.add(flag.get(0));
+            Peptide pep = peptides.get(flag.get(0));
+            for(int i=1; i<flag.size();i++){
+                if(pep.isSimilar(peptides.get(flag.get(i)), isCharge, modiCriteria)){
+                    giTmp.add(flag.get(i));
+                }
+            }
+
+            for(Integer idx : giTmp){
+                flag.remove(idx);
+            }
+
+            groupIndex.add(giTmp);
+
+            if(flag.size()==0){
+                break;
+            }
+        }
+
+        abundanceAllCombined.clear();
+
+        for(int i=0; i<groupIndex.size(); i++){
+            ArrayList<Integer> giTmp = groupIndex.get(i);
+            String id = peptides.get(giTmp.get(0)).getId();
+            String sequence = peptides.get(giTmp.get(0)).getSequence();
+            Integer charge = peptides.get(giTmp.get(0)).getCharge();
+            Double abundance = peptides.get(giTmp.get(0)).getAbundance();
+            TreeMap<String, Double> doubleInfo = new TreeMap<>();
+            TreeMap<String, String> strInfo = new TreeMap<>();
+            ArrayList<Modification> modifications = peptides.get(giTmp.get(0)).getModifications(modiCriteria);
+
+            for(int j=1; j<giTmp.size(); j++){
+                id = id + "_" + peptides.get(giTmp.get(j)).getId();
+                abundance = abundance + peptides.get(giTmp.get(j)).getAbundance();
+            }
+
+
+            if(!isCharge){
+                charge = null;
+            }
+            Peptide pep = new Peptide(id, sequence, abundance, charge, doubleInfo, strInfo, modifications);
+            peptidesCombined.add(pep);
+            pepStartCombined.add(pepStart.get(giTmp.get(0)));
+            pepEndCombined.add(pepEnd.get(giTmp.get(0)));
+            abundanceAllCombined.add(abundance);
+            //modiInfoCombined
+            if(pep.isModified()){
+                for(Modification m : pep.getModifications()){
+                    modiTypeAllCombined.add(m.getModificationType());
+                    for(int j=0; j<m.getPos().size(); j++){
+                        int modiPos = m.getPos().get(j) + pepStart.get(giTmp.get(0));
+                        PosModiInfo tmp = modiInfoCombined.get(modiPos);
+                        if(tmp == null){
+                            PosModiInfo posModiInfo = new PosModiInfo(m.getModificationType(), m.getPercent().get(j));
+                            modiInfoCombined.put(modiPos, posModiInfo);
+                        } else {
+                            tmp.addModi(m.getModificationType(), m.getPercent().get(j));
+                        }
+                    }
+                }
+            }
+        }
+
+        pepCombined = true;
+        Collections.sort(abundanceAllCombined);
+        return;
+
+
+    }
+
+    public ArrayList<Integer> getPepIndex(int pos){
+        ArrayList<Integer> rlt = new ArrayList<>();
+
+        for(int i=0; i<pepStart.size(); i++){
+            if(pepStart.get(i) <= pos && pepEnd.get(i) >= pos){
+                rlt.add(i);
+            }
+        }
+
+        return rlt;
+    }
+
+    /*
     public void combinePep(ArrayList<String> doubleInfoCriteria, ArrayList<String> strInfoCriteria, ArrayList<String> modiCriteria){
         if(pepCombined){
             if(peptides.size()==0){
@@ -394,6 +518,7 @@ public class Protein implements Serializable {
         Collections.sort(abundanceAllCombined);
         return;
     }
+    */
 
     /*
     public void setChargeCutHigh(int chargeCutHigh){
@@ -820,11 +945,11 @@ public class Protein implements Serializable {
         int indexL = sequence.lastIndexOf(pep.getSequence());
 
         if(indexF == -1){
-            System.out.println("Cannot find peptide " + pep.getSequence() + " in protein " + sequence);
+            System.out.println("Cannot find peptide " + pep.getSequence() + " in protein " + name);
             return  false;
         } else {
             if(indexF!=indexL){
-                System.out.println("Find multiple match for peptide " + pep.getSequence() + " in protein " + sequence);
+                System.out.println("Find multiple match for peptide " + pep.getSequence() + " in protein " + name);
                 return  false;
             } else {
                 peptides.add(pep);

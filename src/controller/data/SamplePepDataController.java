@@ -34,6 +34,82 @@ public class SamplePepDataController implements Initializable {
         tbvSamplePepData.getItems().clear();
         ObservableList<ObservableList> data = FXCollections.observableArrayList();
 
+        ArrayList<String> sampleId = new ArrayList<>(sampleGroup.getSampleId());
+
+        TableColumn colInfo = new TableColumn("Info");
+        colInfo.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<ObservableList, String>, ObservableValue<String>>() {
+            @Override
+            public ObservableValue<String> call(TableColumn.CellDataFeatures<ObservableList, String> param) {
+                return new SimpleStringProperty(param.getValue().get(0).toString());
+            }
+        });
+        colInfo.setSortable(false);
+        tbvSamplePepData.getColumns().add(colInfo);
+
+        for(int i =0; i<sampleId.size(); i++){
+            final int idx = i+1;
+            TableColumn col = new TableColumn(sampleId.get(i));
+            col.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<ObservableList, String>, ObservableValue<String>>() {
+                @Override
+                public ObservableValue<String> call(TableColumn.CellDataFeatures<ObservableList, String> param) {
+                    return new SimpleStringProperty(param.getValue().get(idx).toString());
+                }
+            });
+            col.setSortable(false);
+            tbvSamplePepData.getColumns().add(col);
+        }
+
+        ArrayList<String> numInfoName = new ArrayList<>(sampleGroup.getNumInfoName());
+        for(int i=0; i<numInfoName.size(); i++){
+            ObservableList<String> row = FXCollections.observableArrayList();
+            row.add(numInfoName.get(i));
+            for(int j=0; j<sampleId.size(); j++){
+                row.add(sampleGroup.getNumInfo(sampleId.get(j), numInfoName.get(i)).toString());
+            }
+            data.add(row);
+        }
+
+        ArrayList<String> strInfoName = new ArrayList<>(sampleGroup.getStrInfoName());
+        for(int i=0; i<strInfoName.size(); i++){
+            ObservableList<String> row = FXCollections.observableArrayList();
+            row.add(strInfoName.get(i));
+            for(int j=0; j<sampleId.size(); j++){
+                row.add(sampleGroup.getStrInfo(sampleId.get(j), strInfoName.get(i)).toString());
+            }
+            data.add(row);
+        }
+
+        ArrayList<String> pepId = new ArrayList<>(sampleGroup.getPepId());
+        for(int i=0; i<pepId.size(); i++){
+            ObservableList<String> row = FXCollections.observableArrayList();
+            row.add(pepId.get(i));
+            for(int j=0; j<sampleId.size(); j++){
+                Double tmp = sampleGroup.getPepData(sampleId.get(j),pepId.get(i));
+                switch (scaleType){
+                    case Log2:
+                        if(tmp <=0) {
+                            tmp = 0.0;
+                        } else {
+                            tmp = Math.log(tmp)/Math.log(2.0);
+                        }
+                        break;
+                    case Log10:
+                        if(tmp<=0){
+                            tmp = 0.0;
+                        } else {
+                            tmp = Math.log10(tmp);
+                        }
+                        break;
+                    default:
+                        break;
+                }
+                row.add(String.format("%.2f", tmp));
+            }
+            data.add(row);
+        }
+
+
+        /*
         final int idxSampleId = 0;
         TableColumn colSampleId = new TableColumn("Sample ID");
         colSampleId.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<ObservableList, String>, ObservableValue<String>>(){
@@ -122,6 +198,7 @@ public class SamplePepDataController implements Initializable {
             }
             data.add(row);
         }
+        */
 
         tbvSamplePepData.setItems(data);
     }

@@ -16,6 +16,7 @@ import javafx.scene.text.TextAlignment;
 import javafx.scene.transform.Transform;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import project.PublicInfo;
 
 import javax.imageio.ImageIO;
 import java.io.File;
@@ -35,6 +36,8 @@ public class BoxPlotController {
     private double height;
     private double top;
     private double left;
+
+    private PublicInfo.ScaleType scaleType;
 
     @FXML private void save(ActionEvent event){
         FileChooser fileChooser = new FileChooser();
@@ -66,6 +69,24 @@ public class BoxPlotController {
         stage.close();
     }
 
+    @FXML private void scaleRegular(ActionEvent event){
+        scaleType = PublicInfo.ScaleType.Regular;
+        pane.getChildren().clear();
+        pane.getChildren().add(boxPlot());
+    }
+
+    @FXML private void scaleLog2(ActionEvent event){
+        scaleType = PublicInfo.ScaleType.Log2;
+        pane.getChildren().clear();
+        pane.getChildren().add(boxPlot());
+    }
+
+    @FXML private void scaleLog10(ActionEvent event){
+        scaleType = PublicInfo.ScaleType.Log10;
+        pane.getChildren().clear();
+        pane.getChildren().add(boxPlot());
+    }
+
 
     public void init(ArrayList<ArrayList<Double> > dataAll, ArrayList<String> name){
         this.dataAll = dataAll;
@@ -74,6 +95,8 @@ public class BoxPlotController {
         height = 200;
         top = 25;
         left = 25;
+
+        scaleType = PublicInfo.ScaleType.Log2;
 
         pane.getChildren().add(boxPlot());
     }
@@ -86,11 +109,42 @@ public class BoxPlotController {
         this.top = top;
         this.left = left;
 
+        scaleType = PublicInfo.ScaleType.Log2;
+
         pane.getChildren().add(boxPlot());
     }
 
     private Group boxPlot(){
         int numGroup = dataAll.size();
+        ArrayList<ArrayList<Double>> dataAllScale = new ArrayList<>();
+        for(int i=0;i<numGroup;i++){
+            ArrayList<Double> tmp = new ArrayList<>(dataAll.get(i));
+            dataAllScale.add(tmp);
+        }
+
+        if(scaleType == PublicInfo.ScaleType.Log2){
+            for(int i=0; i<numGroup; i++){
+                for(int j=0; j<dataAllScale.get(i).size(); j++){
+                    double tmp = dataAllScale.get(i).get(j);
+                    if(tmp < 0.001){
+                        tmp = 0.001;
+                    }
+                    dataAllScale.get(i).set(j, Math.log(tmp)/Math.log(2));
+                }
+            }
+        }
+
+        if(scaleType == PublicInfo.ScaleType.Log10){
+            for(int i=0; i<numGroup; i++){
+                for(int j=0; j<dataAllScale.get(i).size(); j++){
+                    double tmp = dataAllScale.get(i).get(j);
+                    if(tmp < 0.001){
+                        tmp = 0.001;
+                    }
+                    dataAllScale.get(i).set(j, Math.log10(tmp));
+                }
+            }
+        }
 
         Group root = new Group();
 
@@ -99,8 +153,8 @@ public class BoxPlotController {
         ArrayList<Double> maxEach = new ArrayList<>();
         ArrayList<Double> minEach = new ArrayList<>();
         for(int i =0; i < numGroup; i++){
-            maxEach.add(Collections.max(dataAll.get(i)));
-            minEach.add(Collections.min(dataAll.get(i)));
+            maxEach.add(Collections.max(dataAllScale.get(i)));
+            minEach.add(Collections.min(dataAllScale.get(i)));
         }
 
         double maxAll = Collections.max(maxEach);
@@ -125,7 +179,7 @@ public class BoxPlotController {
 
 
         for(int i= 0; i < numGroup; i++){
-            ArrayList<Double> data = dataAll.get(i);
+            ArrayList<Double> data = dataAllScale.get(i);
             Collections.sort(data);
 
             int idx = data.size()/4;

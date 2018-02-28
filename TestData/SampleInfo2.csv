@@ -1,2 +1,13 @@
-SampleID,Group,BMI
-Sample1,Cancer,29.45434
+SampleID,Group
+QEp17-4397_Monsey_511_G-NR,NR
+QEp17-4401_Monsey_514_G-NR,NR
+QEp17-4405_Monsey_510_G-NR,NR
+QEp17-4425_Monsey_513_G-NR_rerun,NR
+QEp17-4479_Monsey_509_G-NR,NR
+QEp17-4495_Monsey_500_G-NR,NR
+QEp17-4409_Monsey_519_G-R,R
+QEp17-4409_Monsey_529_G-R,R
+QEp17-4429_Monsey_526_G-R,R
+QEp17-4459_Monsey_506_G-R,R
+QEp17-4467_Monsey_521_G-R,R
+QEp17-4487_Monsey_523_G-R,R

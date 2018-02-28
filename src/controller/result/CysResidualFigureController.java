@@ -54,6 +54,9 @@ public class CysResidualFigureController {
 
         Stage stage = (Stage) hBox.getScene().getWindow();
         File figureFile = fileChooser.showSaveDialog(stage);
+        if(figureFile==null){
+            return;
+        }
 
 
         //WritableImage image = hBox.snapshot(new SnapshotParameters(),null);

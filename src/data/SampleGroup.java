@@ -159,17 +159,24 @@ public class SampleGroup implements Serializable {
         }
     }
 
-    public void addPeptide(String sample, String proteinName, String proteinSequence, Peptide pep){
+    public boolean addPeptide(String sample, String proteinName, String proteinSequence, Peptide pep){
         if(samples.get(sample) == null){
             Sample tmp = new Sample(sample);
-            tmp.addPeptide(proteinName, proteinSequence, pep);
-            samples.put(sample, tmp);
-            this.proteinName.add(proteinName);
+            if(tmp.addPeptide(proteinName, proteinSequence, pep)){
+                samples.put(sample, tmp);
+                this.proteinName.add(proteinName);
+            } else{
+                return false;
+            }
         } else {
-            samples.get(sample).addPeptide(proteinName, proteinSequence, pep);
-            this.proteinName.add(proteinName);
+            if(samples.get(sample).addPeptide(proteinName, proteinSequence, pep)){
+                this.proteinName.add(proteinName);
+            } else {
+                return false;
+            }
         }
         this.modificationTypeAll.addAll(pep.getModificationTypes());
+        return true;
     }
 
     public void setProteinIntegrationType(PublicInfo.ProteinIntegrationType proteinIntegrationType){
@@ -546,7 +553,7 @@ public class SampleGroup implements Serializable {
     }
 
 
-    public void outputModiResText(File textFile,  String sample, ArrayList<String> modiSelected, int numResidual){
+    public void outputModiResText(File textFile,  String sample, ArrayList<String> modiSelected, int numResidual, ArrayList<String> selProteinName){
 
         FileWriter fileWriter= null;
         try {
@@ -556,17 +563,34 @@ public class SampleGroup implements Serializable {
         }
         BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
 
-        for(Protein protein: samples.get(sample).getProteins()){
-            ArrayList<String> info = protein.getModiResInfo(modiSelected, numResidual);
-            for(String infoTmp : info){
-                try{
-                    bufferedWriter.write(infoTmp);
-                    bufferedWriter.write("\n");
-                } catch (IOException e){
-                    e.printStackTrace();
+        if(selProteinName == null){
+            for(Protein protein: samples.get(sample).getProteins()){
+                ArrayList<String> info = protein.getModiResInfo(modiSelected, numResidual);
+                for(String infoTmp : info){
+                    try{
+                        bufferedWriter.write(infoTmp);
+                        bufferedWriter.write("\n");
+                    } catch (IOException e){
+                        e.printStackTrace();
+                    }
+                }
+            }
+        } else {
+            for(Protein protein: samples.get(sample).getProteins()){
+                if(selProteinName.contains(protein.getName())){
+                    ArrayList<String> info = protein.getModiResInfo(modiSelected, numResidual);
+                    for(String infoTmp : info){
+                        try{
+                            bufferedWriter.write(infoTmp);
+                            bufferedWriter.write("\n");
+                        } catch (IOException e){
+                            e.printStackTrace();
+                        }
+                    }
                 }
             }
         }
+
         try {
             bufferedWriter.close();
         } catch (IOException e) {
@@ -579,11 +603,20 @@ public class SampleGroup implements Serializable {
         }
     }
 
-    public ArrayList<Map<Character, Double>> outputModiResFreq(String sample, ArrayList<String> modiSelected, int numResidual){
+    public ArrayList<Map<Character, Double>> outputModiResFreq(String sample, ArrayList<String> modiSelected, int numResidual, ArrayList<String> selProteinName){
         ArrayList<Pair<String, Integer> > modiRes = new ArrayList<>();
-        for(Protein protein : samples.get(sample).getProteins()){
-            modiRes.addAll(protein.getModiRes(modiSelected, numResidual));
+        if(selProteinName == null){
+            for(Protein protein : samples.get(sample).getProteins()){
+                modiRes.addAll(protein.getModiRes(modiSelected, numResidual));
+            }
+        } else {
+            for(Protein protein : samples.get(sample).getProteins()){
+                if(selProteinName.contains(protein.getName())) {
+                    modiRes.addAll(protein.getModiRes(modiSelected, numResidual));
+                }
+            }
         }
+
 
         ArrayList<HashMap<Character, Double> > count = new ArrayList<>();
         for(int i=0; i<(2*numResidual+1); i++){

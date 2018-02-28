@@ -82,15 +82,21 @@ public class Sample implements Serializable {
         }
     }
 
-    public void addPeptide(String proteinName, String proteinSeq, Peptide pep){
+    public boolean addPeptide(String proteinName, String proteinSeq, Peptide pep){
         if(proteins.get(proteinName) == null){
             Protein tmp = new Protein(proteinName, proteinSeq);
-            tmp.addPeptide(pep);
-            this.addProtein(tmp);
+            if(tmp.addPeptide(pep)){
+                this.addProtein(tmp);
+            } else {
+                return false;
+            }
         } else {
-            proteins.get(proteinName).addPeptide(pep);
+            if(!proteins.get(proteinName).addPeptide(pep)){
+                return false;
+            }
         }
         modificationTypeAll.addAll(pep.getModificationTypes());
+        return true;
     }
 
     public void updatePepShow(){

@@ -35,7 +35,7 @@ public class CorScatterDataSelectController {
         if(type.equals("Peptide")){
             ArrayList<String> pepId = new ArrayList<>(sampleGroup.getPepId());
             combData1.getItems().addAll(pepId);
-            combData1.getItems().addAll(pepId);
+            combData2.getItems().addAll(pepId);
         } else {
             ArrayList<String> proteinId = new ArrayList<>(sampleGroup.getProteinId());
             combData1.getItems().addAll(proteinId);

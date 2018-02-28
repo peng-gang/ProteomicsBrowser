@@ -1,29 +1,39 @@
 package controller.browser;
 
-import com.sun.tools.javac.Main;
-import com.sun.tools.javac.comp.Check;
 import controller.MainController;
+import controller.result.PepCombineController;
+import data.PepPos;
 import data.*;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.SnapshotParameters;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.*;
+import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
-import org.apache.commons.math3.ode.events.Action;
+import javafx.scene.transform.Transform;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 
-import java.net.InterfaceAddress;
+import javax.imageio.ImageIO;
+import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 
@@ -49,15 +59,19 @@ public class PBrowserController implements Initializable {
     @FXML private VBox vBoxModification;
     @FXML private RadioButton rbYes;
     @FXML private RadioButton rbNo;
-    @FXML private VBox vbPepDoubleInfo;
-    @FXML private VBox vbPepStrInfo;
+    //@FXML private VBox vbPepDoubleInfo;
+    //@FXML private VBox vbPepStrInfo;
+    @FXML private VBox vbPepInfo;
     @FXML private VBox vbModification;
     @FXML private Button btnCombine;
-
+    @FXML private CheckBox cbCharge;
+    @FXML private CheckBox cbSequence;
 
     private boolean initialized = false;
 
     private boolean pepCombined = false;
+
+    //private boolean combinePosSel = false;
 
     /*
     //Legend 1
@@ -108,9 +122,9 @@ public class PBrowserController implements Initializable {
     private MainController mainController;
     private ArrayList<String> sampleId;
     private ArrayList<String> proteinId;
-    private ArrayList<String> pepStrInfo;
-    private ArrayList<String> pepDoubleInfo;
-    private ArrayList<String> modiTypeCombined;
+    //private ArrayList<String> pepStrInfo;
+    //private ArrayList<String> pepDoubleInfo;
+    //private ArrayList<String> modiTypeCombined;
 
 
     private String selectedSample = null;
@@ -148,16 +162,22 @@ public class PBrowserController implements Initializable {
 
 
     private void updateCombineNodes(){
-        if(pepCombined){
+        if(rbYes.isSelected()){
+            /*
             for(Node node : vbPepDoubleInfo.getChildren()){
                 node.setDisable(false);
                 ((CheckBox) node).setSelected(false);
             }
 
-            for(Node node : vbPepDoubleInfo.getChildren()){
+            for(Node node : vbPepStrInfo.getChildren()){
                 node.setDisable(false);
                 ((CheckBox) node).setSelected(false);
             }
+            */
+            cbCharge.setSelected(false);
+            cbCharge.setDisable(false);
+            cbSequence.setSelected(true);
+            cbSequence.setDisable(false);
 
             for(Node node : vbModification.getChildren()){
                 node.setDisable(false);
@@ -165,15 +185,22 @@ public class PBrowserController implements Initializable {
             }
             btnCombine.setDisable(false);
         } else {
+            /*
             for(Node node : vbPepDoubleInfo.getChildren()){
                 node.setDisable(true);
                 ((CheckBox) node).setSelected(false);
             }
 
-            for(Node node : vbPepDoubleInfo.getChildren()){
+            for(Node node : vbPepStrInfo.getChildren()){
                 node.setDisable(true);
                 ((CheckBox) node).setSelected(false);
             }
+            */
+
+            cbCharge.setSelected(false);
+            cbCharge.setDisable(true);
+            cbSequence.setSelected(true);
+            cbSequence.setDisable(true);
 
             for(Node node : vbModification.getChildren()){
                 node.setDisable(true);
@@ -197,6 +224,7 @@ public class PBrowserController implements Initializable {
         combModiPos.getItems().clear();
         combModiPos.getItems().addAll(protein.getModiPosSel1(modiSelected));
         combModiPos.setDisable(false);
+        //combinePosSel = false;
         scaleX = 1;
         scaleY = 1;
         double sc = (canvasWidth - leftPix - rightPix)/(protein.getLength() * pixPerLocus);
@@ -207,32 +235,59 @@ public class PBrowserController implements Initializable {
         if(maxY * (pixPerPep + 2*pixPepGap) > (canvasHeight-bottomPix-pixXLabel)){
             scaleY = (canvasHeight-bottomPix-pixXLabel)/((pixPerPep + 2*pixPepGap)*maxY);
         }
-        initSBar(0);
+        //initSBar(0);
         draw();
         mainController.pepFilterSetDisable(false);
     }
 
     @FXML private void pepCombineYes(ActionEvent event){
-        pepCombined = rbYes.isSelected();
         updateCombineNodes();
-        if(!pepCombined){
+        if(!rbYes.isSelected()){
+            pepCombined = false;
             unCombined();
         }
     }
 
     @FXML private void pepCombineNo(ActionEvent event){
-        pepCombined = rbYes.isSelected();
         updateCombineNodes();
-        if(!pepCombined){
+        if(!rbYes.isSelected()){
+            pepCombined = false;
             unCombined();
         }
     }
 
     @FXML private void combine(ActionEvent event){
-        ArrayList<String> doubleInfoCriteria = new ArrayList<>();
-        ArrayList<String> strInfoCriteria = new ArrayList<>();
+        if(!cbSequence.isSelected()){
+            int pos = combModiPos.getValue()-1;
+
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/result/PepCombine.fxml"));
+            try {
+                Parent root = loader.load();
+
+                Stage pepCombine = new Stage();
+                pepCombine.setTitle("Peptide Combination");
+                pepCombine.setScene(new Scene(root, 950, 450));
+                pepCombine.initModality(Modality.WINDOW_MODAL);
+                pepCombine.initOwner(canvas.getScene().getWindow());
+
+                PepCombineController controller = loader.getController();
+                controller.setData(sampleGroup, protein, pos);
+
+                pepCombine.showAndWait();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            return;
+        }
+
+
+        pepCombined = true;
+        //ArrayList<String> doubleInfoCriteria = new ArrayList<>();
+        //ArrayList<String> strInfoCriteria = new ArrayList<>();
         ArrayList<String> modiCriteria = new ArrayList<>();
 
+        /*
         for(Node node : vbPepDoubleInfo.getChildren()){
             if(((CheckBox) node).isSelected()){
                 doubleInfoCriteria.add(node.getUserData().toString());
@@ -244,6 +299,7 @@ public class PBrowserController implements Initializable {
                 strInfoCriteria.add(node.getUserData().toString());
             }
         }
+        */
 
         for(Node node : vbModification.getChildren()){
             if(((CheckBox) node).isSelected()){
@@ -255,7 +311,8 @@ public class PBrowserController implements Initializable {
         //System.out.println(strInfoCriteria);
         //System.out.println(modiCriteria);
 
-        protein.combinePep(doubleInfoCriteria, strInfoCriteria, modiCriteria);
+        //.combinePep(doubleInfoCriteria, strInfoCriteria, modiCriteria);
+        protein.combinePep(cbCharge.isSelected(), modiCriteria);
         protein.setAbundanceCombinedRange();
         modiSelected.clear();
         modiSelected.addAll(modiCriteria);
@@ -276,6 +333,7 @@ public class PBrowserController implements Initializable {
         combModiPos.getItems().clear();
         combModiPos.getItems().addAll(protein.getModiCombinedPos1(modiSelected));
         combModiPos.setDisable(false);
+        //combinePosSel = false;
         scaleX = 1;
         scaleY = 1;
         double sc = (canvasWidth - leftPix - rightPix)/(protein.getLength() * pixPerLocus);
@@ -286,7 +344,7 @@ public class PBrowserController implements Initializable {
         if(maxYCombined * (pixPerPep + 2*pixPepGap) > (canvasHeight-bottomPix-pixXLabel)){
             scaleY = (canvasHeight-bottomPix-pixXLabel)/((pixPerPep + 2*pixPepGap)*maxYCombined);
         }
-        initSBar(0);
+        //initSBar(0);
         draw();
 
         mainController.pepFilterSetDisable(true);
@@ -296,7 +354,28 @@ public class PBrowserController implements Initializable {
         return;
     }
 
+    @FXML private void selSequence(ActionEvent event){
+        if(combModiPos.getValue() == null){
+            cbSequence.setSelected(true);
+        }
+        if(cbSequence.isSelected()){
+            cbCharge.setDisable(false);
 
+            for(Node node : vbModification.getChildren()){
+                node.setDisable(false);
+            }
+
+        } else {
+            cbCharge.setSelected(false);
+            cbCharge.setDisable(true);
+
+            for(Node node : vbModification.getChildren()){
+                ((CheckBox) node).setSelected(false);
+                node.setDisable(true);
+            }
+        }
+        return;
+    }
 
     public void setData(SampleGroup sampleGroup, MainController mainController){
         this.sampleGroup = sampleGroup;
@@ -304,9 +383,10 @@ public class PBrowserController implements Initializable {
         sampleId = new ArrayList<>(sampleGroup.getSampleId());
         proteinId = new ArrayList<>(sampleGroup.getProteinId());
 
-        pepStrInfo = new ArrayList<>(sampleGroup.getPepStrInfo());
-        pepDoubleInfo = new ArrayList<>(sampleGroup.getPepDoubleInfo());
+        //pepStrInfo = new ArrayList<>(sampleGroup.getPepStrInfo());
+        //pepDoubleInfo = new ArrayList<>(sampleGroup.getPepDoubleInfo());
 
+        /*
         for(String info : pepDoubleInfo){
             CheckBox checkBox = new CheckBox(info);
             checkBox.setSelected(false);
@@ -322,6 +402,7 @@ public class PBrowserController implements Initializable {
             checkBox.setUserData(info);
             vbPepStrInfo.getChildren().addAll(checkBox);
         }
+        */
     }
 
     public void updatePep(){
@@ -437,7 +518,9 @@ public class PBrowserController implements Initializable {
 
     public void show(){
         combSample.getItems().addAll(sampleId);
-        combProtein.getItems().addAll(proteinId);
+        ArrayList<String> ptSort = new ArrayList<>(proteinId);
+        Collections.sort(ptSort);
+        combProtein.getItems().addAll(ptSort);
 
         combSample.valueProperty().addListener(new ChangeListener<String>() {
             @Override
@@ -464,6 +547,7 @@ public class PBrowserController implements Initializable {
                     combModiPos.getItems().clear();
                     combModiPos.getItems().addAll(protein.getModiPosSel1(modiSelected));
                     combModiPos.setDisable(false);
+                    //combinePosSel = false;
                     scaleX = 1;
                     scaleY = 1;
                     double sc = (canvasWidth - leftPix - rightPix)/(protein.getLength() * pixPerLocus);
@@ -503,6 +587,7 @@ public class PBrowserController implements Initializable {
                     combModiPos.getItems().clear();
                     combModiPos.getItems().addAll(protein.getModiPosSel1(modiSelected));
                     combModiPos.setDisable(false);
+                    //combinePosSel = false;
                     scaleX = 1;
                     scaleY = 1;
                     double sc = (canvasWidth - leftPix - rightPix)/(protein.getLength() * pixPerLocus);
@@ -613,6 +698,7 @@ public class PBrowserController implements Initializable {
             @Override
             public void changed(ObservableValue<? extends Integer> observable, Integer oldValue, Integer newValue) {
                 if(newValue != null){
+                    //combinePosSel = true;
                     int centerPos = newValue-1;
                     double st = centerPos * pixPerLocus * scaleX - canvas.getWidth() / 2.0;
                     if(st < 0){
@@ -632,6 +718,7 @@ public class PBrowserController implements Initializable {
         combModiPos.getSelectionModel().clearSelection();
         combModiPos.setValue(null);
         combModiPos.getItems().clear();
+        //combinePosSel = false;
 
         combModiPos.getItems().addAll(protein.getModiPosSel1(modiSelected));
         if(combModiPos.getItems().size() > 0){
@@ -1083,6 +1170,20 @@ public class PBrowserController implements Initializable {
         }
     }
 
+    public void saveImage(File figureFile){
+        double pixelScale = 3.0;
+        WritableImage image = new WritableImage((int)(canvas.getWidth()*pixelScale), (int)(canvas.getHeight()*pixelScale));
+        SnapshotParameters sp = new SnapshotParameters();
+        sp.setTransform(Transform.scale(pixelScale, pixelScale));
+        image = canvas.snapshot(sp, image);
+
+        try{
+            ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", figureFile);
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+    }
+
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -1323,6 +1424,7 @@ public class PBrowserController implements Initializable {
         });
     }
 
+    /*
     public class PepPos implements Comparable<PepPos>{
         // start, end, and y are all from 0
         private int start;
@@ -1375,4 +1477,5 @@ public class PBrowserController implements Initializable {
             }
         }
     }
+    */
 }

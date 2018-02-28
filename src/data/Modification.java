@@ -18,10 +18,12 @@ public class Modification implements Serializable {
 
     //private ModificationType type;
     private String modificationType;
+    private ArrayList<String> residue;
     private ArrayList<Integer> pos;
     private ArrayList<Double>  percent;
 
     public String getModificationType() { return modificationType; }
+    public ArrayList<String> getResidue() {return  residue;}
     public ArrayList<Integer> getPos() { return  pos; }
     public ArrayList<Double> getPercent() { return percent; }
 
@@ -32,6 +34,27 @@ public class Modification implements Serializable {
     }
 
     public Modification(String modi){
+        //System.out.println(modi);
+        String[] tmp = modi.split(";");
+        pos = new ArrayList<>();
+        percent = new ArrayList<>();
+        residue = new ArrayList<>();
+        for(int i=0; i<tmp.length; i++){
+            String posTmp = tmp[i].substring(tmp[i].indexOf("[")+1, tmp[i].indexOf("]"));
+            String typeTmp = tmp[i].substring(tmp[i].indexOf("]")+1, tmp[i].indexOf("("));
+            String otherTmp = tmp[i].substring(tmp[i].indexOf("(")+1, tmp[i].indexOf(")"));
+            String[]  resPer = otherTmp.split(",");
+            pos.add(Integer.parseInt(posTmp.trim()) - 1);
+            modificationType = typeTmp.trim();
+            if(resPer.length == 1){
+                residue.add(resPer[0].trim());
+                percent.add(100.0);
+            } else {
+                residue.add(resPer[0].trim());
+                percent.add(Double.parseDouble(resPer[1].trim()));
+            }
+        }
+        /*
         String[] tmp = modi.split("\\[");
         String typeTmp = tmp[0].toLowerCase();
         String infoTmp = tmp[1].substring(0, (tmp[1].length()-1));
@@ -53,6 +76,7 @@ public class Modification implements Serializable {
         }
 
         modificationType = typeTmp;
+        */
 
         /*
         switch (typeTmp){

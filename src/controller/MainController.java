@@ -1,5 +1,6 @@
 package controller;
 
+import com.sun.tools.doclets.formats.html.SourceToHTMLConverter;
 import controller.apps.ImportDataController;
 import controller.browser.PBrowserController;
 import controller.data.ProteomicsDataController;
@@ -45,6 +46,7 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import org.apache.commons.math3.ode.events.Action;
 import org.apache.commons.math3.stat.inference.TestUtils;
+import org.controlsfx.control.Rating;
 import project.ProjectInfo;
 import project.PublicInfo;
 
@@ -73,6 +75,7 @@ public class MainController implements Initializable{
 
     @FXML private RadioMenuItem menuNonnormalization;
     @FXML private RadioMenuItem menuMedianNormalization;
+    @FXML private RadioMenuItem menuSelProteinNormalization;
 
     //Analyze
     @FXML private Menu menuAnalyze;
@@ -88,6 +91,7 @@ public class MainController implements Initializable{
     //Export
     @FXML private Menu menuExport;
     @FXML private MenuItem menuExportModificationInfo;
+    @FXML private MenuItem menuBrowserFigure;
     @FXML private Menu menuExportModiCys;
 
     //Data Filter
@@ -119,12 +123,14 @@ public class MainController implements Initializable{
     private SampleProteinDataController sampleProteinDataController;
     private PBrowserController pBrowserController;
 
+    //menu selected for normalization
+    private String proteinNorm = "No";
+
     ///Data
     //DB
     //private String proteinDBFile = "src/protein.info.csv";
     //private TreeMap<String, String> proteinSeq;
     private ProteinDB proteinDB;
-
 
 
     //proteomics data
@@ -173,6 +179,9 @@ public class MainController implements Initializable{
 
         Stage stage = (Stage) menuBar.getScene().getWindow();
         File file = fileChooser.showSaveDialog(stage);
+        if(file == null){
+            return;
+        }
         String fileName = file.getName();
         if(fileName == null){
             return;
@@ -681,6 +690,7 @@ public class MainController implements Initializable{
         if(selTab.equals("Protein")){
             //set back to non-normalization
             menuNonnormalization.setSelected(true);
+            proteinNorm = "No";
             sampleGroup.setProteinIntegrationType(PublicInfo.ProteinIntegrationType.Raw);
             sampleGroup.setProteinStatus(PublicInfo.ProteinStatus.Unnormalized);
             sampleGroup.updateProtein();
@@ -695,6 +705,7 @@ public class MainController implements Initializable{
         String selTab = tabPane.getSelectionModel().getSelectedItem().getText();
         if(selTab.equals("Protein")){
             menuNonnormalization.setSelected(true);
+            proteinNorm = "No";
             sampleGroup.setProteinIntegrationType(PublicInfo.ProteinIntegrationType.iBAQ);
             sampleGroup.setProteinStatus(PublicInfo.ProteinStatus.Unnormalized);
             sampleGroup.updateProtein();
@@ -712,6 +723,7 @@ public class MainController implements Initializable{
             sampleGroup.setProteinStatus(PublicInfo.ProteinStatus.Unnormalized);
             sampleGroup.updateProtein();
             sampleProteinDataController.show();
+            proteinNorm = "No";
         } else {
             System.out.println("Wrong Selection: " + selTab);
         }
@@ -724,6 +736,7 @@ public class MainController implements Initializable{
             sampleGroup.setProteinStatus(PublicInfo.ProteinStatus.Median);
             sampleGroup.updateProtein();
             sampleProteinDataController.show();
+            proteinNorm = "Median";
         } else {
             System.out.println("Wrong Selection: " + selTab);
         }
@@ -740,9 +753,18 @@ public class MainController implements Initializable{
             Optional<String> result = dialog.showAndWait();
             if(result.isPresent()){
                 sampleGroup.setProteinStatus(PublicInfo.ProteinStatus.SelProtein, result.get());
+            } else {
+                if(proteinNorm.equals("No")){
+                    menuNonnormalization.setSelected(true);
+                }
+                if(proteinNorm.equals("Median")){
+                    menuMedianNormalization.setSelected(true);
+                }
+                return;
             }
             sampleGroup.updateProtein();
             sampleProteinDataController.show();
+            proteinNorm = "Sel";
         } else {
             System.out.println("Wrong Selection: " + selTab);
         }
@@ -841,6 +863,19 @@ public class MainController implements Initializable{
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    @FXML private void exportBrowserFigure(ActionEvent event){
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Output Browser Figure");
+        fileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
+        fileChooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("Output Figure", "*.png")
+        );
+
+        Stage stage = (Stage) tabPane.getScene().getWindow();
+        File figureFile = fileChooser.showSaveDialog(stage);
+        pBrowserController.saveImage(figureFile);
     }
 
     @FXML private void exportModifiedCysText(ActionEvent event){
@@ -988,6 +1023,7 @@ public class MainController implements Initializable{
                         menuView.setVisible(true);
                         menuExport.setVisible(true);
                         menuExportModificationInfo.setDisable(true);
+                        menuBrowserFigure.setDisable(true);
                         menuExportModiCys.setDisable(false);
                         menuDataClean.setVisible(false);
                         treeView.getSelectionModel().select(4);
@@ -998,6 +1034,7 @@ public class MainController implements Initializable{
                         menuView.setVisible(false);
                         menuExport.setVisible(true);
                         menuExportModificationInfo.setDisable(false);
+                        menuBrowserFigure.setDisable(false);
                         menuExportModiCys.setDisable(true);
                         menuDataClean.setVisible(true);
                         treeView.getSelectionModel().select(5);
@@ -1089,6 +1126,7 @@ public class MainController implements Initializable{
                         menuExport.setVisible(true);
                         menuExportModiCys.setDisable(false);
                         menuExportModificationInfo.setDisable(true);
+                        menuBrowserFigure.setDisable(true);
                         menuDataClean.setVisible(false);
 
                         switch (sampleProteinDataController.getScaleType()){
@@ -1122,6 +1160,7 @@ public class MainController implements Initializable{
                         menuExport.setVisible(true);
                         menuExportModiCys.setDisable(true);
                         menuExportModificationInfo.setDisable(false);
+                        menuBrowserFigure.setDisable(false);
                         menuDataClean.setVisible(true);
                         break;
                     default:
@@ -1269,13 +1308,16 @@ public class MainController implements Initializable{
 
 
             String header = bufferedReader.readLine();
-            String[] vsheader = header.split(",");
+            String[] vsheader = header.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
+
 
             proteomicsRawName = new ArrayList<>();
             proteomicsRaw = new ArrayList<>();
             proteomicsRawType = new ArrayList<>();
             for(String strTmp : vsheader){
-                proteomicsRawName.add(strTmp);
+                String t = strTmp.trim();
+                t = t.replaceAll("^\"|\"$", "");
+                proteomicsRawName.add(t);
                 ArrayList<String> tmp = new ArrayList<>();
                 proteomicsRaw.add(tmp);
                 proteomicsRawType.add("Double");
@@ -1284,12 +1326,14 @@ public class MainController implements Initializable{
 
             String fline;
             while((fline=bufferedReader.readLine()) != null){
-                String[] vslines = fline.split(",");
+                String[] vslines = fline.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
                 for(int i = 0; i < vslines.length; i++) {
-                    if(proteomicsRawType.get(i).equals("Double") && !isNumeric(vslines[i])){
+                    String t = vslines[i].trim();
+                    t  = t.replaceAll("^\"|\"$", "");
+                    if(proteomicsRawType.get(i).equals("Double") && !isNumeric(t)){
                         proteomicsRawType.set(i, "String");
                     }
-                    proteomicsRaw.get(i).add(vslines[i]);
+                    proteomicsRaw.get(i).add(t);
                 }
 
             }
@@ -1325,6 +1369,10 @@ public class MainController implements Initializable{
 
             int indexSampleId = -1;
             for(int i=0; i<vsheader.length; i++){
+                String tmp = vsheader[i].toLowerCase();
+                System.out.println("ll");
+                System.out.println(tmp);
+                System.out.println(tmp.length());
                 if(vsheader[i].toLowerCase().equals("sampleid")){
                     indexSampleId = i;
                     break;
@@ -1390,6 +1438,7 @@ public class MainController implements Initializable{
             int indexProtein = -1;
             int indexModification = -1;
             int indexAbundance = -1;
+            int indexCharge = -1;
             ArrayList<String> otherInfo = new ArrayList<>();
             ArrayList<Integer> indexOther = new ArrayList<>();
             for(int i=0; i< proteomicsRawName.size(); i++){
@@ -1410,6 +1459,9 @@ public class MainController implements Initializable{
                     case "abundance":
                         indexAbundance = i;
                         break;
+                    case "charge":
+                        indexCharge = i;
+                        break;
                     default:
                         otherInfo.add(proteomicsRawName.get(i));
                         indexOther.add(i);
@@ -1421,7 +1473,7 @@ public class MainController implements Initializable{
                 Alert alert = new Alert(Alert.AlertType.WARNING);
                 alert.setTitle("Data Import");
                 alert.setHeaderText(null);
-                alert.setContentText("There must be a column \"id\" in proteomics data");
+                alert.setContentText("There must be a column \"id\" in peptide data");
                 alert.showAndWait();
                 return false;
             }
@@ -1430,7 +1482,7 @@ public class MainController implements Initializable{
                 Alert alert = new Alert(Alert.AlertType.WARNING);
                 alert.setTitle("Data Import");
                 alert.setHeaderText(null);
-                alert.setContentText("There must be a column \"abundance\" in proteomics data");
+                alert.setContentText("There must be a column \"abundance\" in peptide data");
                 alert.showAndWait();
                 return false;
             }
@@ -1439,7 +1491,7 @@ public class MainController implements Initializable{
                 Alert alert = new Alert(Alert.AlertType.WARNING);
                 alert.setTitle("Data Import");
                 alert.setHeaderText(null);
-                alert.setContentText("There must be a column \"modification\" in proteomics data");
+                alert.setContentText("There must be a column \"modification\" in peptide data");
                 alert.showAndWait();
                 return false;
             }
@@ -1448,7 +1500,7 @@ public class MainController implements Initializable{
                 Alert alert = new Alert(Alert.AlertType.WARNING);
                 alert.setTitle("Data Import");
                 alert.setHeaderText(null);
-                alert.setContentText("There must be a column \"protein\" in proteomics data");
+                alert.setContentText("There must be a column \"protein\" in peptide data");
                 alert.showAndWait();
                 return false;
             }
@@ -1457,7 +1509,16 @@ public class MainController implements Initializable{
                 Alert alert = new Alert(Alert.AlertType.WARNING);
                 alert.setTitle("Data Import");
                 alert.setHeaderText(null);
-                alert.setContentText("There must be a column \"sequence\" in proteomics data");
+                alert.setContentText("There must be a column \"sequence\" in peptide data");
+                alert.showAndWait();
+                return false;
+            }
+
+            if(indexCharge == -1){
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("Data Import");
+                alert.setHeaderText(null);
+                alert.setContentText("There must be a column \"charge\" in peptide data");
                 alert.showAndWait();
                 return false;
             }
@@ -1467,7 +1528,11 @@ public class MainController implements Initializable{
                 String id = proteomicsRaw.get(indexId).get(i);
                 String sequence = proteomicsRaw.get(indexSequence).get(i);
                 String protein = proteomicsRaw.get(indexProtein).get(i);
+                if(protein.contains("_")){
+                    protein = protein.substring(0, protein.indexOf("_"));
+                }
                 String modificationStr = proteomicsRaw.get(indexModification).get(i);
+                String charge = proteomicsRaw.get(indexCharge).get(i);
 
                 ArrayList<Modification> modifications = new ArrayList<>();
 
@@ -1478,7 +1543,7 @@ public class MainController implements Initializable{
                 }
 
                 if(!modificationStr.isEmpty()){
-                    String[] modiTmp = modificationStr.split(";");
+                    String[] modiTmp = modificationStr.split("\\|");
                     for(int j=0; j<modiTmp.length; j++){
                         Modification tmp = new Modification(modiTmp[j]);
                         modifications.add(tmp);
@@ -1499,11 +1564,14 @@ public class MainController implements Initializable{
                 Double abTmp = tryDoubleParse(proteomicsRaw.get(indexAbundance).get(i));
                 String spId = "Sample";
 
-                Peptide ptTmp = new Peptide(id, sequence,  abTmp, doubleInfo, strInfo, modifications);
-                sampleGroup.addPepData(spId, id, abTmp);
-                sampleGroup.addPeptide(spId, protein, seq, ptTmp);
-                sampleGroup.increaseProteinData(spId, protein, abTmp);
+                Peptide ptTmp = new Peptide(id, sequence,  abTmp, Integer.parseInt(charge.trim()), doubleInfo, strInfo, modifications);
 
+                if(sampleGroup.addPeptide(spId, protein, seq, ptTmp)){
+                    sampleGroup.addPepData(spId, id, abTmp);
+                    sampleGroup.increaseProteinData(spId, protein, abTmp);
+                } else {
+                    break;
+                }
             }
 
             if(proteinNotFind.size() > 0){
@@ -1524,6 +1592,7 @@ public class MainController implements Initializable{
             int indexSequence = -1;
             int indexProtein = -1;
             int indexModification = -1;
+            int indexCharge = -1;
             ArrayList<Integer> indexAbundance = new ArrayList<>();
             ArrayList<String> otherInfo = new ArrayList<>();
             ArrayList<Integer> indexOther = new ArrayList<>();
@@ -1551,6 +1620,12 @@ public class MainController implements Initializable{
                     case "modification":
                         indexModification = i;
                         break;
+                    case "modifications":
+                        indexModification = i;
+                        break;
+                    case "charge":
+                        indexCharge = i;
+                        break;
                     default:
                         otherInfo.add(proteomicsRawName.get(i));
                         indexOther.add(i);
@@ -1562,7 +1637,7 @@ public class MainController implements Initializable{
                 Alert alert = new Alert(Alert.AlertType.WARNING);
                 alert.setTitle("Data Import");
                 alert.setHeaderText(null);
-                alert.setContentText("There must be a column \"id\" in proteomics data");
+                alert.setContentText("There must be a column \"id\" in peptide data");
                 alert.showAndWait();
                 return false;
             }
@@ -1571,7 +1646,7 @@ public class MainController implements Initializable{
                 Alert alert = new Alert(Alert.AlertType.WARNING);
                 alert.setTitle("Data Import");
                 alert.setHeaderText(null);
-                alert.setContentText("There must be a column \"modification\" in proteomics data");
+                alert.setContentText("There must be a column \"modification\" in peptide data");
                 alert.showAndWait();
                 return false;
             }
@@ -1580,7 +1655,7 @@ public class MainController implements Initializable{
                 Alert alert = new Alert(Alert.AlertType.WARNING);
                 alert.setTitle("Data Import");
                 alert.setHeaderText(null);
-                alert.setContentText("There must be a column \"protein\" in proteomics data");
+                alert.setContentText("There must be a column \"protein\" in peptide data");
                 alert.showAndWait();
                 return false;
             }
@@ -1589,7 +1664,16 @@ public class MainController implements Initializable{
                 Alert alert = new Alert(Alert.AlertType.WARNING);
                 alert.setTitle("Data Import");
                 alert.setHeaderText(null);
-                alert.setContentText("There must be a column \"sequence\" in proteomics data");
+                alert.setContentText("There must be a column \"sequence\" in peptide data");
+                alert.showAndWait();
+                return false;
+            }
+
+            if(indexCharge == -1){
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("Data Import");
+                alert.setHeaderText(null);
+                alert.setContentText("There must be a column \"charge\" in peptide data");
                 alert.showAndWait();
                 return false;
             }
@@ -1612,6 +1696,10 @@ public class MainController implements Initializable{
                 String sequence = proteomicsRaw.get(indexSequence).get(i);
                 String protein = proteomicsRaw.get(indexProtein).get(i);
                 String modificationStr = proteomicsRaw.get(indexModification).get(i);
+                String charge = proteomicsRaw.get(indexCharge).get(i);
+                if(protein.contains("_")){
+                    protein = protein.substring(0, protein.indexOf("_"));
+                }
 
                 ArrayList<Modification> modifications = new ArrayList<>();
 
@@ -1622,8 +1710,10 @@ public class MainController implements Initializable{
                 }
 
                 if(!modificationStr.isEmpty()){
-                    String[] modiTmp = modificationStr.split(";");
+                    //System.out.println(modificationStr);
+                    String[] modiTmp = modificationStr.split("\\|");
                     for(int j=0; j<modiTmp.length; j++){
+                        //System.out.println(modiTmp[j]);
                         Modification tmp = new Modification(modiTmp[j]);
                         modifications.add(tmp);
                     }
@@ -1643,11 +1733,14 @@ public class MainController implements Initializable{
                 for(int j=0; j<sampleId.size(); j++){
                     Double abTmp = tryDoubleParse(proteomicsRaw.get(indexAbundance.get(j)).get(i));
                     String spId = sampleId.get(j);
-                    Peptide ptTmp = new Peptide(id, sequence,  abTmp, doubleInfo, strInfo, modifications);
+                    Peptide ptTmp = new Peptide(id, sequence,  abTmp, Integer.parseInt(charge.trim()), doubleInfo, strInfo, modifications);
 
-                    sampleGroup.addPepData(spId, id, abTmp);
-                    sampleGroup.addPeptide(spId, protein, seq, ptTmp);
-                    sampleGroup.increaseProteinData(spId, protein, abTmp);
+                    if(sampleGroup.addPeptide(spId, protein, seq, ptTmp)){
+                        sampleGroup.addPepData(spId, id, abTmp);
+                        sampleGroup.increaseProteinData(spId, protein, abTmp);
+                    } else {
+                        break;
+                    }
                 }
 
             }

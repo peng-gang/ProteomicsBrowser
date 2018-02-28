@@ -1,11 +1,9 @@
 package data;
 
 
-import apple.laf.JRSUIUtils;
 
 import java.io.Serializable;
 import java.util.*;
-import java.util.function.DoubleToLongFunction;
 
 /**
  * Peptide Class to store peptide information
@@ -14,7 +12,7 @@ import java.util.function.DoubleToLongFunction;
 public class Peptide implements Serializable {
     private String id;
     private String sequence;
-    //private Integer charge;
+    private Integer charge;
     //private Double mz;
     //private Double score;
     private Double abundance;
@@ -30,7 +28,7 @@ public class Peptide implements Serializable {
     public String getId() {return id;}
     public int getLength() {return sequence.length();}
     public String getSequence() {return  sequence; }
-    //public Integer getCharge() { return charge;}
+    public Integer getCharge() { return charge;}
     //public Double getMz() { return mz;}
     //public Double getScore() { return score;}
     public Double getAbundance() { return  abundance;}
@@ -67,6 +65,15 @@ public class Peptide implements Serializable {
     }
     public void setModification(ArrayList<Modification> modi) { this.modifications = modi; }
 
+    public String getModiType(int pos){
+        for(Modification modi : modifications){
+            if(modi.getPos().contains(pos)){
+                return modi.getModificationType();
+            }
+        }
+        return null;
+    }
+
     public TreeSet<Integer> getModificationPos(String modiType) {
         TreeSet<Integer> rlt = new TreeSet<>();
         for(Modification modi : modifications){
@@ -79,20 +86,22 @@ public class Peptide implements Serializable {
 
 
 
-    public Peptide(String id, String sequence, Double abundance, TreeMap<String, Double> doubleInfo, TreeMap<String, String> strInfo){
+    public Peptide(String id, String sequence, Double abundance, Integer charge, TreeMap<String, Double> doubleInfo, TreeMap<String, String> strInfo){
         this.id = id;
         this.sequence = sequence.toUpperCase();
         this.abundance = abundance;
+        this.charge = charge;
         this.doubleInfo = doubleInfo;
         this.strInfo = strInfo;
         this.modifications = new ArrayList<>();
     }
 
-    public Peptide(String id, String sequence, Double abundance,TreeMap<String, Double> doubleInfo, TreeMap<String, String> strInfo,
+    public Peptide(String id, String sequence, Double abundance, Integer charge, TreeMap<String, Double> doubleInfo, TreeMap<String, String> strInfo,
                    ArrayList<Modification> modifications){
         this.id = id;
         this.sequence = sequence.toUpperCase();
         this.abundance = abundance;
+        this.charge = charge;
         this.doubleInfo = doubleInfo;
         this.strInfo = strInfo;
         this.modifications = modifications;
@@ -160,17 +169,42 @@ public class Peptide implements Serializable {
         return true;
     }
 
+    public boolean isSimilar(Peptide pep, boolean charge, ArrayList<String> modiCriteria){
+        if(!this.sequence.equals(pep.getSequence())){
+            return false;
+        }
+
+        if(charge){
+            if(this.charge != pep.getCharge()){
+                return false;
+            }
+        }
+
+        for(String modiType : modiCriteria){
+            if(!this.getModificationPos(modiType).equals(pep.getModificationPos(modiType))){
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     public String toString(){
         String rlt;
         rlt = "ID: " + id + "\n";
-        for(Map.Entry<String, Double> entry : doubleInfo.entrySet()){
-            rlt = rlt + entry.getKey() + ": " + entry.getValue() + "\n";
-        }
-        for(Map.Entry<String, String> entry : strInfo.entrySet()){
-            rlt = rlt + entry.getKey() + ": " + entry.getValue() + "\n";
-        }
-        /*
         rlt = rlt + "Charge: " + charge + "\n";
+        if(doubleInfo!=null){
+            for(Map.Entry<String, Double> entry : doubleInfo.entrySet()){
+                rlt = rlt + entry.getKey() + ": " + entry.getValue() + "\n";
+            }
+        }
+        if(strInfo!=null){
+            for(Map.Entry<String, String> entry : strInfo.entrySet()){
+                rlt = rlt + entry.getKey() + ": " + entry.getValue() + "\n";
+            }
+        }
+
+        /*
         rlt = rlt + "mz: " + mz + "\n";
         rlt = rlt + "Score: " + score + "\n";
         */

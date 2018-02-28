@@ -52,7 +52,7 @@
                   </VBox>
                </content>
           </Tab>
-          <Tab text="Peptide and Protein Data">
+          <Tab disable="true" text="Peptide and Protein Data">
                <content>
                   <VBox prefHeight="200.0" prefWidth="400.0">
                      <children>
@@ -108,7 +108,7 @@
                   </VBox>
                </content>
           </Tab>
-            <Tab text="Protein Data">
+            <Tab disable="true" text="Protein Data">
                <content>
                   <VBox prefHeight="200.0" prefWidth="100.0">
                      <children>

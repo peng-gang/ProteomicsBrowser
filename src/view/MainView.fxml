@@ -82,6 +82,7 @@
                     </items>
                   </Menu>
                 <MenuItem fx:id="menuExportModificationInfo" mnemonicParsing="false" onAction="#exportModificationInfo" text="Modification Info" />
+                  <MenuItem fx:id="menuBrowserFigure" mnemonicParsing="false" onAction="#exportBrowserFigure" text="Browser Figure" />
               </items>
             </Menu>
           <Menu mnemonicParsing="false" text="Help">

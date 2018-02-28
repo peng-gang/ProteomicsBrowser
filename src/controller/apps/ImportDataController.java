@@ -43,10 +43,10 @@ public class ImportDataController implements Initializable {
     @FXML private void getPtDataFile(ActionEvent event){
         Stage stage = (Stage) btnPtDataFile.getScene().getWindow();
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Proteomics Data");
+        fileChooser.setTitle("Peptide Data");
         fileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
         fileChooser.getExtensionFilters().add(
-                new FileChooser.ExtensionFilter("Proteomics Data", "*.csv")
+                new FileChooser.ExtensionFilter("Peptide Data", "*.csv")
         );
 
         ptFile = fileChooser.showOpenDialog(stage);
@@ -82,9 +82,9 @@ public class ImportDataController implements Initializable {
 
         if(ptFile == null){
             Alert alert = new Alert(Alert.AlertType.WARNING);
-            alert.setTitle("Proteomics Data Selection");
+            alert.setTitle("Peptide Data Selection");
             alert.setHeaderText(null);
-            alert.setContentText("Please select a proteomics data file");
+            alert.setContentText("Please select a peptide data file");
             alert.showAndWait();
             btnPtDataFile.requestFocus();
             return;

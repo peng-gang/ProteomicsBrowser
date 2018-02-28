@@ -12,7 +12,8 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import java.io.File;
+
+import java.io.*;
 import java.util.ArrayList;
 
 /**
@@ -29,6 +30,8 @@ public class ParaModifiedCysController{
 
     private String modificationSel;
 
+    private String selProteinFileName;
+
 
     @FXML private ComboBox<String> cmbSample;
     @FXML private TextField textNumResidual;
@@ -36,6 +39,8 @@ public class ParaModifiedCysController{
     @FXML private Button btnTextFile;
     @FXML private VBox vbModification;
     @FXML private Button btnExportFile;
+    @FXML private ComboBox<String> comboProtein;
+    @FXML private Label lblSelProtein;
 
 
     /*
@@ -63,6 +68,10 @@ public class ParaModifiedCysController{
 
         Stage stage = (Stage) cmbSample.getScene().getWindow();
         textFile = fileChooser.showSaveDialog(stage);
+        if(textFile == null){
+            textTextFile.setText("");
+            return;
+        }
         textTextFile.setText(textFile.toString());
     }
 
@@ -122,7 +131,28 @@ public class ParaModifiedCysController{
 
         ArrayList<String> modiSelect = new ArrayList<>();
         modiSelect.add(modificationSel);
-        sampleGroup.outputModiResText(textFile, sample, modiSelect, numResidual);
+        ArrayList<String> selProteinName = new ArrayList<>();
+
+        if(selProteinFileName==null || selProteinFileName.equals("")){
+            sampleGroup.outputModiResText(textFile, sample, modiSelect, numResidual, null);
+        } else {
+            FileReader fileReader = null;
+            try {
+                fileReader = new FileReader(selProteinFileName);
+                BufferedReader bufferedReader = new BufferedReader(fileReader);
+                String fline = null;
+                while((fline = bufferedReader.readLine()) != null){
+                    selProteinName.add(fline);
+                }
+
+                bufferedReader.close();
+                fileReader.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            sampleGroup.outputModiResText(textFile, sample, modiSelect, numResidual, selProteinName);
+        }
 
         Stage stage = (Stage) textNumResidual.getScene().getWindow();
         stage.close();
@@ -131,6 +161,7 @@ public class ParaModifiedCysController{
 
     public void init(SampleGroup sampleGroup){
         this.sampleGroup = sampleGroup;
+        selProteinFileName = null;
         samples =  new ArrayList<>(sampleGroup.getSampleId());
         btnExportFile.setDisable(true);
 
@@ -139,6 +170,11 @@ public class ParaModifiedCysController{
         textNumResidual.setText("15");
 
         modificationSel = null;
+
+
+        comboProtein.getItems().addAll("All Proteins");
+        comboProtein.getItems().addAll("Select Proteins:");
+        comboProtein.setValue("All Proteins");
 
         cmbSample.valueProperty().addListener(new ChangeListener<String>() {
             @Override
@@ -200,6 +236,39 @@ public class ParaModifiedCysController{
                 });
 
                 btnExportFile.setDisable(false);
+            }
+        });
+
+        comboProtein.valueProperty().addListener(new ChangeListener<String>() {
+            @Override
+            public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+                if(newValue.equals("All Proteins")){
+                    lblSelProtein.setText("");
+                    selProteinFileName = null;
+                } else {
+                    FileChooser fileChooser = new FileChooser();
+                    fileChooser.setTitle("Select Proteins");
+                    fileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
+                    fileChooser.getExtensionFilters().add(
+                            new FileChooser.ExtensionFilter("Protein Name File", "*.txt")
+                    );
+
+                    Stage stage = (Stage) cmbSample.getScene().getWindow();
+                    File selProteinNameFile = fileChooser.showOpenDialog(stage);
+                    if(selProteinNameFile == null){
+                        lblSelProtein.setText("");
+                        comboProtein.setValue("All Proteins");
+                        return;
+                    }
+                    selProteinFileName = selProteinNameFile.toString();
+                    if(selProteinFileName.equals("")){
+                        lblSelProtein.setText("");
+                        comboProtein.setValue("All Proteins");
+                        return;
+                    }
+
+                    lblSelProtein.setText(selProteinFileName);
+                }
             }
         });
 

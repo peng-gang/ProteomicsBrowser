@@ -5,7 +5,6 @@
 <?import java.lang.*?>
 <?import javafx.scene.chart.*?>
 
-
 <VBox prefHeight="430.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.result.CorScatterController">
    <children>
       <MenuBar>
@@ -16,6 +15,17 @@
                   <MenuItem mnemonicParsing="false" onAction="#exit" text="Exit" />
             </items>
           </Menu>
+            <Menu mnemonicParsing="false" text="View">
+              <items>
+                  <RadioMenuItem fx:id="menuScaleRegular" mnemonicParsing="false" onAction="#scaleRegular" text="Regular">
+                     <toggleGroup>
+                        <ToggleGroup fx:id="toggleGroupScale" />
+                     </toggleGroup>
+                  </RadioMenuItem>
+                  <RadioMenuItem fx:id="menuScaleLog2" mnemonicParsing="false" onAction="#scaleLog2" selected="true" text="Log2" toggleGroup="$toggleGroupScale" />
+                  <RadioMenuItem fx:id="menuScaleLog10" mnemonicParsing="false" onAction="#scaleLog10" text="Log10" toggleGroup="$toggleGroupScale" />
+              </items>
+            </Menu>
         </menus>
       </MenuBar>
       <Pane fx:id="pane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" />

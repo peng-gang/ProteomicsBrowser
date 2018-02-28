@@ -13,6 +13,8 @@ import javafx.scene.layout.Pane;
 import javafx.scene.transform.Transform;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import org.apache.commons.math3.analysis.function.Log10;
+import project.PublicInfo;
 
 import javax.imageio.ImageIO;
 import java.io.File;
@@ -35,6 +37,8 @@ public class CorScatterController implements Initializable{
     private ArrayList<Double> d2;
     private String t1;
     private String t2;
+
+    private PublicInfo.ScaleType scaleType;
 
     @FXML private void save(ActionEvent event){
         FileChooser fileChooser = new FileChooser();
@@ -65,6 +69,21 @@ public class CorScatterController implements Initializable{
         stage.close();
     }
 
+    @FXML private void scaleLog2(ActionEvent event){
+        scaleType = PublicInfo.ScaleType.Log2;
+        init();
+    }
+
+    @FXML private void scaleRegular(ActionEvent event){
+        scaleType = PublicInfo.ScaleType.Regular;
+        init();
+    }
+
+    @FXML private void scaleLog10(ActionEvent event){
+        scaleType = PublicInfo.ScaleType.Log10;
+        init();
+    }
+
     public void set(String t1, String t2, ArrayList<Double> d1, ArrayList<Double> d2){
         this.t1 = t1;
         this.t2 = t2;
@@ -73,19 +92,67 @@ public class CorScatterController implements Initializable{
     }
 
     public void init(){
-        double min1 = Math.log(Collections.min(d1));
-        double max1 = Math.log(Collections.max(d1));
-        double seg1 = (max1-min1)/10;
-        NumberAxis xAxis = new NumberAxis(min1-seg1, max1+seg1, seg1);
-        //NumberAxis xAxis = new NumberAxis(18, 22, 0.4);
 
-        double min2 = Math.log(Collections.min(d2));
-        double max2 = Math.log(Collections.max(d2));
-        double seg2 = (max2-min2)/10;
-        NumberAxis yAxis = new NumberAxis(min2-seg2, max2+seg2, seg2);
+        //NumberAxis xAxis = new NumberAxis(18, 22, 0.4);
+        NumberAxis xAxis;
+        NumberAxis yAxis;
+        if(scaleType == PublicInfo.ScaleType.Regular){
+            double dMin = Collections.min(d1);
+
+            double min1 = dMin;
+            double max1 = Collections.max(d1);
+            double seg1 = (max1-min1)/10;
+            xAxis = new NumberAxis(min1-seg1, max1+seg1, seg1);
+
+            dMin = Collections.min(d2);
+            double min2 = dMin;
+            double max2 = Collections.max(d2);
+            double seg2 = (max2-min2)/10;
+            yAxis = new NumberAxis(min2-seg2, max2+seg2, seg2);
+        } else {
+            if(scaleType== PublicInfo.ScaleType.Log2) {
+                double dMin = Collections.min(d1);
+                if (dMin < 0.001) {
+                    dMin = 0.001;
+                }
+                double min1 = Math.log(dMin) / Math.log(2.0);
+                double max1 = Math.log(Collections.max(d1)) / Math.log(2.0);
+                double seg1 = (max1 - min1) / 10;
+                xAxis = new NumberAxis(min1 - seg1, max1 + seg1, seg1);
+
+                dMin = Collections.min(d2);
+                if (dMin < 0.001) {
+                    dMin = 0.001;
+                }
+                double min2 = Math.log(dMin) / Math.log(2.0);
+                double max2 = Math.log(Collections.max(d2)) / Math.log(2.0);
+                double seg2 = (max2 - min2) / 10;
+                yAxis = new NumberAxis(min2 - seg2, max2 + seg2, seg2);
+            }else{
+                //(scaleType == PublicInfo.ScaleType.Log10)
+                double dMin = Collections.min(d1);
+                if(dMin < 0.001){
+                    dMin = 0.001;
+                }
+                double min1 = Math.log10(dMin);
+                double max1 = Math.log10(Collections.max(d1));
+                double seg1 = (max1-min1)/10;
+                xAxis = new NumberAxis(min1-seg1, max1+seg1, seg1);
+
+                dMin = Collections.min(d2);
+                if(dMin < 0.001){
+                    dMin = 0.001;
+                }
+                double min2 = Math.log10(dMin);
+                double max2 = Math.log10(Collections.max(d2));
+                double seg2 = (max2-min2)/10;
+                yAxis = new NumberAxis(min2-seg2, max2+seg2, seg2);
+            }
+        }
+
         //NumberAxis yAxis = new NumberAxis(18, 22, 0.4);
         sChart = new ScatterChart<Number, Number>(xAxis, yAxis);
-
+        pane.getChildren().clear();
         pane.getChildren().add(sChart);
 
         xAxis.setLabel(t1);
@@ -94,16 +161,36 @@ public class CorScatterController implements Initializable{
         XYChart.Series<Number, Number> series = new XYChart.Series();
         series.setName("Correlation");
         for(int i =0; i< d1.size();i++){
-            double tmp1 = Math.log(d1.get(i));
-            double tmp2 = Math.log(d2.get(i));
+            double tmp1 = d1.get(i);
+            double tmp2 = d2.get(i);
+
+            if(scaleType == PublicInfo.ScaleType.Regular){
+
+            } else{
+                if(tmp1< 0.001){
+                    tmp1 = 0.001;
+                }
+                if(tmp2 < 0.001){
+                    tmp2 = 0.001;
+                }
+                if(scaleType == PublicInfo.ScaleType.Log2){
+                    tmp1 = Math.log(tmp1)/Math.log(2);
+                    tmp2 = Math.log(tmp2)/Math.log(2);
+                } else {
+                    tmp1 = Math.log10(tmp1);
+                    tmp2 = Math.log10(tmp2);
+                }
+            }
+
             XYChart.Data<Number, Number> tmp = new XYChart.Data<>(tmp1, tmp2);
             series.getData().add(tmp);
         }
         sChart.getData().addAll(series);
+        sChart.setLegendVisible(false);
     }
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-
+        scaleType = PublicInfo.ScaleType.Log2;
     }
 }
