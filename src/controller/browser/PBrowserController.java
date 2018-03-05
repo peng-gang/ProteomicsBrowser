@@ -66,6 +66,7 @@ public class PBrowserController implements Initializable {
     @FXML private Button btnCombine;
     @FXML private CheckBox cbCharge;
     @FXML private CheckBox cbSequence;
+    @FXML private HBox hBoxView;
 
     private boolean initialized = false;
 
@@ -1172,10 +1173,10 @@ public class PBrowserController implements Initializable {
 
     public void saveImage(File figureFile){
         double pixelScale = 3.0;
-        WritableImage image = new WritableImage((int)(canvas.getWidth()*pixelScale), (int)(canvas.getHeight()*pixelScale));
+        WritableImage image = new WritableImage((int)(hBoxView.getWidth()*pixelScale), (int)((hBoxView.getHeight()-20)*pixelScale));
         SnapshotParameters sp = new SnapshotParameters();
         sp.setTransform(Transform.scale(pixelScale, pixelScale));
-        image = canvas.snapshot(sp, image);
+        image = hBoxView.snapshot(sp, image);
 
         try{
             ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", figureFile);
@@ -1324,7 +1325,7 @@ public class PBrowserController implements Initializable {
                 if(pepCombined){
                     for(PepPos tmp : arrangePepCombined){
                         if(tmp.contains(idxX, idxY)) {
-                            String info = tmp.getPep().toString();
+                            String info = tmp.getPep().toString(tmp.getStart());
                             info = info + "Start: " + (tmp.getStart() + 1) + "\n";
                             info = info + "End: " + (tmp.getEnd() + 1);
                             lblPep.setText(info);
@@ -1372,7 +1373,7 @@ public class PBrowserController implements Initializable {
 
                 for(PepPos tmp : arrangePep){
                     if(tmp.contains(idxX, idxY)) {
-                        String info = tmp.getPep().toString();
+                        String info = tmp.getPep().toString(tmp.getStart());
                         info = info + "Start: " + (tmp.getStart() + 1) + "\n";
                         info = info + "End: " + (tmp.getEnd() + 1);
                         lblPep.setText(info);

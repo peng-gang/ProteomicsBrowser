@@ -365,8 +365,13 @@ public class MainController implements Initializable{
 
         corScatterDataSelectStage.showAndWait();
 
+        if(!controller.getSubmitted()){
+            return;
+        }
+
         String dataId1 = controller.getData1Id();
         String dataId2 = controller.getData2Id();
+        String category = controller.getCategory();
 
         ArrayList<Double> d1;
         ArrayList<Double> d2;
@@ -389,13 +394,35 @@ public class MainController implements Initializable{
         }
         Stage scStage = new Stage();
         scStage.setTitle("Correlation Scatter Plot");
-        scStage.setScene(new Scene(root2, 600, 400));
+        scStage.setScene(new Scene(root2, 600, 450));
 
         scStage.initModality(Modality.WINDOW_MODAL);
         scStage.initOwner(menuBar.getScene().getWindow());
 
         CorScatterController controller2 = loader2.getController();
-        controller2.set(dataId1, dataId2, d1, d2);
+        ArrayList<String> group;
+        if(category == "NULL"){
+            group = null;
+        } else {
+            Double low = controller.getLow();
+            Double high = controller.getHigh();
+            if(low == null){
+                group = sampleGroup.getStrInfo(category);
+            } else {
+                group = new ArrayList<>();
+                ArrayList<String> sampleId = new ArrayList<>(sampleGroup.getSampleId());
+                for(String sp : sampleId){
+                    if(sampleGroup.getNumInfo(sp, category) <= low){
+                        group.add("Low");
+                    } else if(sampleGroup.getNumInfo(sp, category) > high){
+                        group.add("High");
+                    } else {
+                        group.add("Middle");
+                    }
+                }
+            }
+        }
+        controller2.set(dataId1, dataId2, d1, d2,group);
         controller2.init();
         scStage.showAndWait();
     }
@@ -453,7 +480,7 @@ public class MainController implements Initializable{
             }
         } else {
             for(String sp: sampleId){
-                if(sampleGroup.getNumInfo(sp, groupId) < low){
+                if(sampleGroup.getNumInfo(sp, groupId) <= low){
                     g1.add(sp);
                 }
 
@@ -620,11 +647,11 @@ public class MainController implements Initializable{
             sampleIdGroups.add(new ArrayList<>());
             sampleIdGroups.add(new ArrayList<>());
             for(String sp : sampleId){
-                if(sampleGroup.getNumInfo(sp, groupId) < low){
+                if(sampleGroup.getNumInfo(sp, groupId) <= low){
                     sampleIdGroups.get(0).add(sp);
                 }
 
-                if(sampleGroup.getNumInfo(sp, groupId) >= high){
+                if(sampleGroup.getNumInfo(sp, groupId) > high){
                     sampleIdGroups.get(1).add(sp);
                 }
             }
@@ -875,6 +902,9 @@ public class MainController implements Initializable{
 
         Stage stage = (Stage) tabPane.getScene().getWindow();
         File figureFile = fileChooser.showSaveDialog(stage);
+        if(figureFile==null){
+            return;
+        }
         pBrowserController.saveImage(figureFile);
     }
 

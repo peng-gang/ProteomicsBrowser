@@ -176,7 +176,7 @@
       </VBox>
       <VBox prefHeight="1100.0" prefWidth="950.0">
          <children>
-            <HBox prefHeight="620.0" prefWidth="950.0" spacing="5.0">
+            <HBox fx:id="hBoxView" prefHeight="620.0" prefWidth="950.0" spacing="5.0">
                <children>
                   <VBox>
                      <children>

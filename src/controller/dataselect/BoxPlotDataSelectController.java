@@ -36,6 +36,9 @@ public class BoxPlotDataSelectController implements Initializable {
 
     private boolean submitted;
 
+    private ArrayList<String> numInfoName ;
+    private ArrayList<String> strInfoName ;
+
 
 
     public boolean getSubmitted() {return submitted; }
@@ -65,12 +68,13 @@ public class BoxPlotDataSelectController implements Initializable {
 
     public void set(SampleGroup sampleGroup){
         this.sampleGroup = sampleGroup;
+        numInfoName = new ArrayList<>(sampleGroup.getNumInfoName());
+        strInfoName = new ArrayList<>(sampleGroup.getStrInfoName());
     }
 
     public void init(String type){
         this.type = type;
-        ArrayList<String> numInfoName = new ArrayList<>(sampleGroup.getNumInfoName());
-        ArrayList<String> strInfoName = new ArrayList<>(sampleGroup.getStrInfoName());
+
         combGroup.getItems().addAll(numInfoName);
         combGroup.getItems().addAll(strInfoName);
         if(type.equals("Peptide")){
@@ -121,7 +125,7 @@ public class BoxPlotDataSelectController implements Initializable {
             public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
                 Integer num = 0;
                 for(Double tmp : val){
-                    if(tmp < newValue.doubleValue()){
+                    if(tmp <= newValue.doubleValue()){
                         num++;
                     }
                 }

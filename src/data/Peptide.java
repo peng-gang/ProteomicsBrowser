@@ -226,6 +226,43 @@ public class Peptide implements Serializable {
         return rlt;
     }
 
+    public String toString(int st){
+        String rlt;
+        rlt = "ID: " + id + "\n";
+        rlt = rlt + "Charge: " + charge + "\n";
+        if(doubleInfo!=null){
+            for(Map.Entry<String, Double> entry : doubleInfo.entrySet()){
+                rlt = rlt + entry.getKey() + ": " + entry.getValue() + "\n";
+            }
+        }
+        if(strInfo!=null){
+            for(Map.Entry<String, String> entry : strInfo.entrySet()){
+                rlt = rlt + entry.getKey() + ": " + entry.getValue() + "\n";
+            }
+        }
+
+        /*
+        rlt = rlt + "mz: " + mz + "\n";
+        rlt = rlt + "Score: " + score + "\n";
+        */
+        rlt = rlt + "Abundance: " + abundance + "\n\t" +  String.format("%.2f", Math.log10(abundance)) + "(log10)\n";
+        if(modifications.size()==0){
+            rlt += "Modification: None\n";
+        } else {
+            rlt += "Modification: \n";
+            for(Modification md : modifications){
+                rlt += "\t" + md.getModificationType() + ": ";
+                rlt += (md.getPos().get(0) + 1) + "/" + (md.getPos().get(0) + st + 1) + "(" + md.getPercent().get(0) + ")";
+                for(int i=1; i<md.getPos().size();i++){
+                    rlt += ";" + md.getPos().get(i) + "/" + (md.getPos().get(i) + st + 1) + "(" + md.getPercent().get(i) + ")";
+                }
+                rlt += "\n";
+            }
+        }
+
+        return rlt;
+    }
+
     public String getModiInfo(ArrayList<String> modiSelected){
         if(modifications.size() == 0){
             return null;

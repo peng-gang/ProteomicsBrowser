@@ -4,6 +4,7 @@ import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.Side;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.ScatterChart;
@@ -13,6 +14,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.transform.Transform;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.util.StringConverter;
 import org.apache.commons.math3.analysis.function.Log10;
 import project.PublicInfo;
 
@@ -20,10 +22,10 @@ import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.ResourceBundle;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.text.ParseException;
+import java.util.*;
 
 /**
  * Created by gpeng on 2/16/17.
@@ -37,6 +39,7 @@ public class CorScatterController implements Initializable{
     private ArrayList<Double> d2;
     private String t1;
     private String t2;
+    private ArrayList<String> group;
 
     private PublicInfo.ScaleType scaleType;
 
@@ -84,11 +87,12 @@ public class CorScatterController implements Initializable{
         init();
     }
 
-    public void set(String t1, String t2, ArrayList<Double> d1, ArrayList<Double> d2){
+    public void set(String t1, String t2, ArrayList<Double> d1, ArrayList<Double> d2, ArrayList<String> group){
         this.t1 = t1;
         this.t2 = t2;
         this.d1 = d1;
         this.d2 = d2;
+        this.group = group;
     }
 
     public void init(){
@@ -109,6 +113,41 @@ public class CorScatterController implements Initializable{
             double max2 = Collections.max(d2);
             double seg2 = (max2-min2)/10;
             yAxis = new NumberAxis(min2-seg2, max2+seg2, seg2);
+
+            NumberFormat format = new DecimalFormat("#.#E0");
+            xAxis.setTickLabelFormatter(new StringConverter<Number>() {
+                @Override
+                public String toString(Number object) {
+                    return format.format(object.doubleValue());
+                }
+
+                @Override
+                public Number fromString(String string) {
+                    try{
+                        return format.parse(string);
+                    } catch (ParseException e){
+                        e.printStackTrace();
+                        return null;
+                    }
+                }
+            });
+
+            yAxis.setTickLabelFormatter(new StringConverter<Number>() {
+                @Override
+                public String toString(Number object) {
+                    return format.format(object.doubleValue());
+                }
+
+                @Override
+                public Number fromString(String string) {
+                    try{
+                        return format.parse(string);
+                    } catch (ParseException e){
+                        e.printStackTrace();
+                        return null;
+                    }
+                }
+            });
         } else {
             if(scaleType== PublicInfo.ScaleType.Log2) {
                 double dMin = Collections.min(d1);
@@ -158,35 +197,76 @@ public class CorScatterController implements Initializable{
         xAxis.setLabel(t1);
         yAxis.setLabel(t2);
 
-        XYChart.Series<Number, Number> series = new XYChart.Series();
-        series.setName("Correlation");
-        for(int i =0; i< d1.size();i++){
-            double tmp1 = d1.get(i);
-            double tmp2 = d2.get(i);
+        if(group == null){
+            XYChart.Series<Number, Number>  series = new XYChart.Series<>();
+            series.setName("Correlation");
+            for(int i=0; i<d1.size(); i++){
+                double tmp1 = d1.get(i);
+                double tmp2 = d2.get(i);
+                if(scaleType == PublicInfo.ScaleType.Regular){
 
-            if(scaleType == PublicInfo.ScaleType.Regular){
+                } else{
+                    if(tmp1< 0.001){
+                        tmp1 = 0.001;
+                    }
+                    if(tmp2 < 0.001){
+                        tmp2 = 0.001;
+                    }
+                    if(scaleType == PublicInfo.ScaleType.Log2){
+                        tmp1 = Math.log(tmp1)/Math.log(2);
+                        tmp2 = Math.log(tmp2)/Math.log(2);
+                    } else {
+                        tmp1 = Math.log10(tmp1);
+                        tmp2 = Math.log10(tmp2);
+                    }
+                }
 
-            } else{
-                if(tmp1< 0.001){
-                    tmp1 = 0.001;
-                }
-                if(tmp2 < 0.001){
-                    tmp2 = 0.001;
-                }
-                if(scaleType == PublicInfo.ScaleType.Log2){
-                    tmp1 = Math.log(tmp1)/Math.log(2);
-                    tmp2 = Math.log(tmp2)/Math.log(2);
-                } else {
-                    tmp1 = Math.log10(tmp1);
-                    tmp2 = Math.log10(tmp2);
+                XYChart.Data<Number, Number> tmp = new XYChart.Data<>(tmp1, tmp2);
+                series.getData().add(tmp);
+            }
+            sChart.getData().add(series);
+            sChart.setLegendVisible(false);
+            return;
+        }
+
+        Set<String> groupName = new TreeSet<>();
+        groupName.addAll(group);
+
+        //int numGroup = groupName.size();
+        for(String id : groupName){
+            XYChart.Series<Number, Number>  series = new XYChart.Series<>();
+            series.setName(id);
+            for(int i=0; i< d1.size();i++){
+                if(group.get(i).equals(id)){
+                    double tmp1 = d1.get(i);
+                    double tmp2 = d2.get(i);
+                    if(scaleType == PublicInfo.ScaleType.Regular){
+
+                    } else{
+                        if(tmp1< 0.001){
+                            tmp1 = 0.001;
+                        }
+                        if(tmp2 < 0.001){
+                            tmp2 = 0.001;
+                        }
+                        if(scaleType == PublicInfo.ScaleType.Log2){
+                            tmp1 = Math.log(tmp1)/Math.log(2);
+                            tmp2 = Math.log(tmp2)/Math.log(2);
+                        } else {
+                            tmp1 = Math.log10(tmp1);
+                            tmp2 = Math.log10(tmp2);
+                        }
+                    }
+
+                    XYChart.Data<Number, Number> tmp = new XYChart.Data<>(tmp1, tmp2);
+                    series.getData().add(tmp);
                 }
             }
-
-            XYChart.Data<Number, Number> tmp = new XYChart.Data<>(tmp1, tmp2);
-            series.getData().add(tmp);
+            sChart.getData().add(series);
         }
-        sChart.getData().addAll(series);
-        sChart.setLegendVisible(false);
+
+        sChart.setLegendSide(Side.RIGHT);
+        //sChart.setLegendVisible(false);
     }
 
     @Override
