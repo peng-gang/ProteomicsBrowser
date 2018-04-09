@@ -41,7 +41,7 @@ public class SampleProteinDataController implements Initializable {
                 return new SimpleStringProperty(param.getValue().get(0).toString());
             }
         });
-        colInfo.setSortable(false);
+        colInfo.setSortable(true);
         tbvSampleProteinData.getColumns().add(colInfo);
 
         ArrayList<String> sampleId = new ArrayList<>(sampleGroup.getSampleId());

@@ -368,7 +368,7 @@ public class Protein implements Serializable {
             if(!isCharge){
                 charge = null;
             }
-            Peptide pep = new Peptide(id, sequence, abundance, charge, doubleInfo, strInfo, modifications);
+            Peptide pep = new Peptide(id, sequence, abundance, charge, doubleInfo, strInfo, modifications, 0);
             peptidesCombined.add(pep);
             pepStartCombined.add(pepStart.get(giTmp.get(0)));
             pepEndCombined.add(pepEnd.get(giTmp.get(0)));
@@ -394,8 +394,6 @@ public class Protein implements Serializable {
         pepCombined = true;
         Collections.sort(abundanceAllCombined);
         return;
-
-
     }
 
     public ArrayList<Integer> getPepIndex(int pos){
@@ -689,6 +687,7 @@ public class Protein implements Serializable {
         } else {
             doubleInfoCutPerLow.set(index, (double) idx/ doubleInfoAll.get(index).size());
         }
+        updatePepShow();
     }
 
     /*
@@ -941,105 +940,112 @@ public class Protein implements Serializable {
 
     public boolean addPeptide(Peptide pep){
         //compare peptide sequence to protein sequence
-        int indexF = sequence.indexOf(pep.getSequence());
-        int indexL = sequence.lastIndexOf(pep.getSequence());
+        ArrayList<Integer> idxPos = new ArrayList<>();
+        int start = 0;
+        while (true){
+            int idxTmp = sequence.indexOf(pep.getSequence(), start);
+            if(idxTmp == -1){
+                break;
+            }
+            idxPos.add(idxTmp);
+            start = idxTmp + 1;
+        }
 
-        if(indexF == -1){
+        if(idxPos.size() == 0){
             System.out.println("Cannot find peptide " + pep.getSequence() + " in protein " + name);
             return  false;
-        } else {
-            if(indexF!=indexL){
-                System.out.println("Find multiple match for peptide " + pep.getSequence() + " in protein " + name);
-                return  false;
+        } else if(idxPos.size() == 1){
+            peptides.add(pep);
+            pepStart.add(idxPos.get(0));
+            pepEnd.add(idxPos.get(0) + pep.getLength() - 1);
+            pepShow.add(1);
+
+            if(pep.getAbundance() == null){
+                abundanceAll.add(-100.0);
             } else {
-                peptides.add(pep);
-                pepStart.add(indexF);
-                pepEnd.add(indexF + pep.getLength() - 1);
+                abundanceAll.add(pep.getAbundance());
+            }
+
+            TreeMap<String, Double> dInfo = pep.getDoubleInfo();
+            if(doubleInfoName.size() == 0){
+                doubleInfoName.addAll(dInfo.keySet());
+                for(int i = 0; i<dInfo.size(); i++){
+                    ArrayList<Double> dTmp = new ArrayList<>();
+                    doubleInfoAll.add(dTmp);
+                }
+                int idx = 0;
+                for(Double v : dInfo.values()){
+                    doubleInfoAll.get(idx).add(v);
+                    idx++;
+                }
+            } else {
+                int idx = 0;
+                for(Double v : dInfo.values()){
+                    doubleInfoAll.get(idx).add(v);
+                    idx++;
+                }
+            }
+
+            if(pep.isModified()){
+                for(Modification m : pep.getModifications()){
+                    modiTypeAll.add(m.getModificationType());
+                    for(int i = 0; i < m.getPos().size(); i++){
+                        int modiPos = m.getPos().get(i) + idxPos.get(0);
+                        PosModiInfo tmp = modiInfo.get(modiPos);
+                        if(tmp == null){
+                            PosModiInfo posModiInfo = new PosModiInfo(m.getModificationType(), m.getPercent().get(i));
+                            modiInfo.put(modiPos, posModiInfo);
+                        } else {
+                            tmp.addModi(m.getModificationType(), m.getPercent().get(i));
+                        }
+                    }
+                }
+            }
+            return true;
+        } else {
+            //pep.setMultiMatch(true);
+            System.out.println("Multiple Match");
+            System.out.println(name);
+            System.out.println(pep.getSequence());
+            TreeMap<String, Double> dInfo = pep.getDoubleInfo();
+            if(doubleInfoName.size() == 0){
+                doubleInfoName.addAll(dInfo.keySet());
+                for(int i = 0; i<dInfo.size(); i++){
+                    ArrayList<Double> dTmp = new ArrayList<>();
+                    doubleInfoAll.add(dTmp);
+                }
+                int idx = 0;
+                for(Double v : dInfo.values()){
+                    doubleInfoAll.get(idx).add(v);
+                    idx++;
+                }
+            } else {
+                int idx = 0;
+                for(Double v : dInfo.values()){
+                    doubleInfoAll.get(idx).add(v);
+                    idx++;
+                }
+            }
+
+            int idxMultiple = 0;
+            for(Integer idxPosTmp : idxPos){
+                idxMultiple++;
+                Peptide ptTmp = new Peptide(pep.getId(), pep.getSequence(),  pep.getAbundance(),
+                        pep.getCharge(), pep.getDoubleInfo(), pep.getStrInfo(), pep.getModifications(), idxMultiple);
+                peptides.add(ptTmp);
+                pepStart.add(idxPosTmp);
+                pepEnd.add(idxPosTmp + ptTmp.getLength() - 1);
                 pepShow.add(1);
-
-                /*
-                if(pep.getCharge() == null){
-                    chargeAll.add(-100);
-                } else {
-                    chargeAll.add(pep.getCharge());
-                }
-
-                if(pep.getMz() == null){
-                    mzAll.add(-100.0);
-                } else {
-                    mzAll.add(pep.getMz());
-                }
-
-                if(pep.getScore() == null){
-                    scoreAll.add(-100.0);
-                } else {
-                    scoreAll.add(pep.getScore());
-                }
-                */
-
-                if(pep.getAbundance() == null){
+                if(ptTmp.getAbundance() == null){
                     abundanceAll.add(-100.0);
                 } else {
-                    abundanceAll.add(pep.getAbundance());
+                    abundanceAll.add(ptTmp.getAbundance());
                 }
-
-                TreeMap<String, Double> dInfo = pep.getDoubleInfo();
-                if(doubleInfoName.size() == 0){
-                    doubleInfoName.addAll(dInfo.keySet());
-                    for(int i = 0; i<dInfo.size(); i++){
-                        ArrayList<Double> dTmp = new ArrayList<>();
-                        doubleInfoAll.add(dTmp);
-                    }
-                    int idx = 0;
-                    for(Double v : dInfo.values()){
-                        doubleInfoAll.get(idx).add(v);
-                        idx++;
-                    }
-                } else {
-                    int idx = 0;
-                    for(Double v : dInfo.values()){
-                        doubleInfoAll.get(idx).add(v);
-                        idx++;
-                    }
-                }
-
-                /*
-                if(pep.getCharge() > chargeMax){
-                    chargeMax = pep.getCharge();
-                    chargeCutHigh = chargeMax;
-                }
-
-                if(pep.getCharge() < chargeMin){
-                    chargeMin = pep.getCharge();
-                    chargeCutLow = chargeMin;
-                }
-
-                if(pep.getMz() > mzMax){
-                    mzMax = pep.getMz();
-                    mzCutHigh = mzMax;
-                }
-
-                if(pep.getMz() < mzMin){
-                    mzMin = pep.getMz();
-                    mzCutLow = mzMin;
-                }
-
-                if(pep.getScore() > scoreMax){
-                    scoreMax = pep.getScore();
-                    scoreCutHigh = scoreMax;
-                }
-
-                if(pep.getScore() < scoreMin){
-                    scoreMin = pep.getScore();
-                    scoreCutLow = scoreMin;
-                }
-                */
-
-                if(pep.isModified()){
-                    for(Modification m : pep.getModifications()){
+                if(ptTmp.isModified()){
+                    for(Modification m :ptTmp.getModifications()){
                         modiTypeAll.add(m.getModificationType());
-                        for(int i = 0; i < m.getPos().size(); i++){
-                            int modiPos = m.getPos().get(i) + indexF;
+                        for(int i=0; i<m.getPos().size(); i++){
+                            int modiPos = m.getPos().get(i) + idxPosTmp;
                             PosModiInfo tmp = modiInfo.get(modiPos);
                             if(tmp == null){
                                 PosModiInfo posModiInfo = new PosModiInfo(m.getModificationType(), m.getPercent().get(i));
@@ -1050,8 +1056,8 @@ public class Protein implements Serializable {
                         }
                     }
                 }
-                return true;
             }
+            return true;
         }
     }
 
@@ -1117,7 +1123,9 @@ public class Protein implements Serializable {
     public void sumRawAbundance(){
         rawAbundance = 0;
         for(Peptide peptide: peptides){
-            rawAbundance += peptide.getAbundance();
+            if(peptide.getMultiMatch() <= 1) {
+                rawAbundance += peptide.getAbundance();
+            }
         }
     }
 

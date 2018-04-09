@@ -21,11 +21,14 @@ import javafx.scene.SnapshotParameters;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
+import javafx.scene.paint.*;
+import javafx.scene.shape.Line;
 import javafx.scene.text.Font;
 import javafx.scene.transform.Transform;
 import javafx.stage.Modality;
@@ -800,6 +803,29 @@ public class PBrowserController implements Initializable {
         }
     }
 
+    private Image createHatch(int r, int g, int b){
+        Pane pane = new Pane();
+        pane.setPrefSize(20, 20);
+        //pane.setStyle("-fx-background-color: rgb(r,g,b);");
+        Line l1 = new Line(0, 0, 20, 0);
+        Line l2 = new Line(0, 10, 20, 10);
+        Line l3 = new Line(0, 20, 20, 20);
+        //Line bw = new Line(0, 20, 20, 0);
+        l1.setStroke(Color.rgb(r,g,b));
+        l2.setStroke(Color.rgb(r,g,b));
+        l3.setStroke(Color.rgb(r,g,b));
+        //-fx-stroke
+        //fw.setStyle("-fx-stroke: rgb(r,g,b);");
+        //bw.setStroke(Color.WHITE);
+        l1.setStrokeWidth(5);
+        l2.setStrokeWidth(5);
+        l3.setStrokeWidth(5);
+        //bw.setStrokeWidth(5);
+        pane.getChildren().addAll(l1, l2, l3);
+        new Scene(pane);
+        return pane.snapshot(null, null);
+    }
+
     private void draw(){
         /*
         int canvasHeight = (pixPepGap*2 + pixPerPep) * maxY + pixXLabel + topPix + bottomPix;
@@ -819,9 +845,9 @@ public class PBrowserController implements Initializable {
 
         if(pepCombined){
             for(PepPos pp : arrangePepCombined){
-                double tlX = leftPix + pp.getStart()*pixPerLocus*scaleX + 0.5;
+                double tlX = leftPix + pp.getStart()*pixPerLocus*scaleX + 1;
                 double tlY = canvasHeight - pixXLabel - bottomPix - (pp.getY() + 1) * (pixPerPep  + pixPepGap * 2) * scaleY + 1;
-                double w = pixPerLocus * pp.getPep().getLength()*scaleX - 0.5;
+                double w = pixPerLocus * pp.getPep().getLength()*scaleX - 2;
                 double h = pixPerPep * scaleY;
 
                 tlX = tlX - st;
@@ -895,9 +921,9 @@ public class PBrowserController implements Initializable {
 
         for(PepPos pp : arrangePep){
             //top left coordinate
-            double tlX = leftPix + pp.getStart()*pixPerLocus*scaleX + 0.5;
+            double tlX = leftPix + pp.getStart()*pixPerLocus*scaleX + 1;
             double tlY = canvasHeight - pixXLabel - bottomPix - (pp.getY() + 1) * (pixPerPep  + pixPepGap * 2) * scaleY + 1;
-            double w = pixPerLocus * pp.getPep().getLength()*scaleX - 0.5;
+            double w = pixPerLocus * pp.getPep().getLength()*scaleX - 2;
             double h = pixPerPep * scaleY;
 
             tlX = tlX - st;
@@ -906,10 +932,26 @@ public class PBrowserController implements Initializable {
 
             if(tlX < canvasWidth && rX > 0){
                 int range = pp.getPep().getAbundanceRange();
-                gc.setFill(Color.rgb(220-15*range, 220-15*range, 220-15*range));
-                tlX = Math.max(tlX, 0);
-                rX = Math.min(rX, canvasWidth);
-                gc.fillRect(tlX, tlY, (rX-tlX), h);
+                if(pp.getPep().getMultiMatch() > 0){
+                    //Image hatch = createHatch(220-15*range, 220-15*range, 220-15*range);
+
+                    Stop[] stops = new Stop[] {new Stop(0, Color.WHITE), new Stop(1, Color.rgb(220-15*range, 220-15*range, 220-15*range))};
+                    LinearGradient lg = new LinearGradient(0, 0, 0, 0.2, true, CycleMethod.REPEAT, stops);
+                    gc.setFill(lg);
+                    tlX = Math.max(tlX, 0);
+                    rX = Math.min(rX, canvasWidth);
+
+                    //ImagePattern pattern = new ImagePattern(hatch, 0, 0, 20, 20, false);
+                    //gc.setFill(pattern);
+
+                    gc.fillRect(tlX, tlY, (rX-tlX), h);
+                } else {
+
+                    gc.setFill(Color.rgb(220-15*range, 220-15*range, 220-15*range));
+                    tlX = Math.max(tlX, 0);
+                    rX = Math.min(rX, canvasWidth);
+                    gc.fillRect(tlX, tlY, (rX-tlX), h);
+                }
             }
 
             if(pp.getPep().isModified()){

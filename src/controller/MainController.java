@@ -144,6 +144,8 @@ public class MainController implements Initializable{
     private ArrayList<ArrayList<String>> sampleInfo;
     private ArrayList<String> sampleId;
 
+    private String dbType;
+
     //
     private SampleGroup sampleGroup;
 
@@ -285,7 +287,14 @@ public class MainController implements Initializable{
             projectInfo.setProteomicsRaw(proteomicsRaw);
             projectInfo.setProteomicsRawName(proteomicsRawName);
             projectInfo.setProteomicsRawType(proteomicsRawType);
-            projectInfo.setSampleGroup(sampleGroup);
+
+            projectInfo.setSampleid(sampleId);
+            projectInfo.setSampleInfo(sampleInfo);
+            projectInfo.setSampleInfoType(sampleInfoType);
+            projectInfo.setSampleInfoName(sampleInfoName);
+            projectInfo.setDbType(dbType);
+
+            //projectInfo.setSampleGroup(sampleGroup);
         }
         try {
             FileOutputStream fos = new FileOutputStream(file);
@@ -299,7 +308,7 @@ public class MainController implements Initializable{
 
     }
 
-    @FXML private void importData(ActionEvent event) throws IOException {
+    @FXML private boolean importData(ActionEvent event) throws IOException {
         System.out.println("Import Data");
 
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/apps/ImportData.fxml"));
@@ -315,23 +324,28 @@ public class MainController implements Initializable{
         importDataStage.showAndWait();
 
         if(!controller.getSubmitted()){
-            return;
+            return false;
         }
 
         ptFile = controller.getPtFile();
         spFile = controller.getSpFile();
 
-        String type = controller.getType();
-        System.out.println(type);
+        dbType = controller.getType();
+        System.out.println(dbType);
         System.out.println(ptFile);
         System.out.println(spFile);
 
+        if(!loadData(dbType)){
+            return false;
+        }
+
         initTreeView();
-        loadData(type);
         initProteomicsDataTab();
         //initSamplePepDataTab();
         //initSampleProteinDataTab();
         menuImportData.setDisable(true);
+
+        return true;
     }
 
     //Menu Analyze
@@ -1012,6 +1026,15 @@ public class MainController implements Initializable{
 
         pepFilterStage.showAndWait();
 
+        if(!controller.getSubmitted()){
+            pBrowserController.getProtein().setAbundanceCutPerHigh(1.0);
+            pBrowserController.getProtein().setAbundanceCutPerLow(0.0);
+            for(int i=0; i<pBrowserController.getProtein().getDoubleInfoName().size();i++){
+                pBrowserController.getProtein().setDoubleInfoCutPerHigh(i, 1.0);
+                pBrowserController.getProtein().setDoubleInfoCutPerLow(i, 0.0);
+            }
+        }
+
         pBrowserController.getProtein().updateShow();
         pBrowserController.updatePep();
         pBrowserController.updateCombModiPos();
@@ -1260,13 +1283,19 @@ public class MainController implements Initializable{
         pBrowserController.show();
     }
 
-    private void loadData(String type){
+    private boolean loadData(String type){
         if(spFile != null){
             readSampleDataFile();
         }
+
         readProteomicsDataFile();
         loadProteinSeqDB(type);
-        arrangeData();
+
+        if(arrangeData()){
+            return true;
+        } else {
+            return false;
+        }
     }
 
     private void loadProteinSeqDB(String type){
@@ -1400,9 +1429,9 @@ public class MainController implements Initializable{
             int indexSampleId = -1;
             for(int i=0; i<vsheader.length; i++){
                 String tmp = vsheader[i].toLowerCase();
-                System.out.println("ll");
-                System.out.println(tmp);
-                System.out.println(tmp.length());
+                //System.out.println("ll");
+                //System.out.println(tmp);
+                //System.out.println(tmp.length());
                 if(vsheader[i].toLowerCase().equals("sampleid")){
                     indexSampleId = i;
                     break;
@@ -1428,9 +1457,6 @@ public class MainController implements Initializable{
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-
-
 
         System.out.println("Read Sample Data");
     }
@@ -1554,6 +1580,8 @@ public class MainController implements Initializable{
             }
 
             Set<String> proteinNotFind = new TreeSet<>();
+            ArrayList<String> pepNotMatch = new ArrayList<>();
+            ArrayList<String> proteinNotMatch = new ArrayList<>();
             for(int i=0; i<proteomicsRaw.get(0).size(); i++){
                 String id = proteomicsRaw.get(indexId).get(i);
                 String sequence = proteomicsRaw.get(indexSequence).get(i);
@@ -1594,13 +1622,15 @@ public class MainController implements Initializable{
                 Double abTmp = tryDoubleParse(proteomicsRaw.get(indexAbundance).get(i));
                 String spId = "Sample";
 
-                Peptide ptTmp = new Peptide(id, sequence,  abTmp, Integer.parseInt(charge.trim()), doubleInfo, strInfo, modifications);
+                Peptide ptTmp = new Peptide(id, sequence,  abTmp, Integer.parseInt(charge.trim()), doubleInfo, strInfo, modifications, 0);
 
                 if(sampleGroup.addPeptide(spId, protein, seq, ptTmp)){
                     sampleGroup.addPepData(spId, id, abTmp);
                     sampleGroup.increaseProteinData(spId, protein, abTmp);
                 } else {
-                    break;
+                    pepNotMatch.add(sequence);
+                    proteinNotMatch.add(protein);
+                    continue;
                 }
             }
 
@@ -1615,6 +1645,18 @@ public class MainController implements Initializable{
                 alert.setContentText(msg);
                 alert.showAndWait();
                 //return false;
+            }
+
+            if(pepNotMatch.size()>0){
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("Import Data");
+                alert.setHeaderText(null);
+                String msg = "The following peptide sequence cannot be found in specified protein: \n(sequence\tprotein)\n";
+                for(int k = 0; k<pepNotMatch.size(); k++){
+                    msg = msg + pepNotMatch.get(k) + "\t" + proteinNotMatch.get(k) + "\n";
+                }
+                alert.setContentText(msg);
+                alert.showAndWait();
             }
 
         } else {
@@ -1721,6 +1763,8 @@ public class MainController implements Initializable{
                 }
             }
             Set<String> proteinNotFind = new TreeSet<>();
+            ArrayList<String> pepNotMatch = new ArrayList<>();
+            ArrayList<String> proteinNotMatch = new ArrayList<>();
             for(int i=0; i<proteomicsRaw.get(0).size(); i++){
                 String id = proteomicsRaw.get(indexId).get(i);
                 String sequence = proteomicsRaw.get(indexSequence).get(i);
@@ -1763,13 +1807,17 @@ public class MainController implements Initializable{
                 for(int j=0; j<sampleId.size(); j++){
                     Double abTmp = tryDoubleParse(proteomicsRaw.get(indexAbundance.get(j)).get(i));
                     String spId = sampleId.get(j);
-                    Peptide ptTmp = new Peptide(id, sequence,  abTmp, Integer.parseInt(charge.trim()), doubleInfo, strInfo, modifications);
+                    Peptide ptTmp = new Peptide(id, sequence,  abTmp, Integer.parseInt(charge.trim()), doubleInfo, strInfo, modifications, 0);
 
                     if(sampleGroup.addPeptide(spId, protein, seq, ptTmp)){
                         sampleGroup.addPepData(spId, id, abTmp);
                         sampleGroup.increaseProteinData(spId, protein, abTmp);
                     } else {
-                        break;
+                        if(j==0){
+                            pepNotMatch.add(sequence);
+                            proteinNotMatch.add(protein);
+                        }
+                        continue;
                     }
                 }
 
@@ -1785,6 +1833,18 @@ public class MainController implements Initializable{
                 alert.setContentText(msg);
                 alert.showAndWait();
                 //return false;
+            }
+
+            if(pepNotMatch.size()>0){
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("Import Data");
+                alert.setHeaderText(null);
+                String msg = "The following peptide sequence cannot be found in specified protein: \n(sequence\tprotein)\n";
+                for(int k = 0; k<pepNotMatch.size(); k++){
+                    msg = msg + pepNotMatch.get(k) + "\t" + proteinNotMatch.get(k) + "\n";
+                }
+                alert.setContentText(msg);
+                alert.showAndWait();
             }
         }
         sampleGroup.initPepCutoff();

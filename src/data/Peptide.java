@@ -24,11 +24,21 @@ public class Peptide implements Serializable {
     private TreeMap<String, Double> doubleInfo;
     private TreeMap<String, String> strInfo;
 
+    /**
+     * indicate whether the peptide has multiple matches in a protein
+     * 0: no multiple match
+     * 1,2,3,...: multiple match index
+     */
+
+    Integer multiMatch = 0;
+
 
     public String getId() {return id;}
     public int getLength() {return sequence.length();}
     public String getSequence() {return  sequence; }
     public Integer getCharge() { return charge;}
+    public Integer getMultiMatch() { return  multiMatch; }
+    public void setMultiMatch(Integer dup) { this.multiMatch = dup; }
     //public Double getMz() { return mz;}
     //public Double getScore() { return score;}
     public Double getAbundance() { return  abundance;}
@@ -86,7 +96,7 @@ public class Peptide implements Serializable {
 
 
 
-    public Peptide(String id, String sequence, Double abundance, Integer charge, TreeMap<String, Double> doubleInfo, TreeMap<String, String> strInfo){
+    public Peptide(String id, String sequence, Double abundance, Integer charge, TreeMap<String, Double> doubleInfo, TreeMap<String, String> strInfo, Integer multiMatch){
         this.id = id;
         this.sequence = sequence.toUpperCase();
         this.abundance = abundance;
@@ -94,10 +104,11 @@ public class Peptide implements Serializable {
         this.doubleInfo = doubleInfo;
         this.strInfo = strInfo;
         this.modifications = new ArrayList<>();
+        this.multiMatch = multiMatch;
     }
 
     public Peptide(String id, String sequence, Double abundance, Integer charge, TreeMap<String, Double> doubleInfo, TreeMap<String, String> strInfo,
-                   ArrayList<Modification> modifications){
+                   ArrayList<Modification> modifications, Integer multiMatch){
         this.id = id;
         this.sequence = sequence.toUpperCase();
         this.abundance = abundance;
@@ -105,6 +116,7 @@ public class Peptide implements Serializable {
         this.doubleInfo = doubleInfo;
         this.strInfo = strInfo;
         this.modifications = modifications;
+        this.multiMatch = multiMatch;
     }
 
     public Set<String> getModificationTypes(){
@@ -230,6 +242,9 @@ public class Peptide implements Serializable {
         String rlt;
         rlt = "ID: " + id + "\n";
         rlt = rlt + "Charge: " + charge + "\n";
+        if(multiMatch>0){
+            rlt = rlt + "Multiple Match Number: " + multiMatch + "\n";
+        }
         if(doubleInfo!=null){
             for(Map.Entry<String, Double> entry : doubleInfo.entrySet()){
                 rlt = rlt + entry.getKey() + ": " + entry.getValue() + "\n";

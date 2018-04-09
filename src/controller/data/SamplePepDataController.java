@@ -43,7 +43,7 @@ public class SamplePepDataController implements Initializable {
                 return new SimpleStringProperty(param.getValue().get(0).toString());
             }
         });
-        colInfo.setSortable(false);
+        colInfo.setSortable(true);
         tbvSamplePepData.getColumns().add(colInfo);
 
         for(int i =0; i<sampleId.size(); i++){
@@ -64,7 +64,8 @@ public class SamplePepDataController implements Initializable {
             ObservableList<String> row = FXCollections.observableArrayList();
             row.add(numInfoName.get(i));
             for(int j=0; j<sampleId.size(); j++){
-                row.add(sampleGroup.getNumInfo(sampleId.get(j), numInfoName.get(i)).toString());
+                //row.add(sampleGroup.getNumInfo(sampleId.get(j), numInfoName.get(i)).toString());
+                row.add(String.format("%.2f",sampleGroup.getNumInfo(sampleId.get(j), numInfoName.get(i))));
             }
             data.add(row);
         }

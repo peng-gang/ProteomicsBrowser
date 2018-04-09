@@ -60,12 +60,14 @@ public class PepFilterController implements Initializable {
     private Label lblPerAbundanceHigh;
     */
 
-
+    private boolean submitted;
 
     private Protein protein;
 
+    public boolean getSubmitted() { return submitted; }
 
     @FXML private void submit(ActionEvent event){
+        submitted = true;
         Stage stage = (Stage) numPep.getScene().getWindow();
         stage.close();
     }
@@ -76,6 +78,13 @@ public class PepFilterController implements Initializable {
         for(int i=0; i<protein.getDoubleInfoName().size();i++){
             protein.setDoubleInfoCutHigh(i, protein.getDoubleInfoMax(i));
             protein.setDoubleInfoCutLow(i, protein.getDoubleInfoMin(i));
+        }
+
+        protein.setAbundanceCutPerHigh(1.0);
+        protein.setAbundanceCutPerLow(0.0);
+        for(int i=0; i<protein.getDoubleInfoName().size();i++){
+            protein.setDoubleInfoCutPerHigh(i, 1.0);
+            protein.setDoubleInfoCutPerLow(i, 0.0);
         }
 
         for(Node hbx : vBoxValue.getChildren()){
@@ -92,6 +101,20 @@ public class PepFilterController implements Initializable {
                                 break;
                             }
                         }
+                    }
+                }
+            }
+        }
+
+        for(Node hbx : vBoxPercentage.getChildren()){
+            for(Node nd : ((HBox) hbx).getChildren()){
+                if(nd instanceof RangeSlider){
+                    if("Abundance".equals(nd.getUserData())){
+                        ((RangeSlider) nd).setLowValue(protein.getAbundanceCutPerLow());
+                        ((RangeSlider) nd).setHighValue(protein.getAbundanceCutPerHigh());
+                    } else {
+                        ((RangeSlider) nd).setLowValue(0.0);
+                        ((RangeSlider) nd).setHighValue(1.0);
                     }
                 }
             }
@@ -133,6 +156,7 @@ public class PepFilterController implements Initializable {
 
     public void init(Protein protein){
         this.protein = protein;
+        submitted = false;
 
         RangeSlider rsValAbundance = new RangeSlider(protein.getAbundanceMin(), protein.getAbundanceMax(),
                 protein.getAbundanceCutLow(), protein.getAbundanceCutHigh());
@@ -256,8 +280,8 @@ public class PepFilterController implements Initializable {
         for(int i=0; i<doubleInfoName.size(); i++){
             RangeSlider rsPerInfo = new RangeSlider(0.0, 1.0, protein.getDoubleInfoCutPerLow(i), protein.getDoubleInfoCutHigh(i));
             rsPerInfo.setUserData(doubleInfoName.get(i));
-            Label lblPerInfoLow = new Label(String.format("%.2g",rsPerInfo.getLowValue() * 100));
-            Label lblPerInfoHigh = new Label(String.format("%.2g",rsPerInfo.getHighValue() * 100));
+            Label lblPerInfoLow = new Label(String.format("%.2f",rsPerInfo.getLowValue() * 100));
+            Label lblPerInfoHigh = new Label(String.format("%.2f",rsPerInfo.getHighValue() * 100));
             lblPerInfoLow.setPrefWidth(70);
             lblPerInfoHigh.setPrefWidth(70);
             Label lblPerInfoName = new Label(doubleInfoName.get(i));

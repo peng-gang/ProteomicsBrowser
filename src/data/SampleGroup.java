@@ -537,7 +537,7 @@ public class SampleGroup implements Serializable {
 
         idx = 0;
         for(Map.Entry<String, Sample> entry : samples.entrySet()){
-            entry.getValue().iBAQSelProteinNorm(md - cp.get(idx));
+            entry.getValue().iBAQSelProteinNorm(md - rawAbundance.get(idx));
             idx++;
         }
     }

@@ -214,6 +214,8 @@ public class Sample implements Serializable {
             double tmp = entry.getValue().getRawAbundance();
             if(tmp >= 0) {
                 rlt.add(tmp);
+            } else {
+                rlt.add(0.0);
             }
         }
 
@@ -226,6 +228,8 @@ public class Sample implements Serializable {
             double tmp = entry.getValue().getiBAQAbundance();
             if(tmp >= 0) {
                 rlt.add(tmp);
+            } else {
+                rlt.add(0.0);
             }
         }
 

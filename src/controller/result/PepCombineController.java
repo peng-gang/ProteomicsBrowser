@@ -122,7 +122,7 @@ public class PepCombineController {
                 abundance += peps.get(idx).getAbundance();
             }
             if(entry.getKey().equals("NULL")){
-                Peptide pepTmp = new Peptide(id, protein.getSequence(st, ed+1), abundance, null, null, null);
+                Peptide pepTmp = new Peptide(id, protein.getSequence(st, ed+1), abundance, null, null, null, 0);
                 PepPos pepPosTmp = new PepPos(st, ed, pepTmp);
                 arrangePep.add(pepPosTmp);
             } else {
@@ -133,7 +133,7 @@ public class PepCombineController {
                 percentTmp.add(100.0);
                 Modification modi = new Modification(entry.getKey(), posTmp, percentTmp);
                 modisTmp.add(modi);
-                Peptide pepTmp = new Peptide(id, protein.getSequence(st, ed+1), abundance, null, null, null, modisTmp);
+                Peptide pepTmp = new Peptide(id, protein.getSequence(st, ed+1), abundance, null, null, null, modisTmp, 0);
                 PepPos pepPosTmp = new PepPos(st, ed, pepTmp);
                 arrangePep.add(pepPosTmp);
             }
