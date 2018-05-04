@@ -116,22 +116,42 @@ public class CorScatterDataSelectController {
                     Double min = val.get(0);
                     Double max = val.get(num-1);
 
-                    Double st = val.get(num/3);
-                    Double ed = val.get(num*2/3);
+                    if(num % 3 == 0){
+                        Double st = val.get(num/3-1);
+                        Double ed = val.get(num*2/3-1);
 
-                    rslinder.setVisible(true);
-                    rslinder.setMax(max);
-                    rslinder.setMin(min);
+                        rslinder.setVisible(true);
+                        rslinder.setMax(max);
+                        rslinder.setMin(min);
 
-                    rslinder.setHighValue(ed);
-                    rslinder.setLowValue(st);
+                        rslinder.setHighValue(ed);
+                        rslinder.setLowValue(st);
 
-                    Integer numLow = num/3;
-                    Integer numHigh = numLow;
-                    lbLow.setVisible(true);
-                    lbLow.setVisible(true);
-                    lbLow.setText(numLow.toString());
-                    lbHigh.setText(numHigh.toString());
+                        Integer numLow = num/3;
+                        Integer numHigh = numLow;
+                        lbLow.setVisible(true);
+                        lbLow.setVisible(true);
+                        lbLow.setText(numLow.toString());
+                        lbHigh.setText(numHigh.toString());
+                    } else {
+                        Integer idx = num/3-1;
+                        Double st = val.get(idx);
+                        Double ed = val.get(num - idx -2);
+
+                        rslinder.setVisible(true);
+                        rslinder.setMax(max);
+                        rslinder.setMin(min);
+
+                        rslinder.setHighValue(ed);
+                        rslinder.setLowValue(st);
+
+                        Integer numLow = num/3;
+                        Integer numHigh = numLow;
+                        lbLow.setVisible(true);
+                        lbLow.setVisible(true);
+                        lbLow.setText(numLow.toString());
+                        lbHigh.setText(numHigh.toString());
+                    }
                 } else {
                     rslinder.setVisible(false);
                     lbLow.setVisible(false);

@@ -77,10 +77,12 @@ public class TTestDataSelectController implements Initializable{
         combGroup.getItems().addAll(strInfoName);
         if(type.equals("Peptide")){
             ArrayList<String> pepId = new ArrayList<>(sampleGroup.getPepId());
+            Collections.sort(pepId);
             combData.getItems().add("ALL");
             combData.getItems().addAll(pepId);
         } else {
             ArrayList<String> proteinId = new ArrayList<>(sampleGroup.getProteinId());
+            Collections.sort(proteinId);
             combData.getItems().add("ALL");
             combData.getItems().addAll(proteinId);
         }

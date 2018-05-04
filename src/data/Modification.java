@@ -27,9 +27,19 @@ public class Modification implements Serializable {
     public ArrayList<Integer> getPos() { return  pos; }
     public ArrayList<Double> getPercent() { return percent; }
 
-    public Modification(String modificationType, ArrayList<Integer> pos, ArrayList<Double> percent){
+    public String getResidueByPos(Integer pos) {
+        Integer idx = this.pos.indexOf(pos);
+        if(idx < 0){
+            return null;
+        }
+
+        return residue.get(idx);
+    }
+
+    public Modification(String modificationType, ArrayList<Integer> pos, ArrayList<String> residue, ArrayList<Double> percent){
         this.modificationType = modificationType;
         this.pos = pos;
+        this.residue = residue;
         this.percent = percent;
     }
 
@@ -51,7 +61,13 @@ public class Modification implements Serializable {
                 percent.add(100.0);
             } else {
                 residue.add(resPer[0].trim());
-                percent.add(Double.parseDouble(resPer[1].trim()));
+                double perTmp;
+                try{
+                    perTmp = Double.parseDouble(resPer[1].trim());
+                } catch (NumberFormatException e){
+                    perTmp = -1.0;
+                }
+                percent.add(perTmp);
             }
         }
         /*

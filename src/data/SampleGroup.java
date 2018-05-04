@@ -35,6 +35,9 @@ public class SampleGroup implements Serializable {
     private boolean flagiBAQ = false;
     private boolean flagiBAQMedianNorm = false;
 
+    private boolean flagTop3 = false;
+    private boolean flagTop3MedianNorm = false;
+
     private boolean flagAbundanceRange = false;
 
     //all kinds of modifications in data
@@ -258,6 +261,47 @@ public class SampleGroup implements Serializable {
                     default:
                         return;
                 }
+                //WARNING: NOT USED YET
+            case NSAF:
+                switch (proteinStatus) {
+                    case Unnormalized:
+                        if(!flagiBAQ){
+                            iBAQ();
+                            flagiBAQ = true;
+                        }
+                        return;
+                    case Median:
+                        if(!flagiBAQMedianNorm){
+                            iBAQMedianNorm();
+                            flagiBAQMedianNorm = true;
+                        }
+                        return;
+                    case SelProtein:
+                        iBAQSelProteinNorm();
+                        return;
+                    default:
+                        return;
+                }
+            case Top3:
+                switch (proteinStatus) {
+                    case Unnormalized:
+                        if(!flagTop3){
+                            top3();
+                            flagTop3 = true;
+                        }
+                        return;
+                    case Median:
+                        if(!flagTop3MedianNorm){
+                            top3MedianNorm();
+                            flagTop3MedianNorm = true;
+                        }
+                        return;
+                    case SelProtein:
+                        top3SelProteinNorm();
+                        return;
+                    default:
+                        return;
+                }
             default:
                 return;
         }
@@ -420,6 +464,15 @@ public class SampleGroup implements Serializable {
         }
     }
 
+    /**
+     * top 3 for each sample
+     */
+    public void top3(){
+        for(Map.Entry<String, Sample> entry : samples.entrySet()){
+            entry.getValue().top3();
+        }
+    }
+
 
     public void rawAbundanceMedianNorm(){
         ArrayList<Double> medianEach = new ArrayList<>();
@@ -488,6 +541,40 @@ public class SampleGroup implements Serializable {
         return;
     }
 
+    public void top3MedianNorm(){
+        ArrayList<Double> medianEach = new ArrayList<>();
+        ArrayList<Double> dataAll = new ArrayList<>();
+
+        for(Map.Entry<String, Sample> entry : samples.entrySet()){
+            ArrayList<Double> tmp = entry.getValue().getTop3Abundance();
+            dataAll.addAll(tmp);
+            Collections.sort(tmp);
+            int idx = tmp.size()/2;
+            if(tmp.size() % 2 == 0){
+                double md = (tmp.get(idx-1) + tmp.get(idx))/2;
+                medianEach.add(md);
+            } else {
+                medianEach.add(tmp.get(idx));
+            }
+        }
+
+        Collections.sort(dataAll);
+        int idx = dataAll.size()/2;
+        double mdAll = 0;
+        if(dataAll.size() %2 == 0){
+            mdAll = (dataAll.get(idx-1) + dataAll.get(idx))/2;
+        } else {
+            mdAll = dataAll.get(idx);
+        }
+
+        idx = 0;
+        for(Map.Entry<String, Sample> entry : samples.entrySet()){
+            entry.getValue().top3AbundanceMedianNorm(mdAll-medianEach.get(idx));
+            idx++;
+        }
+        return;
+    }
+
     public void rawAbundanceSelProteinNorm(){
         if(selProteinNorm == null){
             return;
@@ -538,6 +625,33 @@ public class SampleGroup implements Serializable {
         idx = 0;
         for(Map.Entry<String, Sample> entry : samples.entrySet()){
             entry.getValue().iBAQSelProteinNorm(md - rawAbundance.get(idx));
+            idx++;
+        }
+    }
+
+    public void top3SelProteinNorm(){
+        if(selProteinNorm == null){
+            return;
+        }
+
+        ArrayList<Double> rawAbundance = new ArrayList<>();
+        for(Map.Entry<String, Sample> entry : samples.entrySet()){
+            rawAbundance.add(entry.getValue().getTop3Abundance(selProteinNorm));
+        }
+
+        ArrayList<Double> cp = new ArrayList<>(rawAbundance);
+        Collections.sort(cp);
+        int idx = cp.size()/2;
+        double md;
+        if(cp.size()%2 == 0){
+            md = (cp.get(idx-1) + cp.get(idx))/2;
+        } else {
+            md = cp.get(idx);
+        }
+
+        idx = 0;
+        for(Map.Entry<String, Sample> entry : samples.entrySet()){
+            entry.getValue().top3AbundanceSelProteinNorm(md - rawAbundance.get(idx));
             idx++;
         }
     }

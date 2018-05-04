@@ -49,6 +49,7 @@ public class PepCombineController {
     @FXML private Label lblEnd;
     @FXML private Label lblPep;
     @FXML private Label lblPos;
+    @FXML private Label lblInfo;
 
 
     public void setData(SampleGroup sampleGroup, Protein protein, int pos){
@@ -69,6 +70,8 @@ public class PepCombineController {
         ArrayList<Integer> startSel = new ArrayList<>();
         ArrayList<Integer> endSel = new ArrayList<>();
         int pepSelIdx = 0;
+
+        String modiRes = null;
         for(Integer idx : pepSelIndex){
             int st = protein.getPepStart(idx);
             int ed = protein.getPepEnd(idx);
@@ -82,6 +85,10 @@ public class PepCombineController {
             String modiTypeTmp = pepTmp.getModiType(pos - st);
             if(modiTypeTmp == null){
                 modiTypeTmp = "NULL";
+            }
+
+            if(modiRes==null){
+                modiRes=pepTmp.getModiRes(pos-st);
             }
 
             if(groupIndex.containsKey(modiTypeTmp)){
@@ -128,10 +135,12 @@ public class PepCombineController {
             } else {
                 ArrayList<Modification> modisTmp = new ArrayList<>();
                 ArrayList<Integer> posTmp =  new ArrayList<>();
+                ArrayList<String> resTmp = new ArrayList<>();
                 ArrayList<Double> percentTmp = new ArrayList<>();
                 posTmp.add(pos-st);
+                resTmp.add(modiRes);
                 percentTmp.add(100.0);
-                Modification modi = new Modification(entry.getKey(), posTmp, percentTmp);
+                Modification modi = new Modification(entry.getKey(), posTmp, resTmp, percentTmp);
                 modisTmp.add(modi);
                 Peptide pepTmp = new Peptide(id, protein.getSequence(st, ed+1), abundance, null, null, null, modisTmp, 0);
                 PepPos pepPosTmp = new PepPos(st, ed, pepTmp);
@@ -180,6 +189,30 @@ public class PepCombineController {
 
         gc = canvas.getGraphicsContext2D();
         draw();
+
+        if(arrangePep.size()==1){
+            if(arrangePep.get(0).getPep().getModifications().size()==0){
+                lblInfo.setText("One peptide without modification");
+            } else {
+                lblInfo.setText("One peptide with modification");
+            }
+        } else {
+            double abM = 0;
+            double abN = 0;
+            for(PepPos tmp : arrangePep){
+                if(tmp.getPep().getModifications().size()==0){
+                    abN = tmp.getPep().getAbundance();
+                } else {
+                    abM = tmp.getPep().getAbundance();
+                }
+            }
+
+            String msg = "Total Abundance of Peptides with Modification: " + String.format("%.2f", abM);
+            msg += "; Total Abundance of Peptides without Modification: " + String.format("%.2f", abN);
+            double rt = abM/abN;
+            msg += "; Ratio=" + String.format("%.2f", rt);
+            lblInfo.setText(msg);
+        }
 
 
         canvas.addEventHandler(MouseEvent.MOUSE_MOVED, new EventHandler<MouseEvent>() {
@@ -270,9 +303,9 @@ public class PepCombineController {
         //X Axis
         double fontSize = pixPerLocus * scaleX /2.0  + 3.5;
 
-        //if(fontsize > 16){
-        //    fontsize = 16;
-        //}
+        if(fontSize > 16){
+            fontSize = 16;
+        }
 
         String proteinSeq = protein.getSequence();
         ArrayList<Integer> modiPos = protein.getModiPosSel(modiSelected);

@@ -38,6 +38,7 @@
                            </toggleGroup>
                         </RadioMenuItem>
                         <RadioMenuItem fx:id="menuProteiniBAQ" mnemonicParsing="false" onAction="#iBAQ" text="iBAQ" toggleGroup="$toggleIntegratioin" />
+                        <RadioMenuItem fx:id="menuProteinT3" mnemonicParsing="false" onAction="#Top3" text="Top3" toggleGroup="$toggleIntegratioin" />
                      </items>
                   </Menu>
                   <Menu mnemonicParsing="false" text="Normalization">
@@ -81,6 +82,7 @@
                       <MenuItem mnemonicParsing="false" onAction="#showModifiedCysFigure" text="Show Figure" />
                     </items>
                   </Menu>
+                  <MenuItem fx:id="menuProteinAbundance" mnemonicParsing="false" onAction="#exportProteinAbundance" text="Protein Abundance" />
                 <MenuItem fx:id="menuExportModificationInfo" mnemonicParsing="false" onAction="#exportModificationInfo" text="Modification Info" />
                   <MenuItem fx:id="menuBrowserFigure" mnemonicParsing="false" onAction="#exportBrowserFigure" text="Browser Figure" />
               </items>

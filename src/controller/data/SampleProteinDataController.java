@@ -85,6 +85,11 @@ public class SampleProteinDataController implements Initializable {
             for(int j=0; j<sampleId.size(); j++){
                 Double tmp = sampleGroup.getProteinData(sampleId.get(j),proteinId.get(i));
                 switch (scaleType){
+                    case Regular:
+                        if(tmp <= 0){
+                            tmp = 0.0;
+                        }
+                        break;
                     case Log2:
                         if(tmp <=0) {
                             tmp = 0.0;

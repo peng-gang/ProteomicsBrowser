@@ -73,6 +73,10 @@ public class ParaExportModificationInfoController implements Initializable{
             return;
         }
 
+        if(cutoff==0){
+            cutoff=-9999999;
+        }
+
         //start to output
         FileWriter fileWriter= null;
         try {

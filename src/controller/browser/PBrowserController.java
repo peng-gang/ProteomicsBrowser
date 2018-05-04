@@ -869,17 +869,40 @@ public class PBrowserController implements Initializable {
                         for(Modification modi : modifications){
                             if(modi.getModificationType().equals(modiType)){
                                 for(int i=0; i<modi.getPos().size(); i++){
-                                    double leftX = leftPix + (modi.getPos().get(i) + pp.getStart()) * pixPerLocus * scaleX + 0.5;
-                                    double topY = tlY + (1.0-modi.getPercent().get(i)/100.0) * pixPerPep * scaleY;
-                                    double width = pixPerLocus * scaleX - 0.5;
-                                    double height = scaleY * pixPerPep * modi.getPercent().get(i)/100.0;
 
-                                    leftX = leftX - st;
-                                    double rightX = leftX + width;
-                                    if(leftX < canvasWidth && rightX > 0){
-                                        leftX = Math.max(leftX, 0);
-                                        rightX = Math.min(rightX, canvasWidth);
-                                        gc.fillRect(leftX, topY, (rightX-leftX), height);
+
+                                    if(modi.getPercent().get(i) < 0){
+                                        double leftX = leftPix + (modi.getPos().get(i) + pp.getStart()) * pixPerLocus * scaleX + 0.5;
+                                        double topY = tlY;
+                                        double width = pixPerLocus * scaleX - 0.5;
+                                        double height = scaleY * pixPerPep;
+
+                                        leftX = leftX - st;
+                                        double rightX = leftX + width;
+                                        if(leftX < canvasWidth && rightX > 0){
+                                            leftX = Math.max(leftX, 0);
+                                            rightX = Math.min(rightX, canvasWidth);
+
+                                            //
+                                            Stop[] stops = new Stop[] {new Stop(0, Color.WHITE), new Stop(1, sampleGroup.getModificationColor(modiType))};
+                                            LinearGradient lg = new LinearGradient(0, 0, 0.1, 0.1, true, CycleMethod.REPEAT, stops);
+                                            gc.setFill(lg);
+                                            gc.fillRect(leftX, topY, (rightX-leftX), height);
+                                        }
+                                    } else {
+                                        double leftX = leftPix + (modi.getPos().get(i) + pp.getStart()) * pixPerLocus * scaleX + 0.5;
+                                        double topY = tlY + (1.0-modi.getPercent().get(i)/100.0) * pixPerPep * scaleY;
+                                        double width = pixPerLocus * scaleX - 0.5;
+                                        double height = scaleY * pixPerPep * modi.getPercent().get(i)/100.0;
+
+                                        leftX = leftX - st;
+                                        double rightX = leftX + width;
+                                        if(leftX < canvasWidth && rightX > 0){
+                                            leftX = Math.max(leftX, 0);
+                                            rightX = Math.min(rightX, canvasWidth);
+                                            gc.setFill(sampleGroup.getModificationColor(modiType));
+                                            gc.fillRect(leftX, topY, (rightX-leftX), height);
+                                        }
                                     }
                                 }
                             }
@@ -957,22 +980,44 @@ public class PBrowserController implements Initializable {
             if(pp.getPep().isModified()){
                 ArrayList<Modification> modifications = pp.getPep().getModifications();
                 for(String modiType:modiSelected){
-                    gc.setFill(sampleGroup.getModificationColor(modiType));
+
                     for(Modification modi : modifications){
                         if(modi.getModificationType().equals(modiType)){
                             for(int i=0; i<modi.getPos().size(); i++){
-                                double leftX = leftPix + (modi.getPos().get(i) + pp.getStart()) * pixPerLocus * scaleX + 0.5;
-                                double topY = tlY + (1.0-modi.getPercent().get(i)/100.0) * pixPerPep * scaleY;
-                                double width = pixPerLocus * scaleX - 0.5;
-                                double height = scaleY * pixPerPep * modi.getPercent().get(i)/100.0;
+                                if(modi.getPercent().get(i) < 0){
+                                    double leftX = leftPix + (modi.getPos().get(i) + pp.getStart()) * pixPerLocus * scaleX + 0.5;
+                                    double topY = tlY;
+                                    double width = pixPerLocus * scaleX - 0.5;
+                                    double height = scaleY * pixPerPep;
 
-                                leftX = leftX - st;
-                                double rightX = leftX + width;
-                                if(leftX < canvasWidth && rightX > 0){
-                                    leftX = Math.max(leftX, 0);
-                                    rightX = Math.min(rightX, canvasWidth);
-                                    gc.fillRect(leftX, topY, (rightX-leftX), height);
+                                    leftX = leftX - st;
+                                    double rightX = leftX + width;
+                                    if(leftX < canvasWidth && rightX > 0){
+                                        leftX = Math.max(leftX, 0);
+                                        rightX = Math.min(rightX, canvasWidth);
+
+                                        //
+                                        Stop[] stops = new Stop[] {new Stop(0, Color.WHITE), new Stop(1, sampleGroup.getModificationColor(modiType))};
+                                        LinearGradient lg = new LinearGradient(0, 0, 0.1, 0.1, true, CycleMethod.REPEAT, stops);
+                                        gc.setFill(lg);
+                                        gc.fillRect(leftX, topY, (rightX-leftX), height);
+                                    }
+                                } else {
+                                    double leftX = leftPix + (modi.getPos().get(i) + pp.getStart()) * pixPerLocus * scaleX + 0.5;
+                                    double topY = tlY + (1.0-modi.getPercent().get(i)/100.0) * pixPerPep * scaleY;
+                                    double width = pixPerLocus * scaleX - 0.5;
+                                    double height = scaleY * pixPerPep * modi.getPercent().get(i)/100.0;
+
+                                    leftX = leftX - st;
+                                    double rightX = leftX + width;
+                                    if(leftX < canvasWidth && rightX > 0){
+                                        leftX = Math.max(leftX, 0);
+                                        rightX = Math.min(rightX, canvasWidth);
+                                        gc.setFill(sampleGroup.getModificationColor(modiType));
+                                        gc.fillRect(leftX, topY, (rightX-leftX), height);
+                                    }
                                 }
+
                             }
                         }
                     }
@@ -1399,9 +1444,19 @@ public class PBrowserController implements Initializable {
                             String mt = (String) me.getKey();
                             ArrayList<Double> pc = (ArrayList<Double>) me.getValue();
                             txtShow += mt + ": " + pc.size() + "\n";
-                            txtShow += pc.get(0);
+                            if(pc.get(0) < 0){
+                                txtShow += "NA";
+                            } else {
+                                txtShow += pc.get(0);
+                            }
+
                             for(int i = 1; i < pc.size(); i++){
-                                txtShow += ";" + pc.get(i);
+                                if(pc.get(i) < 0){
+                                    txtShow += ";NA";
+                                } else {
+                                    txtShow += ";" + pc.get(i);
+                                }
+
                             }
                             txtShow += "\n";
                         }
@@ -1450,9 +1505,18 @@ public class PBrowserController implements Initializable {
                         String mt = (String) me.getKey();
                         ArrayList<Double> pc = (ArrayList<Double>) me.getValue();
                         txtShow += mt + ": " + pc.size() + "\n";
-                        txtShow += pc.get(0);
+                        if(pc.get(0) < 0){
+                            txtShow += "NA";
+                        } else {
+                            txtShow += pc.get(0);
+                        }
                         for(int i = 1; i < pc.size(); i++){
-                            txtShow += ";" + pc.get(i);
+                            if(pc.get(i) < 0){
+                                txtShow += ";NA";
+                            } else {
+                                txtShow += ";" + pc.get(i);
+                            }
+
                         }
                         txtShow += "\n";
                     }

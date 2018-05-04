@@ -14,6 +14,7 @@ import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 import org.controlsfx.control.RangeSlider;
 
+import java.awt.*;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -79,9 +80,11 @@ public class BoxPlotDataSelectController implements Initializable {
         combGroup.getItems().addAll(strInfoName);
         if(type.equals("Peptide")){
             ArrayList<String> pepId = new ArrayList<>(sampleGroup.getPepId());
+            Collections.sort(pepId);
             combData.getItems().addAll(pepId);
         } else {
             ArrayList<String> proteinId = new ArrayList<>(sampleGroup.getProteinId());
+            Collections.sort(proteinId);
             combData.getItems().addAll(proteinId);
         }
 

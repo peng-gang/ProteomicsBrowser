@@ -5,6 +5,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Side;
+import javafx.scene.Scene;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.ScatterChart;
@@ -54,6 +55,10 @@ public class CorScatterController implements Initializable{
         Stage stage = (Stage) pane.getScene().getWindow();
         File figureFile = fileChooser.showSaveDialog(stage);
 
+        if(figureFile == null){
+            return;
+        }
+
         double pixelScale = 3.0;
         WritableImage image = new WritableImage((int)(pane.getWidth()*pixelScale), (int)(pane.getHeight()*pixelScale));
         SnapshotParameters sp = new SnapshotParameters();
@@ -96,7 +101,6 @@ public class CorScatterController implements Initializable{
     }
 
     public void init(){
-
         //NumberAxis xAxis = new NumberAxis(18, 22, 0.4);
         NumberAxis xAxis;
         NumberAxis yAxis;
@@ -266,6 +270,9 @@ public class CorScatterController implements Initializable{
         }
 
         sChart.setLegendSide(Side.RIGHT);
+        sChart.getScene().getStylesheets().addAll("/style/CorScatter.css");
+        //Scene scene = sChart.getScene();
+        //scene.getStylesheets().addAll("/style/CorScatter.css");
         //sChart.setLegendVisible(false);
     }
 

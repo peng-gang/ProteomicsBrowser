@@ -1,12 +1,12 @@
 package data;
 
+import com.sun.org.apache.xpath.internal.operations.Mod;
 import javafx.util.Pair;
 import project.PublicInfo;
-import sun.reflect.generics.tree.Tree;
-import sun.rmi.server.InactiveGroupException;
 
 import java.io.Serializable;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * protein or gene information
@@ -37,6 +37,11 @@ public class Protein implements Serializable {
     private ArrayList<Integer> pepEndCombined;
     private TreeMap<Integer, PosModiInfo> modiInfoCombined;
     private TreeSet<String> modiTypeAllCombined;
+
+    private Integer numTheoreticalTrypticPeptides;
+
+    static private Integer cutLow = 6;
+    static private Integer cutHigh = 30;
 
 
     // range of peptide data
@@ -109,12 +114,19 @@ public class Protein implements Serializable {
      */
     private double iBAQAbundance=-1;
 
+    /**
+     * top3 abundance
+     */
+    private double top3Abundance = -1;
+
 
     //after median normalization
     private double rawAbundanceMedianNorm;
     private double iBAQAbundanceMedianNorm;
     private double rawAbundanceSelProteinNorm;
     private double iBAQAbundanceSelProteinNorm;
+    private double top3AbundanceMedianNorm;
+    private double top3AbundanceSelProteinNorm;
 
     public String getName() { return  name;}
     public String getSequence() { return sequence;}
@@ -150,6 +162,46 @@ public class Protein implements Serializable {
 
     public Set<String> getPepDoubleInfo(){
         return peptides.get(0).getDoubleInfo().keySet();
+    }
+
+
+    private void calNumTTP(){
+        ArrayList<Integer> cPoint = new ArrayList<>();
+        cPoint.add(0);
+        for(int i=0; i<sequence.length();i++){
+            if(sequence.charAt(i) == 'K' | sequence.charAt(i) == 'R'){
+                if(i<sequence.length()-1){
+                    if(sequence.charAt(i+1) != 'P'){
+                        if(i!=0){
+                            cPoint.add(i);
+                        }
+                    }
+                } else {
+                    cPoint.add(i);
+                }
+            }
+        }
+        cPoint.add(sequence.length());
+
+        numTheoreticalTrypticPeptides = 0;
+
+        for(int i=0; i< cPoint.size()-1;i++){
+            for(int j=i+1; j<cPoint.size(); j++){
+                int distance = cPoint.get(j)-cPoint.get(i);
+                if(distance<6){
+                    continue;
+                } else {
+                    if(distance>30){
+                        break;
+                    } else {
+                        //System.out.println(cPoint.get(i)+"_"+cPoint.get(j));
+                        numTheoreticalTrypticPeptides++;
+                    }
+                }
+            }
+        }
+
+        return;
     }
 
 
@@ -926,6 +978,8 @@ public class Protein implements Serializable {
         doubleInfoAll = new ArrayList<>();
         doubleInfoName = new ArrayList<>();
 
+        calNumTTP();
+
         /*
         chargeMax = Integer.MIN_VALUE;
         chargeMin = Integer.MAX_VALUE;
@@ -955,6 +1009,33 @@ public class Protein implements Serializable {
             System.out.println("Cannot find peptide " + pep.getSequence() + " in protein " + name);
             return  false;
         } else if(idxPos.size() == 1){
+            // check whether there is peptide with same id that has been added
+            /*
+            for(Peptide p : peptides){
+                if(p.getId().equals(pep.getId())){
+
+                    p.adjModification(pep);
+
+                    if(pep.isModified()){
+                        for(Modification m : pep.getModifications()){
+                            modiTypeAll.add(m.getModificationType());
+                            for(int i = 0; i < m.getPos().size(); i++){
+                                int modiPos = m.getPos().get(i) + idxPos.get(0);
+                                PosModiInfo tmp = modiInfo.get(modiPos);
+                                if(tmp == null){
+                                    PosModiInfo posModiInfo = new PosModiInfo(m.getModificationType(), m.getPercent().get(i));
+                                    modiInfo.put(modiPos, posModiInfo);
+                                } else {
+                                    tmp.addModi(m.getModificationType(), m.getPercent().get(i));
+                                }
+                            }
+                        }
+                    }
+                    return true;
+                }
+            }
+            */
+
             peptides.add(pep);
             pepStart.add(idxPos.get(0));
             pepEnd.add(idxPos.get(0) + pep.getLength() - 1);
@@ -1007,6 +1088,37 @@ public class Protein implements Serializable {
             System.out.println("Multiple Match");
             System.out.println(name);
             System.out.println(pep.getSequence());
+
+            /*
+            boolean adj = false;
+
+            for(Peptide p : peptides){
+                if(p.getId().equals(pep.getId())){
+                    p.adjModification(pep);
+                    adj = true;
+                }
+            }
+
+            if(adj){
+                if(pep.isModified()){
+                    for(Modification m : pep.getModifications()){
+                        modiTypeAll.add(m.getModificationType());
+                        for(int i = 0; i < m.getPos().size(); i++){
+                            int modiPos = m.getPos().get(i) + idxPos.get(0);
+                            PosModiInfo tmp = modiInfo.get(modiPos);
+                            if(tmp == null){
+                                PosModiInfo posModiInfo = new PosModiInfo(m.getModificationType(), m.getPercent().get(i));
+                                modiInfo.put(modiPos, posModiInfo);
+                            } else {
+                                tmp.addModi(m.getModificationType(), m.getPercent().get(i));
+                            }
+                        }
+                    }
+                }
+                return true;
+            }
+            */
+
             TreeMap<String, Double> dInfo = pep.getDoubleInfo();
             if(doubleInfoName.size() == 0){
                 doubleInfoName.addAll(dInfo.keySet());
@@ -1110,6 +1222,17 @@ public class Protein implements Serializable {
                     default:
                         return -1;
                 }
+            case Top3:
+                switch (proteinStatus) {
+                    case Unnormalized:
+                        return top3Abundance;
+                    case Median:
+                        return top3AbundanceMedianNorm;
+                    case SelProtein:
+                        return top3AbundanceSelProteinNorm;
+                    default:
+                        return -1;
+                }
             default:
                 return -1;
         }
@@ -1143,14 +1266,14 @@ public class Protein implements Serializable {
 
     /**
      * set iBAQ abundance
-     * @param theoreticalPepCount theoretical peptide count
      */
-    public void setiBAQAbundance(double theoreticalPepCount){
+    public void setiBAQAbundance(){
         if(rawAbundance==-1){
             this.sumRawAbundance();
         }
 
-        iBAQAbundance = rawAbundance/theoreticalPepCount;
+        //iBAQAbundance = rawAbundance/theoreticalPepCount;
+        iBAQAbundance = rawAbundance/numTheoreticalTrypticPeptides;
     }
 
     /**
@@ -1161,6 +1284,23 @@ public class Protein implements Serializable {
         return iBAQAbundance;
     }
 
+    public void setTop3(){
+        top3Abundance = 0;
+        ArrayList<Double> abAll = new ArrayList<>();
+        for(Peptide peptide : peptides){
+            if(peptide.getMultiMatch() <= 1) {
+                abAll.add(peptide.getAbundance());
+            }
+        }
+
+        Collections.sort(abAll, Collections.reverseOrder());
+        for(int i=0; i<Math.min(3, abAll.size()); i++){
+            top3Abundance += abAll.get(i);
+        }
+    }
+
+    public double getTop3Abundance() { return top3Abundance; }
+
 
     public void setRawAbundanceMedianNorm(double diff) {
         rawAbundanceMedianNorm = rawAbundance + diff;
@@ -1170,9 +1310,13 @@ public class Protein implements Serializable {
         iBAQAbundanceMedianNorm = iBAQAbundance + diff;
     }
 
+    public void setTop3AbundanceMedianNorm(double diff) { top3AbundanceMedianNorm = top3Abundance + diff; }
+
     public void setRawAbundanceSelProteinNorm(double diff) { rawAbundanceSelProteinNorm = rawAbundance + diff; }
 
     public void setiBAQAbundanceSelProteinNorm(double diff) { iBAQAbundanceSelProteinNorm = iBAQAbundance + diff; }
+
+    public void setTop3AbundanceSelProteinNorm(double diff) { top3AbundanceSelProteinNorm = top3Abundance + diff; }
 
     public void setAbundanceRange(ArrayList<Double> cutoff){
         for(Peptide pt : peptides){

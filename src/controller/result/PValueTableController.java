@@ -4,11 +4,18 @@ import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 
 /**
@@ -19,6 +26,55 @@ public class PValueTableController {
 
     private ArrayList<String> id;
     private ArrayList<Double> pv;
+
+    @FXML private void save(ActionEvent event){
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Output p-value");
+        fileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
+        fileChooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("Output p-value", "*.csv")
+        );
+
+        Stage stage = (Stage) tbvPValue.getScene().getWindow();
+        File outputFile = fileChooser.showSaveDialog(stage);
+
+        if(outputFile == null){
+            return;
+        }
+
+        FileWriter fileWriter = null;
+        try {
+            fileWriter = new FileWriter(outputFile);
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+
+        BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+
+        try {
+            for(int i=0; i<id.size(); i++){
+                String fline = id.get(i) + "," + pv.get(i) + "\n";
+                bufferedWriter.write(fline);
+            }
+        } catch (IOException e){
+            e.printStackTrace();
+        } finally {
+            try {
+                bufferedWriter.close();
+                fileWriter.close();
+            } catch (IOException e){
+                e.printStackTrace();
+            }
+
+        }
+
+    }
+
+    @FXML private void exit(ActionEvent event){
+        Stage stage = (Stage) tbvPValue.getScene().getWindow();
+        stage.close();
+    }
+
 
     public void set(ArrayList<String> id, ArrayList<Double> pv){
         this.id = id;

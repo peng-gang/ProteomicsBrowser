@@ -9,10 +9,14 @@ public class PublicInfo {
     }
 
     public enum ProteinIntegrationType {
-        Raw, iBAQ
+        Raw, iBAQ, NSAF, Top3
     }
 
     public enum ProteinStatus{
         Unnormalized, Median, SelProtein
+    }
+
+    public enum ErrorMsgType{
+        ProteinNotFound, PepNotMatch, PepInMultipleProtein
     }
 }

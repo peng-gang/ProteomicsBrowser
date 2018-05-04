@@ -1,6 +1,7 @@
 package controller;
 
 import com.sun.tools.doclets.formats.html.SourceToHTMLConverter;
+import com.sun.tools.javadoc.MemberDocImpl;
 import controller.apps.ImportDataController;
 import controller.browser.PBrowserController;
 import controller.data.ProteomicsDataController;
@@ -9,6 +10,7 @@ import controller.data.SampleProteinDataController;
 import controller.dataselect.BoxPlotDataSelectController;
 import controller.dataselect.CorScatterDataSelectController;
 import controller.dataselect.TTestDataSelectController;
+import controller.errorMsg.ErrorMsgController;
 import controller.filter.PepFilterController;
 import controller.parameter.ParaExportModificationInfoController;
 import controller.parameter.ParaModifiedCysController;
@@ -51,6 +53,7 @@ import project.ProjectInfo;
 import project.PublicInfo;
 
 import javax.print.attribute.standard.DialogTypeSelection;
+import javax.print.attribute.standard.MultipleDocumentHandling;
 import java.io.*;
 import java.net.URL;
 import java.util.*;
@@ -72,6 +75,7 @@ public class MainController implements Initializable{
     @FXML private Menu menuData;
     @FXML private RadioMenuItem menuProteinRaw;
     @FXML private RadioMenuItem menuProteiniBAQ;
+    @FXML private RadioMenuItem menuProteinT3;
 
     @FXML private RadioMenuItem menuNonnormalization;
     @FXML private RadioMenuItem menuMedianNormalization;
@@ -93,6 +97,7 @@ public class MainController implements Initializable{
     @FXML private MenuItem menuExportModificationInfo;
     @FXML private MenuItem menuBrowserFigure;
     @FXML private Menu menuExportModiCys;
+    @FXML private MenuItem menuProteinAbundance;
 
     //Data Filter
     @FXML private MenuItem menuPepFilter;
@@ -438,6 +443,7 @@ public class MainController implements Initializable{
         }
         controller2.set(dataId1, dataId2, d1, d2,group);
         controller2.init();
+        //scStage.getScene().getStylesheets().addAll("/style/CorScatter.css");
         scStage.showAndWait();
     }
 
@@ -742,6 +748,7 @@ public class MainController implements Initializable{
 
     }
 
+    //use iBAQ method to calculate abundance
     @FXML private void iBAQ(ActionEvent event){
         String selTab = tabPane.getSelectionModel().getSelectedItem().getText();
         if(selTab.equals("Protein")){
@@ -755,6 +762,21 @@ public class MainController implements Initializable{
             System.out.println("Wrong Selection: " + selTab);
         }
 
+    }
+
+    //use top three pepetides to calculate protein abundance
+    @FXML private void Top3(ActionEvent event){
+        String selTab = tabPane.getSelectionModel().getSelectedItem().getText();
+        if(selTab.equals("Protein")){
+            menuNonnormalization.setSelected(true);
+            proteinNorm = "No";
+            sampleGroup.setProteinIntegrationType(PublicInfo.ProteinIntegrationType.Top3);
+            sampleGroup.setProteinStatus(PublicInfo.ProteinStatus.Unnormalized);
+            sampleGroup.updateProtein();
+            sampleProteinDataController.show();
+        } else {
+            System.out.println("Wrong Selection: " + selTab);
+        }
     }
 
 
@@ -929,7 +951,7 @@ public class MainController implements Initializable{
         try{
             Parent root = loader.load();
             Stage stage = new Stage();
-            stage.setTitle("Export modified Cys information in text file");
+            stage.setTitle("Parameters for Residue Frequencies Around PTMs Text");
             stage.setScene(new Scene(root, 600, 400));
             stage.initModality(Modality.WINDOW_MODAL);
             stage.initOwner(menuBar.getScene().getWindow());
@@ -943,6 +965,62 @@ public class MainController implements Initializable{
         }
     }
 
+    @FXML private void exportProteinAbundance(ActionEvent event){
+        System.out.println("Export Protein abundance");
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Export Protein Abundance");
+        fileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
+        fileChooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("Output File", "*.csv")
+        );
+
+        Stage stage = (Stage) tabPane.getScene().getWindow();
+        File outputFile = fileChooser.showSaveDialog(stage);
+        if(outputFile==null){
+            return;
+        }
+
+        FileWriter fileWriter = null;
+        try {
+            fileWriter = new FileWriter(outputFile);
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+
+        BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+        try {
+            String header = "Protein";
+            for(String sid : sampleGroup.getSampleId()){
+                header += "," + sid;
+            }
+            header += "\n";
+            bufferedWriter.write(header);
+
+            //ArrayList<String> proteinId = new ArrayList<>(sampleGroup.getProteinId());
+            for(String pid : sampleGroup.getProteinId()){
+                String fline = pid;
+                for(String sid : sampleGroup.getSampleId()){
+                    Double tmp = sampleGroup.getProteinData(sid,pid);
+                    if(tmp < 0){
+                        tmp = 0.0;
+                    }
+                    fline += "," + tmp;
+                }
+                fline += "\n";
+                bufferedWriter.write(fline);
+            }
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+
+        try {
+            bufferedWriter.close();
+            fileWriter.close();
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+    }
+
     @FXML private void showModifiedCysFigure(ActionEvent event){
         System.out.println("Show modified Cys Info Figure");
 
@@ -951,7 +1029,7 @@ public class MainController implements Initializable{
         try{
             Parent root = loader.load();
             Stage stage = new Stage();
-            stage.setTitle("Parameter for Modified Cys information Figure");
+            stage.setTitle("Parameters for Residue Frequencies Around PTMs Figure");
             stage.setScene(new Scene(root, 600, 300));
             stage.initModality(Modality.WINDOW_MODAL);
             stage.initOwner(menuBar.getScene().getWindow());
@@ -1078,6 +1156,7 @@ public class MainController implements Initializable{
                         menuExportModificationInfo.setDisable(true);
                         menuBrowserFigure.setDisable(true);
                         menuExportModiCys.setDisable(false);
+                        menuProteinAbundance.setDisable(false);
                         menuDataClean.setVisible(false);
                         treeView.getSelectionModel().select(4);
                         break;
@@ -1089,6 +1168,7 @@ public class MainController implements Initializable{
                         menuExportModificationInfo.setDisable(false);
                         menuBrowserFigure.setDisable(false);
                         menuExportModiCys.setDisable(true);
+                        menuProteinAbundance.setDisable(true);
                         menuDataClean.setVisible(true);
                         treeView.getSelectionModel().select(5);
                         break;
@@ -1178,6 +1258,7 @@ public class MainController implements Initializable{
                         menuView.setVisible(true);
                         menuExport.setVisible(true);
                         menuExportModiCys.setDisable(false);
+                        menuProteinAbundance.setDisable(false);
                         menuExportModificationInfo.setDisable(true);
                         menuBrowserFigure.setDisable(true);
                         menuDataClean.setVisible(false);
@@ -1212,6 +1293,7 @@ public class MainController implements Initializable{
                         menuView.setVisible(false);
                         menuExport.setVisible(true);
                         menuExportModiCys.setDisable(true);
+                        menuProteinAbundance.setDisable(true);
                         menuExportModificationInfo.setDisable(false);
                         menuBrowserFigure.setDisable(false);
                         menuDataClean.setVisible(true);
@@ -1512,6 +1594,9 @@ public class MainController implements Initializable{
                     case "modification":
                         indexModification = i;
                         break;
+                    case "modifications":
+                        indexModification = i;
+                        break;
                     case "abundance":
                         indexAbundance = i;
                         break;
@@ -1582,17 +1667,65 @@ public class MainController implements Initializable{
             Set<String> proteinNotFind = new TreeSet<>();
             ArrayList<String> pepNotMatch = new ArrayList<>();
             ArrayList<String> proteinNotMatch = new ArrayList<>();
+
+            Map<String, ArrayList<String>> pepInMultipleProtein = new TreeMap<>();
+
+            ArrayList<Boolean> idxAdd = new ArrayList<>();
+            for(int i=0; i<proteomicsRaw.get(0).size();i++){
+                idxAdd.add(false);
+            }
+
+
             for(int i=0; i<proteomicsRaw.get(0).size(); i++){
+                if(idxAdd.get(i)){
+                    continue;
+                }
+
                 String id = proteomicsRaw.get(indexId).get(i);
                 String sequence = proteomicsRaw.get(indexSequence).get(i);
                 String protein = proteomicsRaw.get(indexProtein).get(i);
+                String charge = proteomicsRaw.get(indexCharge).get(i);
+
+                ArrayList<String> modiStrAll = new ArrayList<>();
+                //String modificationStr = proteomicsRaw.get(indexModification).get(i);
+                modiStrAll.add(proteomicsRaw.get(indexModification).get(i));
+                idxAdd.set(i, true);
+
+                boolean flagPepInMultiProtein = false;
+                if(i<idxAdd.size()-1){
+                    for(int j=i+1; j<idxAdd.size();j++){
+                        if(idxAdd.get(j)){
+                            continue;
+                        }
+                        if(proteomicsRaw.get(indexId).get(j).equals(id)) {
+                            if (proteomicsRaw.get(indexProtein).get(j).equals(protein)) {
+                                modiStrAll.add(proteomicsRaw.get(indexModification).get(j));
+                            } else {
+                                flagPepInMultiProtein = true;
+                                if(pepInMultipleProtein.containsKey(id)){
+                                    pepInMultipleProtein.get(id).add(proteomicsRaw.get(indexProtein).get(j));
+                                } else {
+                                    ArrayList<String> pTmp = new ArrayList<>();
+                                    pTmp.add(protein);
+                                    pTmp.add(proteomicsRaw.get(indexProtein).get(j));
+                                    pepInMultipleProtein.put(id, pTmp);
+                                }
+                            }
+                            idxAdd.set(j, true);
+                        }
+                    }
+                }
+
+                if(flagPepInMultiProtein){
+                    continue;
+                }
+
                 if(protein.contains("_")){
                     protein = protein.substring(0, protein.indexOf("_"));
                 }
-                String modificationStr = proteomicsRaw.get(indexModification).get(i);
-                String charge = proteomicsRaw.get(indexCharge).get(i);
 
                 ArrayList<Modification> modifications = new ArrayList<>();
+
 
                 String seq = proteinDB.getSeq(protein);
                 if(seq == null){
@@ -1600,11 +1733,80 @@ public class MainController implements Initializable{
                     continue;
                 }
 
-                if(!modificationStr.isEmpty()){
-                    String[] modiTmp = modificationStr.split("\\|");
-                    for(int j=0; j<modiTmp.length; j++){
-                        Modification tmp = new Modification(modiTmp[j]);
-                        modifications.add(tmp);
+
+
+                if(modiStrAll.size()==1) {
+                    String modificationStr = modiStrAll.get(0);
+                    if(!modificationStr.isEmpty()){
+                        //System.out.println(modificationStr);
+                        String[] modiTmp = modificationStr.split("\\|");
+                        for(int j=0; j<modiTmp.length; j++){
+                            //System.out.println(modiTmp[j]);
+                            Modification tmp = new Modification(modiTmp[j]);
+                            modifications.add(tmp);
+                        }
+                    }
+                } else {
+                    Map<String, Map<Integer, Integer>> frequence = new TreeMap<>();
+                    Map<Integer, String> resInfo = new TreeMap<>();
+                    for(String str : modiStrAll){
+                        if(str.isEmpty()){
+                            continue;
+                        }
+                        //ArrayList<Modification> modiRawTmp = new ArrayList<>();
+                        String[] modiTmp = str.split("\\|");
+                        for(int j=0; j<modiTmp.length; j++){
+                            //System.out.println(modiTmp[j]);
+                            Modification tmp = new Modification(modiTmp[j]);
+
+
+                            String typeTmp = tmp.getModificationType();
+                            if(!frequence.containsKey(typeTmp)){
+                                Map<Integer, Integer> fTmp = new TreeMap<>();
+                                frequence.put(typeTmp, fTmp);
+                            }
+
+                            for(int k=0; k<tmp.getPos().size(); k++){
+                                int posTmp = tmp.getPos().get(k);
+                                resInfo.put(posTmp, tmp.getResidue().get(k));
+                                if(frequence.get(typeTmp).containsKey(posTmp)){
+                                    int ftmp = frequence.get(typeTmp).get(posTmp);
+                                    frequence.get(typeTmp).put(posTmp, ftmp+1);
+                                } else {
+                                    frequence.get(typeTmp).put(posTmp, 1);
+                                }
+                            }
+                        }
+                    }
+
+                    int numRecord = modiStrAll.size();
+
+                    for(Map.Entry<String, Map<Integer, Integer>> entry : frequence.entrySet()){
+                        ArrayList<Integer> posTmp = new ArrayList<>();
+                        ArrayList<String> resTmp = new ArrayList<>();
+                        ArrayList<Double> perTmp = new ArrayList<>();
+                        for(Map.Entry<Integer, Integer> entry1 : entry.getValue().entrySet()){
+                            Integer pos = entry1.getKey();
+                            Integer num = entry1.getValue();
+                            if(num < numRecord){
+                                posTmp.add(pos);
+                                resTmp.add(resInfo.get(pos));
+                                perTmp.add(-1.0);
+                            } else {
+                                ArrayList<Integer> posTmp1 = new ArrayList<>();
+                                ArrayList<String> resTmp1 = new ArrayList<>();
+                                ArrayList<Double> perTmp1 = new ArrayList<>();
+                                posTmp1.add(pos);
+                                resTmp1.add(resInfo.get(pos));
+                                perTmp1.add(100.0);
+                                Modification m = new Modification(entry.getKey(), posTmp1, resTmp1, perTmp1);
+                                modifications.add(m);
+                            }
+                        }
+                        if(posTmp.size()>0){
+                            Modification m = new Modification(entry.getKey(), posTmp, resTmp, perTmp);
+                            modifications.add(m);
+                        }
                     }
                 }
 
@@ -1635,6 +1837,31 @@ public class MainController implements Initializable{
             }
 
             if(proteinNotFind.size() > 0){
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/errorMsg/ErrorMsg.fxml"));
+
+                Parent root = null;
+                try {
+                    root = loader.load();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                Stage stage = new Stage();
+                stage.setTitle("Import Data");
+                stage.setScene(new Scene(root, 600, 400));
+
+                stage.initModality(Modality.WINDOW_MODAL);
+                stage.initOwner(menuBar.getScene().getWindow());
+
+                ErrorMsgController controller = loader.getController();
+                controller.setType(PublicInfo.ErrorMsgType.ProteinNotFound);
+                ArrayList<String> tmp = new ArrayList<>(proteinNotFind);
+                controller.setProteinNotFind(tmp);
+                controller.init();
+                stage.showAndWait();
+
+
+                /*
                 Alert alert = new Alert(Alert.AlertType.WARNING);
                 alert.setTitle("Import Data");
                 alert.setHeaderText(null);
@@ -1644,10 +1871,34 @@ public class MainController implements Initializable{
                 }
                 alert.setContentText(msg);
                 alert.showAndWait();
+                */
                 //return false;
             }
 
             if(pepNotMatch.size()>0){
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/errorMsg/ErrorMsg.fxml"));
+
+                Parent root = null;
+                try {
+                    root = loader.load();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                Stage stage = new Stage();
+                stage.setTitle("Import Data");
+                stage.setScene(new Scene(root, 600, 400));
+
+                stage.initModality(Modality.WINDOW_MODAL);
+                stage.initOwner(menuBar.getScene().getWindow());
+
+                ErrorMsgController controller = loader.getController();
+                controller.setType(PublicInfo.ErrorMsgType.PepNotMatch);
+                controller.setPepNotMatch(pepNotMatch);
+                controller.setProteinNotMatch(proteinNotMatch);
+                controller.init();
+                stage.showAndWait();
+                /*
                 Alert alert = new Alert(Alert.AlertType.WARNING);
                 alert.setTitle("Import Data");
                 alert.setHeaderText(null);
@@ -1657,6 +1908,46 @@ public class MainController implements Initializable{
                 }
                 alert.setContentText(msg);
                 alert.showAndWait();
+                */
+            }
+
+            if(pepInMultipleProtein.size()>0){
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/errorMsg/ErrorMsg.fxml"));
+
+                Parent root = null;
+                try {
+                    root = loader.load();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                Stage stage = new Stage();
+                stage.setTitle("Import Data");
+                stage.setScene(new Scene(root, 600, 400));
+
+                stage.initModality(Modality.WINDOW_MODAL);
+                stage.initOwner(menuBar.getScene().getWindow());
+
+                ErrorMsgController controller = loader.getController();
+                controller.setType(PublicInfo.ErrorMsgType.PepInMultipleProtein);
+                controller.setPepInMultipleProtein(pepInMultipleProtein);
+                controller.init();
+                stage.showAndWait();
+                /*
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("Import Data");
+                alert.setHeaderText(null);
+                String msg = "The following peptides (" + pepInMultipleProtein.size() + ") mapped to multiple proteins are removed from the browser: \n(peptide id\tproteins)\n";
+                for(Map.Entry<String, ArrayList<String>> entry : pepInMultipleProtein.entrySet()){
+                    msg += entry.getKey() + "\t";
+                    for(String strTmp : entry.getValue()){
+                        msg += strTmp + " ";
+                    }
+                    msg += "\n";
+                }
+                alert.setContentText(msg);
+                alert.showAndWait();
+                */
             }
 
         } else {
@@ -1765,12 +2056,58 @@ public class MainController implements Initializable{
             Set<String> proteinNotFind = new TreeSet<>();
             ArrayList<String> pepNotMatch = new ArrayList<>();
             ArrayList<String> proteinNotMatch = new ArrayList<>();
+
+            Map<String, ArrayList<String>> pepInMultipleProtein = new TreeMap<>();
+
+            ArrayList<Boolean> idxAdd = new ArrayList<>();
+            for(int i=0; i<proteomicsRaw.get(0).size();i++){
+                idxAdd.add(false);
+            }
+
             for(int i=0; i<proteomicsRaw.get(0).size(); i++){
+                if(idxAdd.get(i)){
+                    continue;
+                }
+
                 String id = proteomicsRaw.get(indexId).get(i);
                 String sequence = proteomicsRaw.get(indexSequence).get(i);
                 String protein = proteomicsRaw.get(indexProtein).get(i);
-                String modificationStr = proteomicsRaw.get(indexModification).get(i);
                 String charge = proteomicsRaw.get(indexCharge).get(i);
+
+                ArrayList<String> modiStrAll = new ArrayList<>();
+                //String modificationStr = proteomicsRaw.get(indexModification).get(i);
+                modiStrAll.add(proteomicsRaw.get(indexModification).get(i));
+                idxAdd.set(i, true);
+
+                boolean flagPepInMultiProtein = false;
+                if(i<idxAdd.size()-1){
+                    for(int j=i+1; j<idxAdd.size();j++){
+                        if(idxAdd.get(j)){
+                            continue;
+                        }
+                        if(proteomicsRaw.get(indexId).get(j).equals(id)){
+                            if(proteomicsRaw.get(indexProtein).get(j).equals(protein)){
+                                modiStrAll.add(proteomicsRaw.get(indexModification).get(j));
+                            } else {
+                                flagPepInMultiProtein = true;
+                                if(pepInMultipleProtein.containsKey(id)){
+                                    pepInMultipleProtein.get(id).add(proteomicsRaw.get(indexProtein).get(j));
+                                } else {
+                                    ArrayList<String> pTmp = new ArrayList<>();
+                                    pTmp.add(protein);
+                                    pTmp.add(proteomicsRaw.get(indexProtein).get(j));
+                                    pepInMultipleProtein.put(id, pTmp);
+                                }
+                            }
+                            idxAdd.set(j, true);
+                        }
+                    }
+                }
+                if(flagPepInMultiProtein){
+                    continue;
+                }
+
+
                 if(protein.contains("_")){
                     protein = protein.substring(0, protein.indexOf("_"));
                 }
@@ -1783,15 +2120,85 @@ public class MainController implements Initializable{
                     continue;
                 }
 
-                if(!modificationStr.isEmpty()){
-                    //System.out.println(modificationStr);
-                    String[] modiTmp = modificationStr.split("\\|");
-                    for(int j=0; j<modiTmp.length; j++){
-                        //System.out.println(modiTmp[j]);
-                        Modification tmp = new Modification(modiTmp[j]);
-                        modifications.add(tmp);
+                //ArrayList<ArrayList<Modification> > modiRaw = new ArrayList<>();
+
+                if(modiStrAll.size()==1) {
+                    String modificationStr = modiStrAll.get(0);
+                    if(!modificationStr.isEmpty()){
+                        //System.out.println(modificationStr);
+                        String[] modiTmp = modificationStr.split("\\|");
+                        for(int j=0; j<modiTmp.length; j++){
+                            //System.out.println(modiTmp[j]);
+                            Modification tmp = new Modification(modiTmp[j]);
+                            modifications.add(tmp);
+                        }
+                    }
+                } else {
+                    Map<String, Map<Integer, Integer>> frequence = new TreeMap<>();
+                    Map<Integer, String> resInfo = new TreeMap<>();
+                    for(String str : modiStrAll){
+                        if(str.isEmpty()){
+                            continue;
+                        }
+                        //ArrayList<Modification> modiRawTmp = new ArrayList<>();
+                        String[] modiTmp = str.split("\\|");
+                        for(int j=0; j<modiTmp.length; j++){
+                            //System.out.println(modiTmp[j]);
+                            Modification tmp = new Modification(modiTmp[j]);
+
+
+                            String typeTmp = tmp.getModificationType();
+                            if(!frequence.containsKey(typeTmp)){
+                                Map<Integer, Integer> fTmp = new TreeMap<>();
+                                frequence.put(typeTmp, fTmp);
+                            }
+
+                            for(int k=0; k<tmp.getPos().size(); k++){
+                                int posTmp = tmp.getPos().get(k);
+                                resInfo.put(posTmp, tmp.getResidue().get(k));
+                                if(frequence.get(typeTmp).containsKey(posTmp)){
+                                    int ftmp = frequence.get(typeTmp).get(posTmp);
+                                    frequence.get(typeTmp).put(posTmp, ftmp+1);
+                                } else {
+                                    frequence.get(typeTmp).put(posTmp, 1);
+                                }
+                            }
+                        }
+                    }
+
+                    int numRecord = modiStrAll.size();
+
+                    for(Map.Entry<String, Map<Integer, Integer>> entry : frequence.entrySet()){
+                        ArrayList<Integer> posTmp = new ArrayList<>();
+                        ArrayList<String> resTmp = new ArrayList<>();
+                        ArrayList<Double> perTmp = new ArrayList<>();
+                        for(Map.Entry<Integer, Integer> entry1 : entry.getValue().entrySet()){
+                            Integer pos = entry1.getKey();
+                            Integer num = entry1.getValue();
+                            if(num < numRecord){
+                                posTmp.add(pos);
+                                resTmp.add(resInfo.get(pos));
+                                perTmp.add(-1.0);
+                            } else {
+                                ArrayList<Integer> posTmp1 = new ArrayList<>();
+                                ArrayList<String> resTmp1 = new ArrayList<>();
+                                ArrayList<Double> perTmp1 = new ArrayList<>();
+                                posTmp1.add(pos);
+                                resTmp1.add(resInfo.get(pos));
+                                perTmp1.add(100.0);
+                                Modification m = new Modification(entry.getKey(), posTmp1, resTmp1, perTmp1);
+                                modifications.add(m);
+                            }
+                        }
+                        if(posTmp.size()>0){
+                            Modification m = new Modification(entry.getKey(), posTmp, resTmp, perTmp);
+                            modifications.add(m);
+                        }
                     }
                 }
+
+
+
 
                 TreeMap<String, Double> doubleInfo = new TreeMap<>();
                 TreeMap<String, String> strInfo = new TreeMap<>();
@@ -1822,6 +2229,81 @@ public class MainController implements Initializable{
                 }
 
             }
+
+            if(proteinNotFind.size() > 0){
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/errorMsg/ErrorMsg.fxml"));
+
+                Parent root = null;
+                try {
+                    root = loader.load();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                Stage stage = new Stage();
+                stage.setTitle("Import Data");
+                stage.setScene(new Scene(root, 600, 400));
+
+                stage.initModality(Modality.WINDOW_MODAL);
+                stage.initOwner(menuBar.getScene().getWindow());
+
+                ErrorMsgController controller = loader.getController();
+                controller.setType(PublicInfo.ErrorMsgType.ProteinNotFound);
+                ArrayList<String> tmp = new ArrayList<>(proteinNotFind);
+                controller.setProteinNotFind(tmp);
+                controller.init();
+                stage.showAndWait();
+            }
+
+            if(pepNotMatch.size()>0){
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/errorMsg/ErrorMsg.fxml"));
+
+                Parent root = null;
+                try {
+                    root = loader.load();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                Stage stage = new Stage();
+                stage.setTitle("Import Data");
+                stage.setScene(new Scene(root, 600, 400));
+
+                stage.initModality(Modality.WINDOW_MODAL);
+                stage.initOwner(menuBar.getScene().getWindow());
+
+                ErrorMsgController controller = loader.getController();
+                controller.setType(PublicInfo.ErrorMsgType.PepNotMatch);
+                controller.setPepNotMatch(pepNotMatch);
+                controller.setProteinNotMatch(proteinNotMatch);
+                controller.init();
+                stage.showAndWait();
+            }
+
+            if(pepInMultipleProtein.size()>0){
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/errorMsg/ErrorMsg.fxml"));
+
+                Parent root = null;
+                try {
+                    root = loader.load();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                Stage stage = new Stage();
+                stage.setTitle("Import Data");
+                stage.setScene(new Scene(root, 600, 400));
+
+                stage.initModality(Modality.WINDOW_MODAL);
+                stage.initOwner(menuBar.getScene().getWindow());
+
+                ErrorMsgController controller = loader.getController();
+                controller.setType(PublicInfo.ErrorMsgType.PepInMultipleProtein);
+                controller.setPepInMultipleProtein(pepInMultipleProtein);
+                controller.init();
+                stage.showAndWait();
+            }
+            /*
             if(proteinNotFind.size() > 0){
                 Alert alert = new Alert(Alert.AlertType.WARNING);
                 alert.setTitle("Import Data");
@@ -1846,6 +2328,23 @@ public class MainController implements Initializable{
                 alert.setContentText(msg);
                 alert.showAndWait();
             }
+
+            if(pepInMultipleProtein.size()>0){
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("Import Data");
+                alert.setHeaderText(null);
+                String msg = "The following peptides (" + pepInMultipleProtein.size() + ") mapped to multiple proteins are removed from the browser: \n(peptide id\tproteins)\n";
+                for(Map.Entry<String, ArrayList<String>> entry : pepInMultipleProtein.entrySet()){
+                    msg += entry.getKey() + "\t";
+                    for(String strTmp : entry.getValue()){
+                        msg += strTmp + " ";
+                    }
+                    msg += "\n";
+                }
+                alert.setContentText(msg);
+                alert.showAndWait();
+            }
+            */
         }
         sampleGroup.initPepCutoff();
         sampleGroup.updatePepShow();

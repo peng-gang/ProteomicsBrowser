@@ -7,10 +7,7 @@ import data.SampleGroup;
 import javafx.scene.control.Alert;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * Store the project information for save and load
@@ -99,6 +96,7 @@ public class ProjectInfo implements Serializable{
         }
 
         if(sampleId == null){
+            /*
             sampleInfoName = new ArrayList<>();
             sampleInfoType = new ArrayList<>();
             sampleInfo = new ArrayList<>();
@@ -194,7 +192,9 @@ public class ProjectInfo implements Serializable{
                     proteinNotMatch.add(protein);
                     continue;
                 }
-            }
+
+            }*/
+            System.out.println("Open project with error!");
         } else {
             int indexId = -1;
             int indexSequence = -1;
@@ -256,12 +256,56 @@ public class ProjectInfo implements Serializable{
             Set<String> proteinNotFind = new TreeSet<>();
             ArrayList<String> pepNotMatch = new ArrayList<>();
             ArrayList<String> proteinNotMatch = new ArrayList<>();
+
+            Map<String, ArrayList<String>> pepInMultipleProtein = new TreeMap<>();
+
+            ArrayList<Boolean> idxAdd = new ArrayList<>();
+            for(int i=0; i<proteomicsRaw.get(0).size();i++){
+                idxAdd.add(false);
+            }
+
             for(int i=0; i<proteomicsRaw.get(0).size(); i++){
+                if(idxAdd.get(i)){
+                    continue;
+                }
                 String id = proteomicsRaw.get(indexId).get(i);
                 String sequence = proteomicsRaw.get(indexSequence).get(i);
                 String protein = proteomicsRaw.get(indexProtein).get(i);
-                String modificationStr = proteomicsRaw.get(indexModification).get(i);
                 String charge = proteomicsRaw.get(indexCharge).get(i);
+
+                ArrayList<String> modiStrAll = new ArrayList<>();
+                //String modificationStr = proteomicsRaw.get(indexModification).get(i);
+                modiStrAll.add(proteomicsRaw.get(indexModification).get(i));
+                idxAdd.set(i, true);
+
+                boolean flagPepInMultiProtein = false;
+                if(i<idxAdd.size()-1){
+                    for(int j=i+1; j<idxAdd.size();j++){
+                        if(idxAdd.get(j)){
+                            continue;
+                        }
+                        if(proteomicsRaw.get(indexId).get(j).equals(id)){
+                            if(proteomicsRaw.get(indexProtein).get(j).equals(protein)){
+                                modiStrAll.add(proteomicsRaw.get(indexModification).get(j));
+                            } else {
+                                flagPepInMultiProtein = true;
+                                if(pepInMultipleProtein.containsKey(id)){
+                                    pepInMultipleProtein.get(id).add(proteomicsRaw.get(indexProtein).get(j));
+                                } else {
+                                    ArrayList<String> pTmp = new ArrayList<>();
+                                    pTmp.add(protein);
+                                    pTmp.add(proteomicsRaw.get(indexProtein).get(j));
+                                    pepInMultipleProtein.put(id, pTmp);
+                                }
+                            }
+                            idxAdd.set(j, true);
+                        }
+                    }
+                }
+                if(flagPepInMultiProtein){
+                    continue;
+                }
+
                 if(protein.contains("_")){
                     protein = protein.substring(0, protein.indexOf("_"));
                 }
@@ -274,13 +318,78 @@ public class ProjectInfo implements Serializable{
                     continue;
                 }
 
-                if(!modificationStr.isEmpty()){
-                    //System.out.println(modificationStr);
-                    String[] modiTmp = modificationStr.split("\\|");
-                    for(int j=0; j<modiTmp.length; j++){
-                        //System.out.println(modiTmp[j]);
-                        Modification tmp = new Modification(modiTmp[j]);
-                        modifications.add(tmp);
+                if(modiStrAll.size()==1) {
+                    String modificationStr = modiStrAll.get(0);
+                    if(!modificationStr.isEmpty()){
+                        //System.out.println(modificationStr);
+                        String[] modiTmp = modificationStr.split("\\|");
+                        for(int j=0; j<modiTmp.length; j++){
+                            //System.out.println(modiTmp[j]);
+                            Modification tmp = new Modification(modiTmp[j]);
+                            modifications.add(tmp);
+                        }
+                    }
+                } else {
+                    Map<String, Map<Integer, Integer>> frequence = new TreeMap<>();
+                    Map<Integer, String> resInfo = new TreeMap<>();
+                    for(String str : modiStrAll){
+                        if(str.isEmpty()){
+                            continue;
+                        }
+                        //ArrayList<Modification> modiRawTmp = new ArrayList<>();
+                        String[] modiTmp = str.split("\\|");
+                        for(int j=0; j<modiTmp.length; j++){
+                            //System.out.println(modiTmp[j]);
+                            Modification tmp = new Modification(modiTmp[j]);
+
+
+                            String typeTmp = tmp.getModificationType();
+                            if(!frequence.containsKey(typeTmp)){
+                                Map<Integer, Integer> fTmp = new TreeMap<>();
+                                frequence.put(typeTmp, fTmp);
+                            }
+
+                            for(int k=0; k<tmp.getPos().size(); k++){
+                                int posTmp = tmp.getPos().get(k);
+                                resInfo.put(posTmp, tmp.getResidue().get(k));
+                                if(frequence.get(typeTmp).containsKey(posTmp)){
+                                    int ftmp = frequence.get(typeTmp).get(posTmp);
+                                    frequence.get(typeTmp).put(posTmp, ftmp+1);
+                                } else {
+                                    frequence.get(typeTmp).put(posTmp, 1);
+                                }
+                            }
+                        }
+                    }
+
+                    int numRecord = modiStrAll.size();
+
+                    for(Map.Entry<String, Map<Integer, Integer>> entry : frequence.entrySet()){
+                        ArrayList<Integer> posTmp = new ArrayList<>();
+                        ArrayList<String> resTmp = new ArrayList<>();
+                        ArrayList<Double> perTmp = new ArrayList<>();
+                        for(Map.Entry<Integer, Integer> entry1 : entry.getValue().entrySet()){
+                            Integer pos = entry1.getKey();
+                            Integer num = entry1.getValue();
+                            if(num < numRecord){
+                                posTmp.add(pos);
+                                resTmp.add(resInfo.get(pos));
+                                perTmp.add(-1.0);
+                            } else {
+                                ArrayList<Integer> posTmp1 = new ArrayList<>();
+                                ArrayList<String> resTmp1 = new ArrayList<>();
+                                ArrayList<Double> perTmp1 = new ArrayList<>();
+                                posTmp1.add(pos);
+                                resTmp1.add(resInfo.get(pos));
+                                perTmp1.add(100.0);
+                                Modification m = new Modification(entry.getKey(), posTmp1, resTmp1, perTmp1);
+                                modifications.add(m);
+                            }
+                        }
+                        if(posTmp.size()>0){
+                            Modification m = new Modification(entry.getKey(), posTmp, resTmp, perTmp);
+                            modifications.add(m);
+                        }
                     }
                 }
 

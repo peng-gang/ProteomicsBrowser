@@ -6,7 +6,7 @@
 <?import java.lang.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="450.0" prefWidth="950.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.result.PepCombineController">
+<VBox alignment="TOP_CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="450.0" prefWidth="950.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.result.PepCombineController">
    <children>
       <HBox prefHeight="200.0" prefWidth="950.0" spacing="5.0">
          <children>
@@ -27,6 +27,7 @@
             <Insets />
          </opaqueInsets>
       </HBox>
+      <Label fx:id="lblInfo" textAlignment="CENTER" />
       <HBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="950.0" spacing="100.0">
          <children>
             <ScrollPane prefViewportHeight="200.0" prefViewportWidth="350.0">

@@ -2,6 +2,7 @@ package data;
 
 
 
+import javax.print.attribute.SetOfIntegerSyntax;
 import java.io.Serializable;
 import java.util.*;
 
@@ -84,6 +85,16 @@ public class Peptide implements Serializable {
         return null;
     }
 
+    public String getModiRes(int pos){
+        for(Modification modi: modifications){
+            int idx = modi.getPos().indexOf(pos);
+            if(idx >=0){
+                return modi.getResidue().get(idx);
+            }
+        }
+        return null;
+    }
+
     public TreeSet<Integer> getModificationPos(String modiType) {
         TreeSet<Integer> rlt = new TreeSet<>();
         for(Modification modi : modifications){
@@ -126,6 +137,112 @@ public class Peptide implements Serializable {
         }
         return rlt;
     }
+
+    /*
+    public void adjModification(Peptide pep){
+        ArrayList<Modification> modiBackup = new ArrayList<>(modifications);
+        TreeMap<String, Set<Integer>> oldModi = new TreeMap<>();
+        TreeMap<String, Set<Integer>> newModi = new TreeMap<>();
+
+        Map<Integer, String> resAll = new TreeMap<>();
+
+        for(Modification m : modiBackup){
+            for(int i=0; i<m.getPos().size();i++){
+                resAll.put(m.getPos().get(i), m.getResidue().get(i));
+            }
+
+            if(oldModi.containsKey(m.getModificationType())){
+                oldModi.get(m.getModificationType()).addAll(m.getPos());
+            } else {
+                Set<Integer> tmp = new TreeSet<>(m.getPos());
+                oldModi.put(m.getModificationType(), tmp);
+            }
+        }
+
+        for(Modification m : pep.getModifications()){
+            for(int i=0; i<m.getPos().size();i++){
+                resAll.put(m.getPos().get(i), m.getResidue().get(i));
+            }
+
+            if(newModi.containsKey(m.getModificationType())){
+                newModi.get(m.getModificationType()).addAll(m.getPos());
+            } else {
+                Set<Integer> tmp = new TreeSet<>(m.getPos());
+                newModi.put(m.getModificationType(), tmp);
+            }
+        }
+
+        Set<String> modiAll = new TreeSet<>();
+        modiAll.addAll(oldModi.keySet());
+        modiAll.addAll(newModi.keySet());
+
+        modifications.clear();
+        for(String mt : modiAll){
+            if(oldModi.containsKey(mt) && newModi.containsKey(mt)){
+                Set<Integer> inter = new TreeSet<>();
+                Set<Integer> oldUnique = new TreeSet<>();
+                Set<Integer> newUnique = new TreeSet<>();
+
+                inter.addAll(oldModi.get(mt));
+                inter.retainAll(newModi.get(mt));
+
+                oldUnique.addAll(oldModi.get(mt));
+                oldUnique.removeAll(newModi.get(mt));
+
+                newUnique.addAll(newModi.get(mt));
+                newUnique.removeAll(oldModi.get(mt));
+
+                Set<Integer> uniqueAll = new TreeSet<>();
+                uniqueAll.addAll(oldUnique);
+                uniqueAll.addAll(newUnique);
+
+                for(Integer i : inter){
+                    ArrayList<Integer> posTmp = new ArrayList<>();
+                    posTmp.add(i);
+                    ArrayList<String> resTmp = new ArrayList<>();
+                    resTmp.add(resAll.get(i));
+                    ArrayList<Double> perTmp = new ArrayList<>();
+                    perTmp.add(100.0);
+                    Modification modiTmp = new Modification(mt, posTmp, resTmp, perTmp);
+                    modifications.add(modiTmp);
+                }
+
+                ArrayList<Integer> posTmp = new ArrayList<>(uniqueAll);
+                ArrayList<String> resTmp = new ArrayList<>();
+                ArrayList<Double> perTmp = new ArrayList<>();
+                for(Integer i : posTmp){
+                    resTmp.add(resAll.get(i));
+                    perTmp.add(null);
+                }
+
+                Modification modiTmp = new Modification(mt, posTmp, resTmp, perTmp);
+                modifications.add(modiTmp);
+            } else if(oldModi.containsKey(mt)){
+                ArrayList<Integer> posTmp = new ArrayList<>();
+                ArrayList<String> resTmp = new ArrayList<>();
+                ArrayList<Double> perTmp = new ArrayList<>();
+                for(Integer i : oldModi.get(mt)){
+                    posTmp.add(i);
+                    resTmp.add(resAll.get(i));
+                    perTmp.add(null);
+                }
+                Modification modiTmp = new Modification(mt, posTmp, resTmp, perTmp);
+                modifications.add(modiTmp);
+            } else {
+                ArrayList<Integer> posTmp = new ArrayList<>();
+                ArrayList<String> resTmp = new ArrayList<>();
+                ArrayList<Double> perTmp = new ArrayList<>();
+                for(Integer i : newModi.get(mt)){
+                    posTmp.add(i);
+                    resTmp.add(resAll.get(i));
+                    perTmp.add(null);
+                }
+                Modification modiTmp = new Modification(mt, posTmp, resTmp, perTmp);
+                modifications.add(modiTmp);
+            }
+        }
+    }
+    */
 
     /*
     public Peptide(String id, String sequence, Integer charge, Double mz, Double score, Double abundance){
