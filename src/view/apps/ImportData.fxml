@@ -32,7 +32,7 @@
             </VBox>
             <VBox alignment="CENTER_LEFT" prefHeight="200.0" prefWidth="100.0" spacing="5.0">
                <children>
-                  <Label text="Sample Data (optional)" />
+                  <Label text="Sample Data " />
                   <HBox prefHeight="100.0" prefWidth="200.0">
                      <children>
                         <TextField fx:id="txtSpDataFile" prefWidth="300.0" />
@@ -59,10 +59,9 @@
                   <Insets left="20.0" />
                </VBox.margin>
             </Label>
-            <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0" spacing="150.0">
+            <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0" spacing="50.0">
                <children>
                   <ComboBox fx:id="cmbType" prefWidth="150.0" />
-                  <Button fx:id="btnImport" mnemonicParsing="false" onAction="#importData" text="Import" />
                </children>
                <VBox.margin>
                   <Insets left="20.0" right="20.0" />
@@ -70,5 +69,21 @@
             </HBox>
          </children>
       </VBox>
+      <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0" spacing="40.0">
+         <children>
+            <CheckBox fx:id="checkIncludePepMultiProtein" mnemonicParsing="false" text="Include Peptides Mapped to Multiple Proteins">
+               <font>
+                  <Font size="11.0" />
+               </font>
+            </CheckBox>
+            <Button fx:id="btnImport" mnemonicParsing="false" onAction="#importData" text="Import" />
+         </children>
+         <opaqueInsets>
+            <Insets />
+         </opaqueInsets>
+         <padding>
+            <Insets left="20.0" />
+         </padding>
+      </HBox>
    </children>
 </VBox>

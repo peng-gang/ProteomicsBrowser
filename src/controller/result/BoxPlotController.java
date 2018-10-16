@@ -37,6 +37,8 @@ public class BoxPlotController {
     private double top;
     private double left;
 
+    private boolean jitter;
+
     private PublicInfo.ScaleType scaleType;
 
     @FXML private void save(ActionEvent event){
@@ -87,6 +89,12 @@ public class BoxPlotController {
         pane.getChildren().add(boxPlot());
     }
 
+    @FXML private void jitter(ActionEvent event){
+        jitter = !jitter;
+        pane.getChildren().clear();
+        pane.getChildren().add(boxPlot());
+    }
+
 
     public void init(ArrayList<ArrayList<Double> > dataAll, ArrayList<String> name){
         this.dataAll = dataAll;
@@ -97,6 +105,8 @@ public class BoxPlotController {
         left = 25;
 
         scaleType = PublicInfo.ScaleType.Log2;
+
+        jitter=false;
 
         pane.getChildren().add(boxPlot());
     }
@@ -243,27 +253,40 @@ public class BoxPlotController {
 
             root.getChildren().addAll(r,md, h1, h2, v1, v2);
 
-            for(int j=data.size()/4;j>=0;j--){
-                if(data.get(j) < innerFenceLow){
+            if(jitter){
+                for(int j=0; j<data.size(); j++){
                     Circle pt = new Circle();
-                    pt.setCenterX(st + paintWidth/2);
+                    pt.setCenterX(st + paintWidth/4 + paintWidth * Math.random()/2);
                     pt.setCenterY(transferY(data.get(j), top, height, minAll, maxAll));
-                    pt.setRadius(1);
-
+                    pt.setRadius(2);
                     root.getChildren().add(pt);
+                }
+            } else {
+                for(int j=data.size()/4;j>=0;j--){
+                    if(data.get(j) < innerFenceLow){
+                        Circle pt = new Circle();
+                        pt.setCenterX(st + paintWidth/2);
+                        pt.setCenterY(transferY(data.get(j), top, height, minAll, maxAll));
+                        pt.setRadius(2);
+
+                        root.getChildren().add(pt);
+                    }
+                }
+
+                for(int j=data.size()*3/4;j< data.size();j++){
+                    if(data.get(j) > innerFenceHigh){
+                        Circle pt = new Circle();
+                        pt.setCenterX(st + paintWidth/2);
+                        pt.setCenterY(transferY(data.get(j), top, height, minAll, maxAll));
+                        pt.setRadius(2);
+
+                        root.getChildren().add(pt);
+                    }
                 }
             }
 
-            for(int j=data.size()*3/4;j< data.size();j++){
-                if(data.get(j) > innerFenceHigh){
-                    Circle pt = new Circle();
-                    pt.setCenterX(st + paintWidth/2);
-                    pt.setCenterY(transferY(data.get(j), top, height, minAll, maxAll));
-                    pt.setRadius(1);
 
-                    root.getChildren().add(pt);
-                }
-            }
+
 
             Text t = new Text(st + paintWidth/4, height + 50, name.get(i));
             t.setTextAlignment(TextAlignment.CENTER);

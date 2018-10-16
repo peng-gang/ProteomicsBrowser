@@ -94,6 +94,19 @@ public class CysResidualFigureController {
         this.residualFreq = residualFreq;
 
         ArrayList<Color> colors = new ArrayList<>();
+        double alpha=1.0;
+        colors.add(Color.web("#1f77b4", alpha));
+        colors.add(Color.web("#ff7f0e", alpha));
+        colors.add(Color.web("#2ca02c", alpha));
+        colors.add(Color.web("#d62728", alpha));
+        colors.add(Color.web("#9467bd", alpha));
+        colors.add(Color.web("#8c564b", alpha));
+        colors.add(Color.web("#e377c2", alpha));
+        colors.add(Color.web("#7f7f7f", alpha));
+        colors.add(Color.web("#bcbd22", alpha));
+        colors.add(Color.web("#17becf", alpha));
+
+        /*
         colors.add(Color.RED);
         colors.add(Color.GREEN);
         colors.add(Color.BLUE);
@@ -101,6 +114,7 @@ public class CysResidualFigureController {
         colors.add(Color.ORANGE);
         colors.add(Color.CYAN);
         colors.add(Color.PURPLE);
+        */
 
         double paneWidth = (width - (residualFreq.size() - 1) * hSpacing) / residualFreq.size();
         TreeSet<Character> aminoAcidAll = new TreeSet<>();

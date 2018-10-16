@@ -35,7 +35,9 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 import javax.imageio.ImageIO;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
@@ -114,6 +116,10 @@ public class PBrowserController implements Initializable {
     private Label lbAbundance41;
     private Label lbAbundance42;
 
+    private VBox vbAbundanceTag;
+    private Label lbAbundanceTag1;
+    private Label lbAbundanceTag2;
+
 
 
     private GraphicsContext gc;
@@ -164,6 +170,7 @@ public class PBrowserController implements Initializable {
     public Protein getProtein() { return  protein; }
     public boolean getInitialized() { return initialized; }
 
+    public String getSelectedSample() { return  selectedSample; }
 
     private void updateCombineNodes(){
         if(rbYes.isSelected()){
@@ -381,6 +388,118 @@ public class PBrowserController implements Initializable {
         return;
     }
 
+    public void proteinFilter(Set<String> modiSel, Set<String> modiRm, int numPep){
+        ArrayList<String> ptSort = new ArrayList<> ();
+
+        for(String pid : proteinId){
+            boolean include = true;
+
+            if(modiRm.size()!=0) {
+                for(String mType: sampleGroup.getProtein(selectedSample, pid).getModiTypeAll()){
+                    if(modiRm.contains(mType)){
+                        include = false;
+                        break;
+                    }
+                }
+                if(!include){
+                    continue;
+                }
+            }
+
+            if(modiSel.size()!=0){
+                int numInclude = 0;
+                for(String mType: sampleGroup.getProtein(selectedSample, pid).getModiTypeAll()){
+                    if(modiSel.contains(mType)){
+                        numInclude++;
+                    }
+                }
+                if(numInclude!=modiSel.size()){
+                    continue;
+                }
+            }
+
+            if(include){
+                if(sampleGroup.getProtein(selectedSample, pid).getPeptides().size() >= numPep){
+                    ptSort.add(pid);
+                }
+            }
+        }
+
+        Collections.sort(ptSort);
+        combProtein.getItems().clear();
+        combProtein.getItems().addAll(ptSort);
+        combProtein.getSelectionModel().select(0);
+        selectedProtein = combProtein.getValue();
+    }
+
+    public void proteinFilter(int numModiPos, int numPep){
+        ArrayList<String> ptSort = new ArrayList<> ();
+        for(String pid : proteinId){
+            if(sampleGroup.getProtein(selectedSample, pid).getModiPos().size() >= numModiPos &&
+                    sampleGroup.getProtein(selectedSample, pid).getPeptides().size() >= numPep){
+                ptSort.add(pid);
+            }
+        }
+
+        Collections.sort(ptSort);
+        combProtein.getItems().clear();
+        combProtein.getItems().addAll(ptSort);
+        combProtein.getSelectionModel().select(0);
+        selectedProtein = combProtein.getValue();
+    }
+
+    public void proteinFilterType(int numModiType, int numPep){
+        ArrayList<String> ptSort = new ArrayList<> ();
+        for(String pid : proteinId){
+            if(sampleGroup.getProtein(selectedSample, pid).getModiTypeAll().size() >= numModiType &&
+                    sampleGroup.getProtein(selectedSample, pid).getPeptides().size() >= numPep){
+                ptSort.add(pid);
+            }
+        }
+
+        Collections.sort(ptSort);
+        combProtein.getItems().clear();
+        combProtein.getItems().addAll(ptSort);
+        combProtein.getSelectionModel().select(0);
+        selectedProtein = combProtein.getValue();
+    }
+
+    public void saveProteinFilter(File txtFile){
+        if(combProtein.getItems().size()==0){
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("Export Protein after Filtering");
+            alert.setHeaderText(null);
+            alert.setContentText("There is no protein after filtering");
+            alert.showAndWait();
+
+            return;
+        }
+
+        FileWriter fileWriter = null;
+        try {
+            fileWriter = new FileWriter(txtFile);
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+
+        BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+
+        try {
+            for(String pt : combProtein.getItems()){
+                bufferedWriter.write(pt + "\n");
+            }
+        } catch (IOException e){
+            e.printStackTrace();
+        } finally {
+            try {
+                bufferedWriter.close();
+                fileWriter.close();
+            } catch (IOException e){
+                e.printStackTrace();
+            }
+        }
+    }
+
     public void setData(SampleGroup sampleGroup, MainController mainController){
         this.sampleGroup = sampleGroup;
         this.mainController = mainController;
@@ -530,6 +649,13 @@ public class PBrowserController implements Initializable {
             @Override
             public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
                 selectedSample = newValue;
+                ArrayList<String> ptSort = new ArrayList<>(proteinId);
+                Collections.sort(ptSort);
+                combProtein.getItems().clear();
+                combProtein.getItems().addAll(ptSort);
+                combProtein.getSelectionModel().select(0);
+                selectedProtein = combProtein.getValue();
+
                 if(selectedProtein != null && selectedSample !=null){
                     protein = sampleGroup.getProtein(selectedSample, selectedProtein);
                     //init modification selection
@@ -779,6 +905,13 @@ public class PBrowserController implements Initializable {
         vbLegend.getChildren().add(hbAbundance2);
         vbLegend.getChildren().add(hbAbundance3);
         vbLegend.getChildren().add(hbAbundance4);
+        if(pepCombined){
+            lbAbundanceTag2.setText(String.format("%9.3g",protein.getAbundanceMaxCombined()));
+        } else {
+            lbAbundanceTag2.setText(String.format("%9.3g",protein.getAbundanceMax()));
+        }
+
+        vbLegend.getChildren().addAll(vbAbundanceTag);
 
     }
 
@@ -826,7 +959,7 @@ public class PBrowserController implements Initializable {
         return pane.snapshot(null, null);
     }
 
-    private void draw(){
+    public void draw(){
         /*
         int canvasHeight = (pixPepGap*2 + pixPerPep) * maxY + pixXLabel + topPix + bottomPix;
         if(canvasHeight > 500){
@@ -968,12 +1101,21 @@ public class PBrowserController implements Initializable {
                     //gc.setFill(pattern);
 
                     gc.fillRect(tlX, tlY, (rX-tlX), h);
-                } else {
 
+                    if(pp.getPep().isOtherProtein()){
+                        gc.setStroke(Color.BLACK);
+                        gc.strokeRect(tlX, tlY, (rX-tlX), h);
+                    }
+                } else {
                     gc.setFill(Color.rgb(220-15*range, 220-15*range, 220-15*range));
                     tlX = Math.max(tlX, 0);
                     rX = Math.min(rX, canvasWidth);
                     gc.fillRect(tlX, tlY, (rX-tlX), h);
+
+                    if(pp.getPep().isOtherProtein()){
+                        gc.setStroke(Color.BLACK);
+                        gc.strokeRect(tlX, tlY, (rX-tlX), h);
+                    }
                 }
             }
 
@@ -1389,6 +1531,69 @@ public class PBrowserController implements Initializable {
         lbAbundance41.setPrefWidth(10);
         lbAbundance42 = new Label("75~100%");
         hbAbundance4.getChildren().addAll(lbAbundance41, lbAbundance42);
+
+        vbAbundanceTag = new VBox();
+        vbAbundanceTag.setAlignment(Pos.TOP_LEFT);
+        lbAbundanceTag1 = new Label("Max Intensity:");
+        lbAbundanceTag2 = new Label("");
+        vbAbundanceTag.getChildren().addAll(lbAbundanceTag1, lbAbundanceTag2);
+
+
+        canvas.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent event) {
+                if(!initialized){
+                    return;
+                }
+
+                double x = event.getX();
+                double y = event.getY();
+
+
+                // start from 0
+                int idxX = (int) ((x + sbarCanvas.getValue() - leftPix) /(pixPerLocus*scaleX));
+                if(idxX < 0){
+                    return;
+                }
+                int idxY = (int) ((canvasHeight - pixXLabel - bottomPix - y - 1) / ((pixPerPep + pixPepGap * 2) * scaleY));
+
+                if(pepCombined){
+                    for(PepPos tmp : arrangePepCombined){
+                        if(tmp.contains(idxX, idxY)) {
+                            String info = tmp.getPep().toString(tmp.getStart());
+                            info = info + "Start: " + (tmp.getStart() + 1) + "\n";
+                            info = info + "End: " + (tmp.getEnd() + 1);
+                            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                            alert.setTitle("Peptide Information");
+                            alert.setHeaderText(null);
+                            alert.setContentText(info);
+                            alert.showAndWait();
+                            break;
+                        } //else {
+                        //    lblPep.setText("No Peptide");
+                        //}
+                    }
+                    return;
+                }
+
+                for(PepPos tmp : arrangePep){
+                    if(tmp.contains(idxX, idxY)) {
+                        String info = tmp.getPep().toString(tmp.getStart());
+                        info = info + "Start: " + (tmp.getStart() + 1) + "\n";
+                        info = info + "End: " + (tmp.getEnd() + 1);
+
+                        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                        alert.setTitle("Peptide Information");
+                        alert.setHeaderText(null);
+                        alert.setContentText(info);
+                        alert.showAndWait();
+                        break;
+                    } //else {
+                      //  lblPep.setText("No Peptide");
+                    //}
+                }
+            }
+        });
 
 
         canvas.addEventHandler(MouseEvent.MOUSE_MOVED, new EventHandler<MouseEvent>() {

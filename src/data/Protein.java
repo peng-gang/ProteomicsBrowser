@@ -330,6 +330,8 @@ public class Protein implements Serializable {
     public double getDoubleInfoCutHigh(int i) { return  doubleInfoCutHigh.get(i);}
     public double getDoubleInfoCutLow(int i) { return  doubleInfoCutLow.get(i);}
 
+    public double getAbundanceMaxCombined() { return abundanceAllCombined.get(abundanceAllCombined.size()-1);}
+
     /*
     public double getChargeCutPerHigh() {return chargeCutPerHigh; }
     public double getChargeCutPerLow() { return chargeCutPerLow; }
@@ -1006,7 +1008,7 @@ public class Protein implements Serializable {
         }
 
         if(idxPos.size() == 0){
-            System.out.println("Cannot find peptide " + pep.getSequence() + " in protein " + name);
+            //System.out.println("Cannot find peptide " + pep.getSequence() + " in protein " + name);
             return  false;
         } else if(idxPos.size() == 1){
             // check whether there is peptide with same id that has been added
@@ -1085,9 +1087,9 @@ public class Protein implements Serializable {
             return true;
         } else {
             //pep.setMultiMatch(true);
-            System.out.println("Multiple Match");
-            System.out.println(name);
-            System.out.println(pep.getSequence());
+            //System.out.println("Multiple Match");
+            //System.out.println(name);
+            //System.out.println(pep.getSequence());
 
             /*
             boolean adj = false;
@@ -1326,12 +1328,16 @@ public class Protein implements Serializable {
 
     public void setAbundanceRange(){
         ArrayList<Double> cutoff = new ArrayList<>();
-        int idx = abundanceAll.size()/4;
-        cutoff.add(abundanceAll.get(idx));
-        idx = abundanceAll.size()/2;
-        cutoff.add(abundanceAll.get(idx));
-        idx = abundanceAll.size()*3/4;
-        cutoff.add(abundanceAll.get(idx));
+        double maxAbundance = abundanceAll.get(abundanceAll.size()-1);
+        cutoff.add(maxAbundance/4.0);
+        cutoff.add(maxAbundance/2.0);
+        cutoff.add(maxAbundance*0.75);
+        //int idx = abundanceAll.size()/4;
+        //cutoff.add(abundanceAll.get(idx));
+        //idx = abundanceAll.size()/2;
+        //cutoff.add(abundanceAll.get(idx));
+        //idx = abundanceAll.size()*3/4;
+        //cutoff.add(abundanceAll.get(idx));
 
 
         for(Peptide pt : peptides){
@@ -1341,12 +1347,18 @@ public class Protein implements Serializable {
 
     public void setAbundanceCombinedRange(){
         ArrayList<Double> cutoffCombined = new ArrayList<>();
+        double maxAbundance = abundanceAllCombined.get(abundanceAllCombined.size()-1);
+        cutoffCombined.add(maxAbundance/4.0);
+        cutoffCombined.add(maxAbundance/2.0);
+        cutoffCombined.add(maxAbundance*0.75);
+        /*
         int idx = abundanceAllCombined.size()/4;
         cutoffCombined.add(abundanceAllCombined.get(idx));
         idx = abundanceAllCombined.size()/2;
         cutoffCombined.add(abundanceAllCombined.get(idx));
         idx = abundanceAllCombined.size()*3/4;
         cutoffCombined.add(abundanceAllCombined.get(idx));
+        */
 
         for(Peptide pt : peptidesCombined){
             pt.setAbundanceRange(cutoffCombined);

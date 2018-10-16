@@ -25,6 +25,14 @@ public class Peptide implements Serializable {
     private TreeMap<String, Double> doubleInfo;
     private TreeMap<String, String> strInfo;
 
+
+    /**
+     * if the peptide has multiple matches in different proteins
+     * store the protein name
+     */
+
+    private ArrayList<String> otherProtein;
+
     /**
      * indicate whether the peptide has multiple matches in a protein
      * 0: no multiple match
@@ -59,6 +67,10 @@ public class Peptide implements Serializable {
 
         return rlt;
     }
+
+    public ArrayList<String> getOtherProtein() {return otherProtein;}
+    public boolean isOtherProtein() { return otherProtein.size() > 0; }
+    public void setOtherProtein(ArrayList<String> otherProtein) { this.otherProtein = otherProtein; }
 
     public TreeMap<String, Double> getDoubleInfo() { return doubleInfo; }
     public TreeMap<String, String> getStrInfo() { return strInfo; }
@@ -116,6 +128,7 @@ public class Peptide implements Serializable {
         this.strInfo = strInfo;
         this.modifications = new ArrayList<>();
         this.multiMatch = multiMatch;
+        this.otherProtein = new ArrayList<>();
     }
 
     public Peptide(String id, String sequence, Double abundance, Integer charge, TreeMap<String, Double> doubleInfo, TreeMap<String, String> strInfo,
@@ -128,6 +141,7 @@ public class Peptide implements Serializable {
         this.strInfo = strInfo;
         this.modifications = modifications;
         this.multiMatch = multiMatch;
+        this.otherProtein = new ArrayList<>();
     }
 
     public Set<String> getModificationTypes(){
@@ -322,6 +336,15 @@ public class Peptide implements Serializable {
         String rlt;
         rlt = "ID: " + id + "\n";
         rlt = rlt + "Charge: " + charge + "\n";
+
+        if(otherProtein.size() > 0){
+            rlt = rlt + "Other Candidate Protein: " + otherProtein.get(0);
+            for(int i=1; i<otherProtein.size();i++){
+                rlt += ";" + otherProtein.get(i);
+            }
+            rlt += "\n";
+        }
+
         if(doubleInfo!=null){
             for(Map.Entry<String, Double> entry : doubleInfo.entrySet()){
                 rlt = rlt + entry.getKey() + ": " + entry.getValue() + "\n";
@@ -337,16 +360,26 @@ public class Peptide implements Serializable {
         rlt = rlt + "mz: " + mz + "\n";
         rlt = rlt + "Score: " + score + "\n";
         */
-        rlt = rlt + "Abundance: " + abundance + "\n\t" +  String.format("%.2f", Math.log10(abundance)) + "(log10)\n";
+        rlt = rlt + "Abundance: " + String.format("%9.3g",abundance) + "\n\t" +  String.format("%.2f", Math.log10(abundance)) + "(log10)\n";
         if(modifications.size()==0){
             rlt += "Modification: None\n";
         } else {
             rlt += "Modification: \n";
             for(Modification md : modifications){
                 rlt += "\t" + md.getModificationType() + ": ";
-                rlt += (md.getPos().get(0) + 1) + "(" + md.getPercent().get(0) + ")";
+                if(md.getPercent().get(0) <=0){
+                    rlt += (md.getPos().get(0) + 1) + "(NA)";
+                } else {
+                    rlt += (md.getPos().get(0) + 1) + "(" + md.getPercent().get(0) + ")";
+                }
+
                 for(int i=1; i<md.getPos().size();i++){
-                    rlt += ";" + md.getPos().get(i) + "(" + md.getPercent().get(i) + ")";
+                    if(md.getPercent().get(i) <= 0){
+                        rlt += ";" + md.getPos().get(i) + "(NA)";
+                    } else {
+                        rlt += ";" + md.getPos().get(i) + "(" + md.getPercent().get(i) + ")";
+                    }
+
                 }
                 rlt += "\n";
             }
@@ -359,14 +392,27 @@ public class Peptide implements Serializable {
         String rlt;
         rlt = "ID: " + id + "\n";
         rlt = rlt + "Charge: " + charge + "\n";
+
+        if(otherProtein.size() > 0){
+            rlt = rlt + "Other Candidate Protein: " + otherProtein.get(0);
+            for(int i=1; i<otherProtein.size();i++){
+                rlt += ";" + otherProtein.get(i);
+            }
+            rlt += "\n";
+        }
+
         if(multiMatch>0){
             rlt = rlt + "Multiple Match Number: " + multiMatch + "\n";
         }
+
+
         if(doubleInfo!=null){
             for(Map.Entry<String, Double> entry : doubleInfo.entrySet()){
                 rlt = rlt + entry.getKey() + ": " + entry.getValue() + "\n";
             }
         }
+
+
         if(strInfo!=null){
             for(Map.Entry<String, String> entry : strInfo.entrySet()){
                 rlt = rlt + entry.getKey() + ": " + entry.getValue() + "\n";
@@ -377,16 +423,26 @@ public class Peptide implements Serializable {
         rlt = rlt + "mz: " + mz + "\n";
         rlt = rlt + "Score: " + score + "\n";
         */
-        rlt = rlt + "Abundance: " + abundance + "\n\t" +  String.format("%.2f", Math.log10(abundance)) + "(log10)\n";
+        rlt = rlt + "Abundance: " + String.format("%9.3g",abundance) + "\n\t" +  String.format("%.2f", Math.log10(abundance)) + "(log10)\n";
         if(modifications.size()==0){
             rlt += "Modification: None\n";
         } else {
             rlt += "Modification: \n";
             for(Modification md : modifications){
                 rlt += "\t" + md.getModificationType() + ": ";
-                rlt += (md.getPos().get(0) + 1) + "/" + (md.getPos().get(0) + st + 1) + "(" + md.getPercent().get(0) + ")";
+                if(md.getPercent().get(0) <=0){
+                    rlt += (md.getPos().get(0) + 1) + "/" + (md.getPos().get(0) + st + 1) + "(NA)";
+                } else {
+                    rlt += (md.getPos().get(0) + 1) + "/" + (md.getPos().get(0) + st + 1) + "(" + md.getPercent().get(0) + ")";
+                }
+
                 for(int i=1; i<md.getPos().size();i++){
-                    rlt += ";" + md.getPos().get(i) + "/" + (md.getPos().get(i) + st + 1) + "(" + md.getPercent().get(i) + ")";
+                    if(md.getPercent().get(i) <=0){
+                        rlt += ";" + md.getPos().get(i) + "/" + (md.getPos().get(i) + st + 1) + "(NA)";
+                    } else {
+                        rlt += ";" + md.getPos().get(i) + "/" + (md.getPos().get(i) + st + 1) + "(" + md.getPercent().get(i) + ")";
+                    }
+
                 }
                 rlt += "\n";
             }
@@ -452,12 +508,12 @@ public class Peptide implements Serializable {
 
     public void setAbundanceRange(ArrayList<Double> cutoff){
         for(int i=0;i<cutoff.size();i++){
-            if(abundance < cutoff.get(i)){
+            if(abundance <= cutoff.get(i)){
                 abundanceRange = i;
                 return;
             }
         }
-        abundanceRange = cutoff.size();
+        abundanceRange = cutoff.size() - 1;
     }
 
     public int getAbundanceRange(){return abundanceRange;}

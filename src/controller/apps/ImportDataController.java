@@ -28,6 +28,7 @@ public class ImportDataController implements Initializable {
     @FXML private Button btnPtDataFile;
     @FXML private Button btnSpDataFile;
     @FXML private ComboBox<String> cmbType;
+    @FXML private CheckBox checkIncludePepMultiProtein;
 
     private File ptFile = null;
     private File spFile = null;
@@ -38,6 +39,7 @@ public class ImportDataController implements Initializable {
     public File getSpFile() { return  spFile; }
     public String getType() { return cmbType.getSelectionModel().getSelectedItem().toString(); }
     public boolean getSubmitted() { return submitted; }
+    public boolean getIncludePepInMultiProtein() { return checkIncludePepMultiProtein.isSelected(); }
 
 
     @FXML private void getPtDataFile(ActionEvent event){

@@ -2,20 +2,26 @@ package controller.result;
 
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.util.Callback;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 
 /**
@@ -53,7 +59,18 @@ public class PValueTableController {
 
         try {
             for(int i=0; i<id.size(); i++){
-                String fline = id.get(i) + "," + pv.get(i) + "\n";
+                String fline;
+                if(pv.get(i) > 0.1){
+                    fline = id.get(i) + "," + String.format("%.2f", pv.get(i)) + "\n";
+                } else if(pv.get(i) > 0.01){
+                    fline = id.get(i) + "," + String.format("%.3f", pv.get(i)) + "\n";
+                } else if(pv.get(i) > 0.001){
+                    fline = id.get(i) + "," + String.format("%.4f", pv.get(i)) + "\n";
+                } else if(pv.get(i) > 0.0001){
+                    fline = id.get(i) + "," + String.format("%.5f", pv.get(i)) + "\n";
+                } else {
+                    fline = id.get(i) + "," + String.format("%.1e", pv.get(i)) + "\n";
+                }
                 bufferedWriter.write(fline);
             }
         } catch (IOException e){
@@ -94,6 +111,67 @@ public class PValueTableController {
 
         TableColumn pvCol = new TableColumn("PValue");
         pvCol.setCellValueFactory(new PropertyValueFactory<PValueResult, Double>("pv"));
+
+        pvCol.setCellFactory(new Callback<TableColumn, TableCell>() {
+            @Override
+            public TableCell call(TableColumn param) {
+                TableCell cell = new TableCell<PValueResult, Double> () {
+                    public void updateItem(Double item, boolean empty){
+                        super.updateItem(item, empty);
+                        setText(empty ? null : getString());
+                        setGraphic(null);
+                    }
+
+                    private String getString(){
+                        String ret = "";
+                        if (getItem() != null) {
+                            if(getItem() > 0.1){
+                                String gi = getItem().toString();
+                                //NumberFormat df = DecimalFormat.getInstance();
+                                NumberFormat df = new DecimalFormat("0.00");
+                                df.setMinimumFractionDigits(2);
+                                df.setRoundingMode(RoundingMode.HALF_UP);
+                                ret = df.format(Double.parseDouble(gi));
+                            } else if(getItem() > 0.01){
+                                String gi = getItem().toString();
+                                //NumberFormat df = DecimalFormat.getInstance();
+                                NumberFormat df = new DecimalFormat("0.000");
+                                df.setMinimumFractionDigits(2);
+                                df.setRoundingMode(RoundingMode.HALF_UP);
+                                ret = df.format(Double.parseDouble(gi));
+                            } else if(getItem() > 0.001){
+                                String gi = getItem().toString();
+                                //NumberFormat df = DecimalFormat.getInstance();
+                                NumberFormat df = new DecimalFormat("0.0000");
+                                df.setMinimumFractionDigits(2);
+                                df.setRoundingMode(RoundingMode.HALF_UP);
+                                ret = df.format(Double.parseDouble(gi));
+                            } else if(getItem() > 0.0001){
+                                String gi = getItem().toString();
+                                //NumberFormat df = DecimalFormat.getInstance();
+                                NumberFormat df = new DecimalFormat("0.00000");
+                                df.setMinimumFractionDigits(2);
+                                df.setRoundingMode(RoundingMode.HALF_UP);
+                                ret = df.format(Double.parseDouble(gi));
+                            } else {
+                                String gi = getItem().toString();
+                                //NumberFormat df = DecimalFormat.getInstance();
+                                NumberFormat df = new DecimalFormat("0.00E0");
+                                df.setMinimumFractionDigits(2);
+                                df.setRoundingMode(RoundingMode.HALF_UP);
+                                ret = df.format(Double.parseDouble(gi));
+                            }
+
+                        } else {
+                            ret = "NULL";
+                        }
+                        return ret;
+                    }
+                };
+                cell.setStyle("-fx-alignment: baseline-right");
+                return cell;
+            }
+        });
 
         tbvPValue.setItems(data);
         tbvPValue.getColumns().addAll(idCol, pvCol);

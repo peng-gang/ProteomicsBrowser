@@ -34,7 +34,7 @@ public class ErrorMsgController {
     public void setProteinNotMatch(ArrayList<String> proteinNotMatch) {this.proteinNotMatch = proteinNotMatch; }
     public void setPepInMultipleProtein(Map<String, ArrayList<String>> pepInMultipleProtein) {this.pepInMultipleProtein = pepInMultipleProtein;}
 
-    public void init(){
+    public void init(boolean includePepMultiProtein){
         String msg;
         switch (type){
             case ProteinNotFound:
@@ -48,7 +48,7 @@ public class ErrorMsgController {
                     break;
                 }
 
-                msg = "The following proteins are not found in database and removed from analysis:\n\n";
+                msg = "The following proteins that were not found in the database have been removed from the analyses.\n\n";
                 msg += proteinNotFind.get(0);
 
                 for(int i=1; i<proteinNotFind.size(); i++){
@@ -61,7 +61,7 @@ public class ErrorMsgController {
                     lblMsg.setText("All peptides can be matched to proteins.");
                     break;
                 }
-                msg = "The following peptide sequence cannot be found in specified protein and removed from analysis: \n\n(sequence\tprotein)\n";
+                msg = "The following peptide sequence that was not found in the specified protein has been removed from the analysis.\n\n(sequence\tprotein)\n";
                 for(int k = 0; k<pepNotMatch.size(); k++){
                     msg = msg + pepNotMatch.get(k) + "\t" + proteinNotMatch.get(k) + "\n";
                 }
@@ -73,7 +73,13 @@ public class ErrorMsgController {
                     break;
                 }
 
-                msg = "The following peptides (" + pepInMultipleProtein.size() + ") mapped to multiple proteins are removed from the browser: \n\n(peptide id\tproteins)\n";
+                if(includePepMultiProtein){
+                    msg = "The following peptides (" + pepInMultipleProtein.size() + ") that mapped to multiple proteins are INCLUDED in the ProteomicsBrowser.\n\n(peptide id\tproteins)\n";
+
+                } else{
+                    msg = "The following peptides (" + pepInMultipleProtein.size() + ") that mapped to multiple proteins have been REMOVED from the ProteomicsBrowser.\n\n(peptide id\tproteins)\n";
+
+                }
                 for(Map.Entry<String, ArrayList<String>> entry : pepInMultipleProtein.entrySet()){
                     msg += entry.getKey() + "\t";
                     for(String strTmp : entry.getValue()){

@@ -43,9 +43,21 @@ public class SampleGroup implements Serializable {
     //all kinds of modifications in data
     private Set<String> modificationTypeAll;
 
-    private Map<String, Double> modificationColor;
+    private Map<String, Color> modificationColor;
 
-
+    public static final double alpha = 0.9;
+    public static final ArrayList<Color> colorDefault = new ArrayList<Color>() {{
+        add(Color.web("#1f77b4", alpha));
+        add(Color.web("#ff7f0e", alpha));
+        add(Color.web("#2ca02c", alpha));
+        add(Color.web("#d62728", alpha));
+        add(Color.web("#9467bd", alpha));
+        add(Color.web("#8c564b", alpha));
+        add(Color.web("#e377c2", alpha));
+        add(Color.web("#7f7f7f", alpha));
+        add(Color.web("#bcbd22", alpha));
+        add(Color.web("#17becf", alpha));
+    }};
 
     public SampleGroup(){
         samples = new TreeMap<>();
@@ -66,16 +78,34 @@ public class SampleGroup implements Serializable {
     public void initModificationColor(){
         modificationColor.clear();
         int numModi = modificationTypeAll.size();
-        int idx = 0;
-        double div = 360.0/numModi;
-        for(String modi:modificationTypeAll){
-            modificationColor.put(modi, (div * idx + 15) % 360);
-            idx++;
+
+        if(numModi < 11){
+            int i = 0;
+            for(String modi:modificationTypeAll){
+                modificationColor.put(modi, colorDefault.get(i));
+                i++;
+            }
+        } else {
+            int idx = 0;
+            double div = 360.0/numModi;
+            for(String modi:modificationTypeAll){
+                modificationColor.put(modi, Color.hsb( (div * idx + 15) % 360, 0.85, 0.99));
+                idx++;
+            }
         }
+
     }
 
     public Color getModificationColor(String modi){
-        return Color.hsb(modificationColor.get(modi), 0.85, 0.99);
+        return modificationColor.get(modi);
+    }
+
+    public Map<String, Color> getModificationColor(){
+        return modificationColor;
+    }
+
+    public void setModificationColor(String modi, Color color){
+        modificationColor.put(modi, color);
     }
 
     public Set<String> getModificationTypeAll() { return modificationTypeAll; }
@@ -312,6 +342,10 @@ public class SampleGroup implements Serializable {
     public Set<String> getSampleId(){
         return samples.keySet();
     }
+
+    //public Collection<Sample> getSample() {return samples.values(); }
+
+    public Sample getSample(String sample) { return samples.get(sample); }
 
     public HashSet<String> getNumInfoName(){
         return numInfoName;
@@ -729,6 +763,10 @@ public class SampleGroup implements Serializable {
                     modiRes.addAll(protein.getModiRes(modiSelected, numResidual));
                 }
             }
+        }
+
+        if(modiRes.isEmpty()){
+            return null;
         }
 
 

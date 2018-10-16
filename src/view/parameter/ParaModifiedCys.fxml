@@ -11,7 +11,7 @@
          <children>
             <Label text="Sample:" />
             <ComboBox fx:id="cmbSample" prefWidth="150.0" />
-            <Label maxWidth="100.0" prefWidth="100.0" text="Num Residual:">
+            <Label maxWidth="100.0" prefWidth="100.0" text="Num Residues:">
                <HBox.margin>
                   <Insets left="40.0" />
                </HBox.margin>
@@ -43,7 +43,7 @@
       </VBox>
       <VBox alignment="CENTER_LEFT" maxHeight="100.0" prefHeight="100.0" prefWidth="580.0">
          <children>
-            <Label text="Output Residual Infomation File:" />
+            <Label text="Output Residues  Infomation File:" />
             <HBox prefHeight="40.0" prefWidth="580.0" spacing="20.0">
                <children>
                   <TextField fx:id="textTextFile" prefWidth="300.0" />

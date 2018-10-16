@@ -43,6 +43,10 @@ public class Modification implements Serializable {
         this.percent = percent;
     }
 
+    public String toString(){
+        return modificationType;
+    }
+
     public Modification(String modi){
         //System.out.println(modi);
         String[] tmp = modi.split(";");

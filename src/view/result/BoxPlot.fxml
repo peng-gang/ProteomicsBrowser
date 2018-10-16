@@ -24,6 +24,8 @@
                   </RadioMenuItem>
                   <RadioMenuItem mnemonicParsing="false" onAction="#scaleLog2" selected="true" text="Log2" toggleGroup="$toggleGroupScale" />
                   <RadioMenuItem mnemonicParsing="false" onAction="#scaleLog10" text="Log10" toggleGroup="$toggleGroupScale" />
+                  <SeparatorMenuItem mnemonicParsing="false" />
+                  <RadioMenuItem mnemonicParsing="false" onAction="#jitter" text="Jitter" />
               </items>
             </Menu>
         </menus>

@@ -255,6 +255,14 @@ public class PepCombineController {
 
         double st = minX * pixPerLocus*scaleX;
 
+        double maxAbundance = 0;
+        for(PepPos pp : arrangePep){
+            double abTmp = pp.getPep().getAbundance();
+            if(maxAbundance < abTmp){
+                maxAbundance = abTmp;
+            }
+        }
+
         for(PepPos pp : arrangePep){
             //top left coordinate
             double tlX = leftPix + pp.getStart()*pixPerLocus*scaleX + 0.5;
@@ -268,7 +276,12 @@ public class PepCombineController {
 
             if(tlX < canvasWidth && rX > 0){
                 //int range = pp.getPep().getAbundanceRange();
-                gc.setFill(Color.LIGHTGRAY);
+                double abTmp = pp.getPep().getAbundance();
+                int range = (int) (4 * abTmp / maxAbundance);
+                if(range == 4){
+                    range = 3;
+                }
+                gc.setFill(Color.rgb(220-15*range, 220-15*range, 220-15*range));
                 tlX = Math.max(tlX, 0);
                 rX = Math.min(rX, canvasWidth);
                 gc.fillRect(tlX, tlY, (rX-tlX), h);

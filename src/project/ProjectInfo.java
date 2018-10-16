@@ -26,6 +26,7 @@ public class ProjectInfo implements Serializable{
     private ArrayList<ArrayList<String>> sampleInfo;
     private ArrayList<String> sampleId;
     private String dbType;
+    private Boolean includePepMultiProtein;
 
     //private SampleGroup sampleGroup;
 
@@ -53,6 +54,7 @@ public class ProjectInfo implements Serializable{
     public void setSampleInfo(ArrayList<ArrayList<String>> sampleInfo) { this.sampleInfo = sampleInfo;}
     public void setSampleid(ArrayList<String> sampleId) { this.sampleId = sampleId; }
     public void setDbType(String dbType) {this.dbType = dbType;}
+    public void setIncludePepMultiProtein(Boolean includePepMultiProtein) { this.includePepMultiProtein = includePepMultiProtein; }
 
     public SampleGroup getSampleGroup() {
         SampleGroup sampleGroup = new SampleGroup();
@@ -278,6 +280,11 @@ public class ProjectInfo implements Serializable{
                 modiStrAll.add(proteomicsRaw.get(indexModification).get(i));
                 idxAdd.set(i, true);
 
+                Map<String, ArrayList<Integer>> proteins = new TreeMap<>();
+                ArrayList<Integer> ptIdx = new ArrayList<>();
+                ptIdx.add(i);
+                proteins.put(protein, ptIdx);
+
                 boolean flagPepInMultiProtein = false;
                 if(i<idxAdd.size()-1){
                     for(int j=i+1; j<idxAdd.size();j++){
@@ -298,126 +305,275 @@ public class ProjectInfo implements Serializable{
                                     pepInMultipleProtein.put(id, pTmp);
                                 }
                             }
+
+                            String ptTmp = proteomicsRaw.get(indexProtein).get(j);
+                            if(proteins.containsKey(ptTmp)){
+                                proteins.get(ptTmp).add(j);
+                            } else {
+                                ArrayList<Integer> ptIdxTmp = new ArrayList<>();
+                                ptIdxTmp.add(j);
+                                proteins.put(ptTmp, ptIdxTmp);
+                            }
+
                             idxAdd.set(j, true);
                         }
                     }
                 }
                 if(flagPepInMultiProtein){
-                    continue;
-                }
-
-                if(protein.contains("_")){
-                    protein = protein.substring(0, protein.indexOf("_"));
-                }
-
-                ArrayList<Modification> modifications = new ArrayList<>();
-
-                String seq = proteinDB.getSeq(protein);
-                if(seq == null){
-                    proteinNotFind.add(protein);
-                    continue;
-                }
-
-                if(modiStrAll.size()==1) {
-                    String modificationStr = modiStrAll.get(0);
-                    if(!modificationStr.isEmpty()){
-                        //System.out.println(modificationStr);
-                        String[] modiTmp = modificationStr.split("\\|");
-                        for(int j=0; j<modiTmp.length; j++){
-                            //System.out.println(modiTmp[j]);
-                            Modification tmp = new Modification(modiTmp[j]);
-                            modifications.add(tmp);
+                    if(includePepMultiProtein){
+                        ArrayList<String> ptAll = new ArrayList<>(proteins.keySet());
+                        for(int j = 0; j<ptAll.size(); j++){
+                            if(ptAll.get(j).contains("_")){
+                                ptAll.set(j, ptAll.get(j).substring(0, ptAll.get(j).indexOf("_")));
+                            }
                         }
-                    }
-                } else {
-                    Map<String, Map<Integer, Integer>> frequence = new TreeMap<>();
-                    Map<Integer, String> resInfo = new TreeMap<>();
-                    for(String str : modiStrAll){
-                        if(str.isEmpty()){
-                            continue;
-                        }
-                        //ArrayList<Modification> modiRawTmp = new ArrayList<>();
-                        String[] modiTmp = str.split("\\|");
-                        for(int j=0; j<modiTmp.length; j++){
-                            //System.out.println(modiTmp[j]);
-                            Modification tmp = new Modification(modiTmp[j]);
-
-
-                            String typeTmp = tmp.getModificationType();
-                            if(!frequence.containsKey(typeTmp)){
-                                Map<Integer, Integer> fTmp = new TreeMap<>();
-                                frequence.put(typeTmp, fTmp);
+                        for(Map.Entry<String, ArrayList<Integer>> entry : proteins.entrySet()){
+                            String proteinTmp = entry.getKey();
+                            if(proteinTmp.contains("_")){
+                                proteinTmp = proteinTmp.substring(0, proteinTmp.indexOf("_"));
                             }
 
-                            for(int k=0; k<tmp.getPos().size(); k++){
-                                int posTmp = tmp.getPos().get(k);
-                                resInfo.put(posTmp, tmp.getResidue().get(k));
-                                if(frequence.get(typeTmp).containsKey(posTmp)){
-                                    int ftmp = frequence.get(typeTmp).get(posTmp);
-                                    frequence.get(typeTmp).put(posTmp, ftmp+1);
+                            String idTmp = proteomicsRaw.get(indexId).get(entry.getValue().get(0));
+                            String sequenceTmp = proteomicsRaw.get(indexSequence).get(entry.getValue().get(0));
+                            String chargeTmp = proteomicsRaw.get(indexCharge).get(entry.getValue().get(0));
+
+                            ArrayList<Modification> modifications = new ArrayList<>();
+
+                            String seq = proteinDB.getSeq(proteinTmp);
+                            if(seq == null){
+                                proteinNotFind.add(proteinTmp);
+                                continue;
+                            }
+
+                            ArrayList<String> modiStrAllTmp = new ArrayList<>();
+                            for(int idxTmp : entry.getValue()){
+                                modiStrAllTmp.add(proteomicsRaw.get(indexModification).get(idxTmp));
+                            }
+
+                            if(modiStrAllTmp.size()==1) {
+                                String modificationStr = modiStrAllTmp.get(0);
+                                if(!modificationStr.isEmpty()){
+                                    //System.out.println(modificationStr);
+                                    String[] modiTmp = modificationStr.split("\\|");
+                                    for(int j=0; j<modiTmp.length; j++){
+                                        //System.out.println(modiTmp[j]);
+                                        Modification tmp = new Modification(modiTmp[j]);
+                                        modifications.add(tmp);
+                                    }
+                                }
+                            } else {
+                                Map<String, Map<Integer, Integer>> frequence = new TreeMap<>();
+                                Map<Integer, String> resInfo = new TreeMap<>();
+                                for(String str : modiStrAllTmp){
+                                    if(str.isEmpty()){
+                                        continue;
+                                    }
+                                    //ArrayList<Modification> modiRawTmp = new ArrayList<>();
+                                    String[] modiTmp = str.split("\\|");
+                                    for(int j=0; j<modiTmp.length; j++){
+                                        //System.out.println(modiTmp[j]);
+                                        Modification tmp = new Modification(modiTmp[j]);
+
+
+                                        String typeTmp = tmp.getModificationType();
+                                        if(!frequence.containsKey(typeTmp)){
+                                            Map<Integer, Integer> fTmp = new TreeMap<>();
+                                            frequence.put(typeTmp, fTmp);
+                                        }
+
+                                        for(int k=0; k<tmp.getPos().size(); k++){
+                                            int posTmp = tmp.getPos().get(k);
+                                            resInfo.put(posTmp, tmp.getResidue().get(k));
+                                            if(frequence.get(typeTmp).containsKey(posTmp)){
+                                                int ftmp = frequence.get(typeTmp).get(posTmp);
+                                                frequence.get(typeTmp).put(posTmp, ftmp+1);
+                                            } else {
+                                                frequence.get(typeTmp).put(posTmp, 1);
+                                            }
+                                        }
+                                    }
+                                }
+
+                                int numRecord = modiStrAllTmp.size();
+
+                                for(Map.Entry<String, Map<Integer, Integer>> entryTmp : frequence.entrySet()){
+                                    ArrayList<Integer> posTmp = new ArrayList<>();
+                                    ArrayList<String> resTmp = new ArrayList<>();
+                                    ArrayList<Double> perTmp = new ArrayList<>();
+                                    for(Map.Entry<Integer, Integer> entry1 : entryTmp.getValue().entrySet()){
+                                        Integer pos = entry1.getKey();
+                                        Integer num = entry1.getValue();
+                                        if(num < numRecord){
+                                            posTmp.add(pos);
+                                            resTmp.add(resInfo.get(pos));
+                                            perTmp.add(-1.0);
+                                        } else {
+                                            ArrayList<Integer> posTmp1 = new ArrayList<>();
+                                            ArrayList<String> resTmp1 = new ArrayList<>();
+                                            ArrayList<Double> perTmp1 = new ArrayList<>();
+                                            posTmp1.add(pos);
+                                            resTmp1.add(resInfo.get(pos));
+                                            perTmp1.add(100.0);
+                                            Modification m = new Modification(entryTmp.getKey(), posTmp1, resTmp1, perTmp1);
+                                            modifications.add(m);
+                                        }
+                                    }
+                                    if(posTmp.size()>0){
+                                        Modification m = new Modification(entryTmp.getKey(), posTmp, resTmp, perTmp);
+                                        modifications.add(m);
+                                    }
+                                }
+                            }
+
+                            TreeMap<String, Double> doubleInfo = new TreeMap<>();
+                            TreeMap<String, String> strInfo = new TreeMap<>();
+
+                            for(int j=0; j<otherInfo.size(); j++){
+                                if(proteomicsRawType.get(indexOther.get(j)).equals("Double")){
+                                    doubleInfo.put(otherInfo.get(j), tryDoubleParse(proteomicsRaw.get(indexOther.get(j)).get(entry.getValue().get(0))));
                                 } else {
-                                    frequence.get(typeTmp).put(posTmp, 1);
+                                    strInfo.put(otherInfo.get(j), proteomicsRaw.get(indexOther.get(j)).get(entry.getValue().get(0)));
+                                }
+                            }
+
+                            for(int j=0; j<sampleId.size(); j++){
+                                Double abTmp = tryDoubleParse(proteomicsRaw.get(indexAbundance.get(j)).get(entry.getValue().get(0)));
+                                String spId = sampleId.get(j);
+                                Peptide ptTmp = new Peptide(idTmp, sequenceTmp,  abTmp, Integer.parseInt(chargeTmp.trim()), doubleInfo, strInfo, modifications, 0);
+
+                                ArrayList<String> otherProteins = new ArrayList<>(ptAll);
+                                otherProteins.remove(proteinTmp);
+                                ptTmp.setOtherProtein(otherProteins);
+
+                                if(sampleGroup.addPeptide(spId, proteinTmp, seq, ptTmp)){
+                                    sampleGroup.addPepData(spId, idTmp, abTmp);
+                                    sampleGroup.increaseProteinData(spId, proteinTmp, abTmp);
+                                } else {
+                                    if(j==0){
+                                        pepNotMatch.add(sequenceTmp);
+                                        proteinNotMatch.add(proteinTmp);
+                                    }
+                                    continue;
                                 }
                             }
                         }
+                    } else {
+                        continue;
+                    }
+                } else {
+                    if(protein.contains("_")){
+                        protein = protein.substring(0, protein.indexOf("_"));
                     }
 
-                    int numRecord = modiStrAll.size();
+                    ArrayList<Modification> modifications = new ArrayList<>();
 
-                    for(Map.Entry<String, Map<Integer, Integer>> entry : frequence.entrySet()){
-                        ArrayList<Integer> posTmp = new ArrayList<>();
-                        ArrayList<String> resTmp = new ArrayList<>();
-                        ArrayList<Double> perTmp = new ArrayList<>();
-                        for(Map.Entry<Integer, Integer> entry1 : entry.getValue().entrySet()){
-                            Integer pos = entry1.getKey();
-                            Integer num = entry1.getValue();
-                            if(num < numRecord){
-                                posTmp.add(pos);
-                                resTmp.add(resInfo.get(pos));
-                                perTmp.add(-1.0);
-                            } else {
-                                ArrayList<Integer> posTmp1 = new ArrayList<>();
-                                ArrayList<String> resTmp1 = new ArrayList<>();
-                                ArrayList<Double> perTmp1 = new ArrayList<>();
-                                posTmp1.add(pos);
-                                resTmp1.add(resInfo.get(pos));
-                                perTmp1.add(100.0);
-                                Modification m = new Modification(entry.getKey(), posTmp1, resTmp1, perTmp1);
+                    String seq = proteinDB.getSeq(protein);
+                    if(seq == null){
+                        proteinNotFind.add(protein);
+                        continue;
+                    }
+
+                    if(modiStrAll.size()==1) {
+                        String modificationStr = modiStrAll.get(0);
+                        if(!modificationStr.isEmpty()){
+                            //System.out.println(modificationStr);
+                            String[] modiTmp = modificationStr.split("\\|");
+                            for(int j=0; j<modiTmp.length; j++){
+                                //System.out.println(modiTmp[j]);
+                                Modification tmp = new Modification(modiTmp[j]);
+                                modifications.add(tmp);
+                            }
+                        }
+                    } else {
+                        Map<String, Map<Integer, Integer>> frequence = new TreeMap<>();
+                        Map<Integer, String> resInfo = new TreeMap<>();
+                        for(String str : modiStrAll){
+                            if(str.isEmpty()){
+                                continue;
+                            }
+                            //ArrayList<Modification> modiRawTmp = new ArrayList<>();
+                            String[] modiTmp = str.split("\\|");
+                            for(int j=0; j<modiTmp.length; j++){
+                                //System.out.println(modiTmp[j]);
+                                Modification tmp = new Modification(modiTmp[j]);
+
+
+                                String typeTmp = tmp.getModificationType();
+                                if(!frequence.containsKey(typeTmp)){
+                                    Map<Integer, Integer> fTmp = new TreeMap<>();
+                                    frequence.put(typeTmp, fTmp);
+                                }
+
+                                for(int k=0; k<tmp.getPos().size(); k++){
+                                    int posTmp = tmp.getPos().get(k);
+                                    resInfo.put(posTmp, tmp.getResidue().get(k));
+                                    if(frequence.get(typeTmp).containsKey(posTmp)){
+                                        int ftmp = frequence.get(typeTmp).get(posTmp);
+                                        frequence.get(typeTmp).put(posTmp, ftmp+1);
+                                    } else {
+                                        frequence.get(typeTmp).put(posTmp, 1);
+                                    }
+                                }
+                            }
+                        }
+
+                        int numRecord = modiStrAll.size();
+
+                        for(Map.Entry<String, Map<Integer, Integer>> entry : frequence.entrySet()){
+                            ArrayList<Integer> posTmp = new ArrayList<>();
+                            ArrayList<String> resTmp = new ArrayList<>();
+                            ArrayList<Double> perTmp = new ArrayList<>();
+                            for(Map.Entry<Integer, Integer> entry1 : entry.getValue().entrySet()){
+                                Integer pos = entry1.getKey();
+                                Integer num = entry1.getValue();
+                                if(num < numRecord){
+                                    posTmp.add(pos);
+                                    resTmp.add(resInfo.get(pos));
+                                    perTmp.add(-1.0);
+                                } else {
+                                    ArrayList<Integer> posTmp1 = new ArrayList<>();
+                                    ArrayList<String> resTmp1 = new ArrayList<>();
+                                    ArrayList<Double> perTmp1 = new ArrayList<>();
+                                    posTmp1.add(pos);
+                                    resTmp1.add(resInfo.get(pos));
+                                    perTmp1.add(100.0);
+                                    Modification m = new Modification(entry.getKey(), posTmp1, resTmp1, perTmp1);
+                                    modifications.add(m);
+                                }
+                            }
+                            if(posTmp.size()>0){
+                                Modification m = new Modification(entry.getKey(), posTmp, resTmp, perTmp);
                                 modifications.add(m);
                             }
                         }
-                        if(posTmp.size()>0){
-                            Modification m = new Modification(entry.getKey(), posTmp, resTmp, perTmp);
-                            modifications.add(m);
+                    }
+
+                    TreeMap<String, Double> doubleInfo = new TreeMap<>();
+                    TreeMap<String, String> strInfo = new TreeMap<>();
+
+                    for(int j=0; j<otherInfo.size(); j++){
+                        if(proteomicsRawType.get(indexOther.get(j)).equals("Double")){
+                            doubleInfo.put(otherInfo.get(j), tryDoubleParse(proteomicsRaw.get(indexOther.get(j)).get(i)));
+                        } else {
+                            strInfo.put(otherInfo.get(j), proteomicsRaw.get(indexOther.get(j)).get(i));
                         }
                     }
-                }
 
-                TreeMap<String, Double> doubleInfo = new TreeMap<>();
-                TreeMap<String, String> strInfo = new TreeMap<>();
+                    for(int j=0; j<sampleId.size(); j++){
+                        Double abTmp = tryDoubleParse(proteomicsRaw.get(indexAbundance.get(j)).get(i));
+                        String spId = sampleId.get(j);
+                        Peptide ptTmp = new Peptide(id, sequence,  abTmp, Integer.parseInt(charge.trim()), doubleInfo, strInfo, modifications, 0);
 
-                for(int j=0; j<otherInfo.size(); j++){
-                    if(proteomicsRawType.get(indexOther.get(j)).equals("Double")){
-                        doubleInfo.put(otherInfo.get(j), tryDoubleParse(proteomicsRaw.get(indexOther.get(j)).get(i)));
-                    } else {
-                        strInfo.put(otherInfo.get(j), proteomicsRaw.get(indexOther.get(j)).get(i));
-                    }
-                }
-
-                for(int j=0; j<sampleId.size(); j++){
-                    Double abTmp = tryDoubleParse(proteomicsRaw.get(indexAbundance.get(j)).get(i));
-                    String spId = sampleId.get(j);
-                    Peptide ptTmp = new Peptide(id, sequence,  abTmp, Integer.parseInt(charge.trim()), doubleInfo, strInfo, modifications, 0);
-
-                    if(sampleGroup.addPeptide(spId, protein, seq, ptTmp)){
-                        sampleGroup.addPepData(spId, id, abTmp);
-                        sampleGroup.increaseProteinData(spId, protein, abTmp);
-                    } else {
-                        if(j==0){
-                            pepNotMatch.add(sequence);
-                            proteinNotMatch.add(protein);
+                        if(sampleGroup.addPeptide(spId, protein, seq, ptTmp)){
+                            sampleGroup.addPepData(spId, id, abTmp);
+                            sampleGroup.increaseProteinData(spId, protein, abTmp);
+                        } else {
+                            if(j==0){
+                                pepNotMatch.add(sequence);
+                                proteinNotMatch.add(protein);
+                            }
+                            continue;
                         }
-                        continue;
                     }
                 }
             }
@@ -427,6 +583,7 @@ public class ProjectInfo implements Serializable{
         sampleGroup.updatePepShow();
         sampleGroup.rawAbundance();
         sampleGroup.initModificationColor();
+        sampleGroup.setAbundanceRange();
         return  sampleGroup;
     }
     //public void setSampleGroup(SampleGroup sampleGroup) { this.sampleGroup = sampleGroup; }
@@ -446,6 +603,7 @@ public class ProjectInfo implements Serializable{
         sampleId = null;
 
         dbType = null;
+        includePepMultiProtein = null;
     }
 
     public static Double tryDoubleParse(String text){

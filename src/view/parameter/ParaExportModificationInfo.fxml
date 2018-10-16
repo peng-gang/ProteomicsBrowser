@@ -9,7 +9,7 @@
    <children>
       <VBox prefHeight="200.0" prefWidth="100.0" spacing="5.0">
          <children>
-            <Label text="Modification Position Cutoff" />
+            <Label text="Minimum Modification Confidence Value" />
             <TextField fx:id="txtModiCutoff" />
          </children>
          <VBox.margin>

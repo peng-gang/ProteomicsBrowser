@@ -166,7 +166,7 @@ public class PepFilterController implements Initializable {
         lblValAbundanceLow.setPrefWidth(70);
         lblValAbundanceHigh.setPrefWidth(70);
         Label lblValAbundanceName = new Label("Abundance");
-        lblValAbundanceName.setPrefWidth(80);
+        lblValAbundanceName.setPrefWidth(120);
 
         RangeSlider rsPerAbundance = new RangeSlider(0, 1.0, protein.getAbundanceCutPerLow(), protein.getAbundanceCutPerHigh());
         rsPerAbundance.setUserData("Abundance");
@@ -175,7 +175,7 @@ public class PepFilterController implements Initializable {
         lblPerAbundanceLow.setPrefWidth(70);
         lblPerAbundanceHigh.setPrefWidth(70);
         Label lblPerAbundanceName = new Label("Abundance");
-        lblPerAbundanceName.setPrefWidth(80);
+        lblPerAbundanceName.setPrefWidth(120);
 
         rsValAbundance.lowValueProperty().addListener(new ChangeListener<Number>() {
             @Override
@@ -244,7 +244,7 @@ public class PepFilterController implements Initializable {
             lblValInfoLow.setPrefWidth(70);
             lblValInfoHigh.setPrefWidth(70);
             Label lblValInfoName = new Label(doubleInfoName.get(i));
-            lblValInfoName.setPrefWidth(80);
+            lblValInfoName.setPrefWidth(120);
 
             int dInfoIdx = i;
             rsValInfo.lowValueProperty().addListener(new ChangeListener<Number>() {
@@ -285,7 +285,7 @@ public class PepFilterController implements Initializable {
             lblPerInfoLow.setPrefWidth(70);
             lblPerInfoHigh.setPrefWidth(70);
             Label lblPerInfoName = new Label(doubleInfoName.get(i));
-            lblPerInfoName.setPrefWidth(80);
+            lblPerInfoName.setPrefWidth(120);
 
             int dInfoIdx = i;
             rsPerInfo.lowValueProperty().addListener(new ChangeListener<Number>() {
