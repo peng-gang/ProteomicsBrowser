@@ -1402,7 +1402,7 @@ public class Protein implements Serializable {
             }
 
             if(!rltTmp.equals("")){
-                rlt += (rltTmp + "\n");
+                rlt += (rltTmp + System.lineSeparator());
             }
         }
 

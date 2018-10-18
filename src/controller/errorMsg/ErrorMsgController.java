@@ -48,7 +48,7 @@ public class ErrorMsgController {
                     break;
                 }
 
-                msg = "The following proteins that were not found in the database have been removed from the analyses.\n\n";
+                msg = "The following proteins that were not found in the database have been removed from the analyses." + System.lineSeparator() + System.lineSeparator();
                 msg += proteinNotFind.get(0);
 
                 for(int i=1; i<proteinNotFind.size(); i++){
@@ -61,9 +61,10 @@ public class ErrorMsgController {
                     lblMsg.setText("All peptides can be matched to proteins.");
                     break;
                 }
-                msg = "The following peptide sequence that was not found in the specified protein has been removed from the analysis.\n\n(sequence\tprotein)\n";
+                msg = "The following peptide sequence that was not found in the specified protein has been removed from the analysis." +
+                        System.lineSeparator() + System.lineSeparator() + "(sequence\tprotein)" + System.lineSeparator();
                 for(int k = 0; k<pepNotMatch.size(); k++){
-                    msg = msg + pepNotMatch.get(k) + "\t" + proteinNotMatch.get(k) + "\n";
+                    msg = msg + pepNotMatch.get(k) + "\t" + proteinNotMatch.get(k) + System.lineSeparator();
                 }
                 lblMsg.setText(msg);
                 break;
@@ -74,10 +75,12 @@ public class ErrorMsgController {
                 }
 
                 if(includePepMultiProtein){
-                    msg = "The following peptides (" + pepInMultipleProtein.size() + ") that mapped to multiple proteins are INCLUDED in the ProteomicsBrowser.\n\n(peptide id\tproteins)\n";
+                    msg = "The following peptides (" + pepInMultipleProtein.size() + ") that mapped to multiple proteins are INCLUDED in the ProteomicsBrowser." +
+                            System.lineSeparator() + System.lineSeparator() + "(peptide id\tproteins)" + System.lineSeparator();
 
                 } else{
-                    msg = "The following peptides (" + pepInMultipleProtein.size() + ") that mapped to multiple proteins have been REMOVED from the ProteomicsBrowser.\n\n(peptide id\tproteins)\n";
+                    msg = "The following peptides (" + pepInMultipleProtein.size() + ") that mapped to multiple proteins have been REMOVED from the ProteomicsBrowser." +
+                            System.lineSeparator() + System.lineSeparator() + "(peptide id\tproteins)"+ System.lineSeparator();
 
                 }
                 for(Map.Entry<String, ArrayList<String>> entry : pepInMultipleProtein.entrySet()){
@@ -85,7 +88,7 @@ public class ErrorMsgController {
                     for(String strTmp : entry.getValue()){
                         msg += strTmp + " ";
                     }
-                    msg += "\n";
+                    msg += System.lineSeparator();
                 }
                 lblMsg.setText(msg);
                 break;
@@ -131,7 +134,8 @@ public class ErrorMsgController {
 
                 try {
                     for(String s : proteinNotFind){
-                        bufferedWriter.write(s + "\n");
+                        bufferedWriter.write(s);
+                        bufferedWriter.newLine();
                     }
                 } catch (IOException e){
                     e.printStackTrace();
@@ -171,7 +175,8 @@ public class ErrorMsgController {
 
                 try {
                     for(int k = 0; k<pepNotMatch.size(); k++){
-                        bufferedWriter.write(pepNotMatch.get(k) + "," + proteinNotMatch.get(k) + "\n");
+                        bufferedWriter.write(pepNotMatch.get(k) + "," + proteinNotMatch.get(k));
+                        bufferedWriter.newLine();
                     }
                 } catch (IOException e){
                     e.printStackTrace();
@@ -216,8 +221,8 @@ public class ErrorMsgController {
                         for(String strTmp : entry.getValue()){
                             fline += strTmp + " ";
                         }
-                        fline += "\n";
                         bufferedWriter.write(fline);
+                        bufferedWriter.newLine();
                     }
                 } catch (IOException e){
                     e.printStackTrace();

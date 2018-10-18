@@ -91,7 +91,8 @@
                   <MenuItem fx:id="menuProteinAbundance" mnemonicParsing="false" onAction="#exportProteinAbundance" text="Protein Abundance" />
                 <MenuItem fx:id="menuExportModificationInfo" mnemonicParsing="false" onAction="#exportModificationInfo" text="Modification Info" />
                   <MenuItem fx:id="menuBrowserFigure" mnemonicParsing="false" onAction="#exportBrowserFigure" text="Browser Figure" />
-                  <MenuItem fx:id="menuProteinFilter" mnemonicParsing="false" onAction="#exportProteinFilter" text="Proteins after Filtering" />
+                  <MenuItem fx:id="menuExportPeptideFilter" mnemonicParsing="false" onAction="#exportPeptideFilter" text="Peptides after Filtering" />
+                  <MenuItem fx:id="menuExportProteinFilter" mnemonicParsing="false" onAction="#exportProteinFilter" text="Proteins after Filtering" />
               </items>
             </Menu>
           <Menu mnemonicParsing="false" text="Help">

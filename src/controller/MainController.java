@@ -98,7 +98,8 @@ public class MainController implements Initializable{
     @FXML private Menu menuExport;
     @FXML private MenuItem menuExportModificationInfo;
     @FXML private MenuItem menuBrowserFigure;
-    @FXML private MenuItem menuProteinFilter;
+    @FXML private MenuItem menuExportProteinFilter;
+    @FXML private MenuItem menuExportPeptideFilter;
     @FXML private Menu menuExportModiCys;
     @FXML private MenuItem menuProteinAbundance;
 
@@ -963,8 +964,28 @@ public class MainController implements Initializable{
 
 
     @FXML private void exportProteinFilter(ActionEvent event){
+        if(pBrowserController.getSelectedSample()==null){
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("Export Proteins after Filtering");
+            alert.setHeaderText(null);
+            alert.setContentText("Please select a sample in the browser first.");
+            alert.showAndWait();
+            return;
+        }
+
+        if(pBrowserController.getCombProtein().getItems().size()==0){
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Export Proteins after Filtering");
+            alert.setHeaderText(null);
+            alert.setContentText("No Protein after Filtering");
+            alert.showAndWait();
+            return;
+        }
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Output Proteins after Filtering");
+
+        String initName = "ProteinsAfterFilter_" + pBrowserController.getSelectedSample() + ".txt";
+        fileChooser.setInitialFileName(initName);
 
         fileChooser.getExtensionFilters().add(
                 new FileChooser.ExtensionFilter("Output Text File", "*.txt")
@@ -977,6 +998,43 @@ public class MainController implements Initializable{
         }
 
         pBrowserController.saveProteinFilter(txtFile);
+    }
+
+    @FXML private void exportPeptideFilter(ActionEvent event){
+        if(pBrowserController.getSelectedSample()==null){
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("Export Peptides after Filtering");
+            alert.setHeaderText(null);
+            alert.setContentText("Please select a sample in the browser first.");
+            alert.showAndWait();
+            return;
+        }
+
+        if(pBrowserController.getCombProtein().getValue()==null){
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("Export Peptides after Filtering");
+            alert.setHeaderText(null);
+            alert.setContentText("No protein is selected.");
+            alert.showAndWait();
+            return;
+        }
+
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Output Peptide after Filtering");
+        String initName = "PeptidesAfterFilter_" + pBrowserController.getCombProtein().getValue() + "_" + pBrowserController.getSelectedSample() + ".txt";
+        fileChooser.setInitialFileName(initName);
+
+        fileChooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("Output Text File", "*.txt")
+        );
+
+        Stage stage = (Stage) tabPane.getScene().getWindow();
+        File txtFile = fileChooser.showSaveDialog(stage);
+        if(txtFile==null){
+            return;
+        }
+
+        pBrowserController.savePeptideFilter(txtFile);
     }
 
     @FXML private void exportModifiedCysText(ActionEvent event){
@@ -1028,8 +1086,8 @@ public class MainController implements Initializable{
             for(String sid : sampleGroup.getSampleId()){
                 header += "," + sid;
             }
-            header += "\n";
             bufferedWriter.write(header);
+            bufferedWriter.newLine();
 
             //ArrayList<String> proteinId = new ArrayList<>(sampleGroup.getProteinId());
             for(String pid : sampleGroup.getProteinId()){
@@ -1041,8 +1099,8 @@ public class MainController implements Initializable{
                     }
                     fline += "," + tmp;
                 }
-                fline += "\n";
                 bufferedWriter.write(fline);
+                bufferedWriter.newLine();
             }
         } catch (IOException e){
             e.printStackTrace();
@@ -1113,7 +1171,7 @@ public class MainController implements Initializable{
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("ProteomicsBrowser");
         alert.setHeaderText(null);
-        alert.setContentText("ProteomicsBrowser: Version 1.0.1 \nYale University \nAll Rights Reserved. \n");
+        alert.setContentText("ProteomicsBrowser: Version 1.0.1 " + System.lineSeparator() + "Yale University " + System.lineSeparator() + "All Rights Reserved. " + System.lineSeparator());
         alert.showAndWait();
         return;
     }
@@ -1186,7 +1244,7 @@ public class MainController implements Initializable{
 
         Stage proteinFilterStage = new Stage();
         proteinFilterStage.setTitle("Protein Filter");
-        proteinFilterStage.setScene(new Scene(root, 500, 350));
+        proteinFilterStage.setScene(new Scene(root, 550, 350));
 
         proteinFilterStage.initModality(Modality.WINDOW_MODAL);
         proteinFilterStage.initOwner(menuBar.getScene().getWindow());
@@ -1207,7 +1265,7 @@ public class MainController implements Initializable{
             */
             String tabSel = controller.getTabSelected();
             switch (tabSel){
-                case "Modification Type":
+                case "Types of Modification":
                     //System.out.println("MT");
                     pBrowserController.proteinFilter(controller.getModiSelected(), controller.getModiRm(), controller.getNumPep());
                     break;
@@ -1228,6 +1286,11 @@ public class MainController implements Initializable{
 
     @FXML private void changeModificationColor(ActionEvent event){
         if(!pBrowserController.getInitialized()) {
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("Modification Color");
+            alert.setHeaderText(null);
+            alert.setContentText("Please select a sample and protein first before change the modification color.");
+            alert.showAndWait();
             return;
         }
 
@@ -1292,7 +1355,8 @@ public class MainController implements Initializable{
                         menuExport.setVisible(true);
                         menuExportModificationInfo.setDisable(true);
                         menuBrowserFigure.setDisable(true);
-                        menuProteinFilter.setDisable(true);
+                        menuExportProteinFilter.setDisable(true);
+                        menuExportPeptideFilter.setDisable(true);
                         menuExportModiCys.setDisable(false);
                         menuProteinAbundance.setDisable(false);
                         menuDataClean.setVisible(false);
@@ -1306,7 +1370,8 @@ public class MainController implements Initializable{
                         menuExport.setVisible(true);
                         menuExportModificationInfo.setDisable(false);
                         menuBrowserFigure.setDisable(false);
-                        menuProteinFilter.setDisable(false);
+                        menuExportProteinFilter.setDisable(false);
+                        menuExportPeptideFilter.setDisable(false);
                         menuExportModiCys.setDisable(true);
                         menuProteinAbundance.setDisable(true);
                         menuDataClean.setVisible(true);
@@ -1404,7 +1469,8 @@ public class MainController implements Initializable{
                         menuProteinAbundance.setDisable(false);
                         menuExportModificationInfo.setDisable(true);
                         menuBrowserFigure.setDisable(true);
-                        menuProteinFilter.setDisable(true);
+                        menuExportProteinFilter.setDisable(true);
+                        menuExportPeptideFilter.setDisable(true);
                         menuDataClean.setVisible(false);
                         menuEdit.setVisible(false);
 
@@ -1441,7 +1507,8 @@ public class MainController implements Initializable{
                         menuProteinAbundance.setDisable(true);
                         menuExportModificationInfo.setDisable(false);
                         menuBrowserFigure.setDisable(false);
-                        menuProteinFilter.setDisable(false);
+                        menuExportProteinFilter.setDisable(false);
+                        menuExportPeptideFilter.setDisable(false);
                         menuDataClean.setVisible(true);
                         menuEdit.setVisible(true);
                         break;

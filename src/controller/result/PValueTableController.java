@@ -61,17 +61,18 @@ public class PValueTableController {
             for(int i=0; i<id.size(); i++){
                 String fline;
                 if(pv.get(i) > 0.1){
-                    fline = id.get(i) + "," + String.format("%.2f", pv.get(i)) + "\n";
+                    fline = id.get(i) + "," + String.format("%.2f", pv.get(i));
                 } else if(pv.get(i) > 0.01){
-                    fline = id.get(i) + "," + String.format("%.3f", pv.get(i)) + "\n";
+                    fline = id.get(i) + "," + String.format("%.3f", pv.get(i));
                 } else if(pv.get(i) > 0.001){
-                    fline = id.get(i) + "," + String.format("%.4f", pv.get(i)) + "\n";
+                    fline = id.get(i) + "," + String.format("%.4f", pv.get(i));
                 } else if(pv.get(i) > 0.0001){
-                    fline = id.get(i) + "," + String.format("%.5f", pv.get(i)) + "\n";
+                    fline = id.get(i) + "," + String.format("%.5f", pv.get(i));
                 } else {
-                    fline = id.get(i) + "," + String.format("%.1e", pv.get(i)) + "\n";
+                    fline = id.get(i) + "," + String.format("%.1e", pv.get(i));
                 }
                 bufferedWriter.write(fline);
+                bufferedWriter.newLine();
             }
         } catch (IOException e){
             e.printStackTrace();

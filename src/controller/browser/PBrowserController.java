@@ -172,6 +172,11 @@ public class PBrowserController implements Initializable {
 
     public String getSelectedSample() { return  selectedSample; }
 
+
+    public ComboBox<String> getCombProtein(){
+        return combProtein;
+    }
+
     private void updateCombineNodes(){
         if(rbYes.isSelected()){
             /*
@@ -236,11 +241,12 @@ public class PBrowserController implements Initializable {
         combModiPos.getItems().addAll(protein.getModiPosSel1(modiSelected));
         combModiPos.setDisable(false);
         //combinePosSel = false;
-        scaleX = 1;
+        //scaleX = 1;
         scaleY = 1;
         double sc = (canvasWidth - leftPix - rightPix)/(protein.getLength() * pixPerLocus);
         sliderZoom.setMin(Math.log(sc) /Math.log(2.0));
-        sliderZoom.setValue(0);
+        sliderZoom.setValue(sliderZoom.getMin());
+        scaleX = Math.pow(2.0, sliderZoom.getValue());
         orderPep();
         //too many modification to show in a canvas
         if(maxY * (pixPerPep + 2*pixPepGap) > (canvasHeight-bottomPix-pixXLabel)){
@@ -345,11 +351,12 @@ public class PBrowserController implements Initializable {
         combModiPos.getItems().addAll(protein.getModiCombinedPos1(modiSelected));
         combModiPos.setDisable(false);
         //combinePosSel = false;
-        scaleX = 1;
+        //scaleX = 1;
         scaleY = 1;
         double sc = (canvasWidth - leftPix - rightPix)/(protein.getLength() * pixPerLocus);
         sliderZoom.setMin(Math.log(sc) /Math.log(2.0));
-        sliderZoom.setValue(0);
+        sliderZoom.setValue(sliderZoom.getMin());
+        scaleX = Math.pow(2.0, sliderZoom.getValue());
         orderPep();
         //too many modification to show in a canvas
         if(maxYCombined * (pixPerPep + 2*pixPepGap) > (canvasHeight-bottomPix-pixXLabel)){
@@ -425,6 +432,13 @@ public class PBrowserController implements Initializable {
             }
         }
 
+        if(ptSort.size()==0){
+            combProtein.getItems().clear();
+            selectedProtein=null;
+            draw();
+            return;
+        }
+
         Collections.sort(ptSort);
         combProtein.getItems().clear();
         combProtein.getItems().addAll(ptSort);
@@ -441,6 +455,13 @@ public class PBrowserController implements Initializable {
             }
         }
 
+        if(ptSort.size()==0){
+            combProtein.getItems().clear();
+            selectedProtein=null;
+            draw();
+            return;
+        }
+
         Collections.sort(ptSort);
         combProtein.getItems().clear();
         combProtein.getItems().addAll(ptSort);
@@ -455,6 +476,13 @@ public class PBrowserController implements Initializable {
                     sampleGroup.getProtein(selectedSample, pid).getPeptides().size() >= numPep){
                 ptSort.add(pid);
             }
+        }
+
+        if(ptSort.size()==0){
+            combProtein.getItems().clear();
+            selectedProtein=null;
+            draw();
+            return;
         }
 
         Collections.sort(ptSort);
@@ -485,8 +513,11 @@ public class PBrowserController implements Initializable {
         BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
 
         try {
+            bufferedWriter.write("Protein");
+            bufferedWriter.newLine();
             for(String pt : combProtein.getItems()){
-                bufferedWriter.write(pt + "\n");
+                bufferedWriter.write(pt);
+                bufferedWriter.newLine();
             }
         } catch (IOException e){
             e.printStackTrace();
@@ -498,6 +529,45 @@ public class PBrowserController implements Initializable {
                 e.printStackTrace();
             }
         }
+    }
+
+    public void savePeptideFilter(File txtFile){
+        if(selectedProtein==null){
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("Export Peptides after Filtering");
+            alert.setHeaderText(null);
+            alert.setContentText("There is no protein selected");
+            alert.showAndWait();
+            return;
+        }
+
+        FileWriter fileWriter = null;
+        try {
+            fileWriter = new FileWriter(txtFile);
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+
+        BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+
+        try {
+            bufferedWriter.write("Peptide id");
+            bufferedWriter.newLine();
+            for(PepPos pepPos : arrangePep){
+                bufferedWriter.write(pepPos.getPep().getId());
+                bufferedWriter.newLine();
+            }
+        } catch (IOException e){
+            e.printStackTrace();
+        } finally {
+            try {
+                bufferedWriter.close();
+                fileWriter.close();
+            } catch (IOException e){
+                e.printStackTrace();
+            }
+        }
+
     }
 
     public void setData(SampleGroup sampleGroup, MainController mainController){
@@ -529,11 +599,12 @@ public class PBrowserController implements Initializable {
     }
 
     public void updatePep(){
-        scaleX = 1;
+        //scaleX = 1;
         scaleY = 1;
         double sc = (canvasWidth - leftPix - rightPix)/(protein.getLength() * pixPerLocus);
         sliderZoom.setMin(Math.log(sc) /Math.log(2.0));
-        sliderZoom.setValue(0);
+        sliderZoom.setValue(sliderZoom.getMin());
+        scaleX = Math.pow(2.0, sliderZoom.getValue());
         orderPep();
         //too many modification to show in a canvas
         if(maxY * (pixPerPep + 2*pixPepGap) > (canvasHeight-bottomPix-pixXLabel)){
@@ -678,11 +749,12 @@ public class PBrowserController implements Initializable {
                     combModiPos.getItems().addAll(protein.getModiPosSel1(modiSelected));
                     combModiPos.setDisable(false);
                     //combinePosSel = false;
-                    scaleX = 1;
+                    //scaleX = 1;
                     scaleY = 1;
                     double sc = (canvasWidth - leftPix - rightPix)/(protein.getLength() * pixPerLocus);
                     sliderZoom.setMin(Math.log(sc) /Math.log(2.0));
-                    sliderZoom.setValue(0);
+                    sliderZoom.setValue(sliderZoom.getMin());
+                    scaleX = Math.pow(2.0, sliderZoom.getValue());
                     orderPep();
                     //too many modification to show in a canvas
                     if(maxY * (pixPerPep + 2*pixPepGap) > (canvasHeight-bottomPix-pixXLabel)){
@@ -718,11 +790,12 @@ public class PBrowserController implements Initializable {
                     combModiPos.getItems().addAll(protein.getModiPosSel1(modiSelected));
                     combModiPos.setDisable(false);
                     //combinePosSel = false;
-                    scaleX = 1;
+                    //scaleX = 1;
                     scaleY = 1;
                     double sc = (canvasWidth - leftPix - rightPix)/(protein.getLength() * pixPerLocus);
                     sliderZoom.setMin(Math.log(sc) / Math.log(2.0));
-                    sliderZoom.setValue(0);
+                    sliderZoom.setValue(sliderZoom.getMin());
+                    scaleX = Math.pow(2.0, sliderZoom.getValue());
                     orderPep();
                     if(maxY * (pixPerPep + 2*pixPepGap) > (canvasHeight-bottomPix-pixXLabel)){
                         scaleY = (canvasHeight-bottomPix-pixXLabel)/((pixPerPep + 2*pixPepGap)*maxY);
@@ -975,6 +1048,10 @@ public class PBrowserController implements Initializable {
 
         //Start to plot
         gc.clearRect(0, 0, canvasWidth, canvasHeight);
+
+        if(combProtein.getItems().size()==0){
+            return;
+        }
 
         if(pepCombined){
             for(PepPos pp : arrangePepCombined){
@@ -1441,7 +1518,7 @@ public class PBrowserController implements Initializable {
         //sliderZoom.setMin(0.1);
         sliderZoom.setMax(2);
         sliderZoom.setMin(-2);
-        sliderZoom.setValue(0);
+        sliderZoom.setValue(-2);
         sliderZoom.setMajorTickUnit(0.25);
 
 
@@ -1546,6 +1623,10 @@ public class PBrowserController implements Initializable {
                     return;
                 }
 
+                if(combProtein.getItems().size()==0){
+                    return;
+                }
+
                 double x = event.getX();
                 double y = event.getY();
 
@@ -1561,7 +1642,7 @@ public class PBrowserController implements Initializable {
                     for(PepPos tmp : arrangePepCombined){
                         if(tmp.contains(idxX, idxY)) {
                             String info = tmp.getPep().toString(tmp.getStart());
-                            info = info + "Start: " + (tmp.getStart() + 1) + "\n";
+                            info = info + "Start: " + (tmp.getStart() + 1) + System.lineSeparator();
                             info = info + "End: " + (tmp.getEnd() + 1);
                             Alert alert = new Alert(Alert.AlertType.INFORMATION);
                             alert.setTitle("Peptide Information");
@@ -1579,7 +1660,7 @@ public class PBrowserController implements Initializable {
                 for(PepPos tmp : arrangePep){
                     if(tmp.contains(idxX, idxY)) {
                         String info = tmp.getPep().toString(tmp.getStart());
-                        info = info + "Start: " + (tmp.getStart() + 1) + "\n";
+                        info = info + "Start: " + (tmp.getStart() + 1) + System.lineSeparator();
                         info = info + "End: " + (tmp.getEnd() + 1);
 
                         Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -1603,6 +1684,11 @@ public class PBrowserController implements Initializable {
                     return;
                 }
 
+
+                if(combProtein.getItems().size()==0){
+                    return;
+                }
+
                 double x = event.getX();
                 double y = event.getY();
 
@@ -1618,7 +1704,7 @@ public class PBrowserController implements Initializable {
                     for(PepPos tmp : arrangePepCombined){
                         if(tmp.contains(idxX, idxY)) {
                             String info = tmp.getPep().toString(tmp.getStart());
-                            info = info + "Start: " + (tmp.getStart() + 1) + "\n";
+                            info = info + "Start: " + (tmp.getStart() + 1) + System.lineSeparator();
                             info = info + "End: " + (tmp.getEnd() + 1);
                             lblPep.setText(info);
                             break;
@@ -1639,7 +1725,7 @@ public class PBrowserController implements Initializable {
                             }
                         }
 
-                        String txtShow = "Modifications at position: " + (idxX +1) + "\nTotal peptides: " + numTotal + "\n";
+                        String txtShow = "Modifications at position: " + (idxX +1) + System.lineSeparator() + "Total peptides: " + numTotal + System.lineSeparator();
 
                         TreeMap<String, ArrayList<Double>> modis =  posModiInfo.getModifications();
                         Set set = modis.entrySet();
@@ -1648,7 +1734,7 @@ public class PBrowserController implements Initializable {
                             Map.Entry me = (Map.Entry) it.next();
                             String mt = (String) me.getKey();
                             ArrayList<Double> pc = (ArrayList<Double>) me.getValue();
-                            txtShow += mt + ": " + pc.size() + "\n";
+                            txtShow += mt + ": " + pc.size() + System.lineSeparator();
                             if(pc.get(0) < 0){
                                 txtShow += "NA";
                             } else {
@@ -1663,7 +1749,7 @@ public class PBrowserController implements Initializable {
                                 }
 
                             }
-                            txtShow += "\n";
+                            txtShow += System.lineSeparator();
                         }
 
                         lblPos.setText(txtShow);
@@ -1676,7 +1762,7 @@ public class PBrowserController implements Initializable {
                 for(PepPos tmp : arrangePep){
                     if(tmp.contains(idxX, idxY)) {
                         String info = tmp.getPep().toString(tmp.getStart());
-                        info = info + "Start: " + (tmp.getStart() + 1) + "\n";
+                        info = info + "Start: " + (tmp.getStart() + 1) + System.lineSeparator();
                         info = info + "End: " + (tmp.getEnd() + 1);
                         lblPep.setText(info);
                         break;
@@ -1700,7 +1786,7 @@ public class PBrowserController implements Initializable {
                         }
                     }
 
-                    String txtShow = "Modifications at position: " + (idxX +1) + "\nTotal peptides: " + numTotal + "\n";
+                    String txtShow = "Modifications at position: " + (idxX +1) + System.lineSeparator() + "Total peptides: " + numTotal + System.lineSeparator();
 
                     TreeMap<String, ArrayList<Double>> modis =  posModiInfo.getModifications();
                     Set set = modis.entrySet();
@@ -1709,7 +1795,7 @@ public class PBrowserController implements Initializable {
                         Map.Entry me = (Map.Entry) it.next();
                         String mt = (String) me.getKey();
                         ArrayList<Double> pc = (ArrayList<Double>) me.getValue();
-                        txtShow += mt + ": " + pc.size() + "\n";
+                        txtShow += mt + ": " + pc.size() + System.lineSeparator();
                         if(pc.get(0) < 0){
                             txtShow += "NA";
                         } else {
@@ -1723,7 +1809,7 @@ public class PBrowserController implements Initializable {
                             }
 
                         }
-                        txtShow += "\n";
+                        txtShow += System.lineSeparator();
                     }
 
                     lblPos.setText(txtShow);

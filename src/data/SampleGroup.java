@@ -717,7 +717,7 @@ public class SampleGroup implements Serializable {
                 for(String infoTmp : info){
                     try{
                         bufferedWriter.write(infoTmp);
-                        bufferedWriter.write("\n");
+                        bufferedWriter.newLine();
                     } catch (IOException e){
                         e.printStackTrace();
                     }
@@ -730,7 +730,7 @@ public class SampleGroup implements Serializable {
                     for(String infoTmp : info){
                         try{
                             bufferedWriter.write(infoTmp);
-                            bufferedWriter.write("\n");
+                            bufferedWriter.newLine();
                         } catch (IOException e){
                             e.printStackTrace();
                         }

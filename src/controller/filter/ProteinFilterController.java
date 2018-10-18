@@ -7,10 +7,7 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.Slider;
-import javafx.scene.control.TabPane;
+import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
@@ -32,17 +29,17 @@ public class ProteinFilterController {
     @FXML private VBox vBoxModiType;
     @FXML private Label lblMinNumModification;
     @FXML private Slider sliderNumModification;
-    @FXML private Text txtNumModification;
+    @FXML private TextField txtNumModification;
     @FXML private Label lblMaxNumModification;
 
     @FXML private Label lblMinNumModiType;
     @FXML private Slider sliderNumModiType;
-    @FXML private Text txtNumModiType;
+    @FXML private TextField txtNumModiType;
     @FXML private Label lblMaxNumModiType;
 
     @FXML private Label lblMinNumPep;
     @FXML private Slider sliderNumPep;
-    @FXML private Text txtNumPep;
+    @FXML private TextField txtNumPep;
     @FXML private Label lblMaxNumPep;
 
     private Sample sample;
@@ -239,7 +236,7 @@ public class ProteinFilterController {
             @Override
             public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
                 if (!newValue.matches("\\d*")) {
-                    txtNumModification.setText(newValue.replaceAll("[^\\d]", ""));
+                    txtNumModiType.setText(newValue.replaceAll("[^\\d]", ""));
                 }
             }
         });
@@ -256,7 +253,7 @@ public class ProteinFilterController {
 
                     if(newVal < 0){
                         newVal = 0;
-                        txtNumModification.setText(String.valueOf(0));
+                        txtNumModiType.setText(String.valueOf(0));
                     }
 
                     sliderNumModiType.setValue(Integer.valueOf(newVal));
@@ -291,7 +288,7 @@ public class ProteinFilterController {
             @Override
             public void handle(KeyEvent event) {
                 if(event.getCode().equals(KeyCode.ENTER)){
-                    int newVal = Integer.valueOf(txtNumModification.getText());
+                    int newVal = Integer.valueOf(txtNumPep.getText());
                     if(newVal > maxNumPep){
                         newVal = maxNumPep;
                         txtNumPep.setText(String.valueOf(maxNumPep));

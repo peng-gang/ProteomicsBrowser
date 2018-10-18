@@ -231,7 +231,7 @@ public class PepCombineController {
                 for(PepPos tmp : arrangePep){
                     if(tmp.contains(idxX, idxY)) {
                         String info = tmp.getPep().toString();
-                        info = info + "Start: " + (tmp.getStart() + 1) + "\n";
+                        info = info + "Start: " + (tmp.getStart() + 1) + System.lineSeparator();
                         info = info + "End: " + (tmp.getEnd() + 1);
                         lblPep.setText(info);
                         break;

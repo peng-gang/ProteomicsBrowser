@@ -334,25 +334,25 @@ public class Peptide implements Serializable {
 
     public String toString(){
         String rlt;
-        rlt = "ID: " + id + "\n";
-        rlt = rlt + "Charge: " + charge + "\n";
+        rlt = "ID: " + id + System.lineSeparator();
+        rlt = rlt + "Charge: " + charge + System.lineSeparator();
 
         if(otherProtein.size() > 0){
             rlt = rlt + "Other Candidate Protein: " + otherProtein.get(0);
             for(int i=1; i<otherProtein.size();i++){
                 rlt += ";" + otherProtein.get(i);
             }
-            rlt += "\n";
+            rlt += System.lineSeparator();
         }
 
         if(doubleInfo!=null){
             for(Map.Entry<String, Double> entry : doubleInfo.entrySet()){
-                rlt = rlt + entry.getKey() + ": " + entry.getValue() + "\n";
+                rlt = rlt + entry.getKey() + ": " + entry.getValue() + System.lineSeparator();
             }
         }
         if(strInfo!=null){
             for(Map.Entry<String, String> entry : strInfo.entrySet()){
-                rlt = rlt + entry.getKey() + ": " + entry.getValue() + "\n";
+                rlt = rlt + entry.getKey() + ": " + entry.getValue() + System.lineSeparator();
             }
         }
 
@@ -360,11 +360,11 @@ public class Peptide implements Serializable {
         rlt = rlt + "mz: " + mz + "\n";
         rlt = rlt + "Score: " + score + "\n";
         */
-        rlt = rlt + "Abundance: " + String.format("%9.3g",abundance) + "\n\t" +  String.format("%.2f", Math.log10(abundance)) + "(log10)\n";
+        rlt = rlt + "Abundance: " + String.format("%9.3g",abundance) + System.lineSeparator() + "\t" +  String.format("%.2f", Math.log10(abundance)) + "(log10)" + System.lineSeparator();
         if(modifications.size()==0){
-            rlt += "Modification: None\n";
+            rlt += "Modification: None" + System.lineSeparator();
         } else {
-            rlt += "Modification: \n";
+            rlt += "Modification: " + System.lineSeparator();
             for(Modification md : modifications){
                 rlt += "\t" + md.getModificationType() + ": ";
                 if(md.getPercent().get(0) <=0){
@@ -381,7 +381,7 @@ public class Peptide implements Serializable {
                     }
 
                 }
-                rlt += "\n";
+                rlt += System.lineSeparator();
             }
         }
 
@@ -390,32 +390,32 @@ public class Peptide implements Serializable {
 
     public String toString(int st){
         String rlt;
-        rlt = "ID: " + id + "\n";
-        rlt = rlt + "Charge: " + charge + "\n";
+        rlt = "ID: " + id + System.lineSeparator();
+        rlt = rlt + "Charge: " + charge + System.lineSeparator();
 
         if(otherProtein.size() > 0){
             rlt = rlt + "Other Candidate Protein: " + otherProtein.get(0);
             for(int i=1; i<otherProtein.size();i++){
                 rlt += ";" + otherProtein.get(i);
             }
-            rlt += "\n";
+            rlt += System.lineSeparator();
         }
 
         if(multiMatch>0){
-            rlt = rlt + "Multiple Match Number: " + multiMatch + "\n";
+            rlt = rlt + "Multiple Match Number: " + multiMatch + System.lineSeparator();
         }
 
 
         if(doubleInfo!=null){
             for(Map.Entry<String, Double> entry : doubleInfo.entrySet()){
-                rlt = rlt + entry.getKey() + ": " + entry.getValue() + "\n";
+                rlt = rlt + entry.getKey() + ": " + entry.getValue() + System.lineSeparator();
             }
         }
 
 
         if(strInfo!=null){
             for(Map.Entry<String, String> entry : strInfo.entrySet()){
-                rlt = rlt + entry.getKey() + ": " + entry.getValue() + "\n";
+                rlt = rlt + entry.getKey() + ": " + entry.getValue() + System.lineSeparator();
             }
         }
 
@@ -423,11 +423,11 @@ public class Peptide implements Serializable {
         rlt = rlt + "mz: " + mz + "\n";
         rlt = rlt + "Score: " + score + "\n";
         */
-        rlt = rlt + "Abundance: " + String.format("%9.3g",abundance) + "\n\t" +  String.format("%.2f", Math.log10(abundance)) + "(log10)\n";
+        rlt = rlt + "Abundance: " + String.format("%9.3g",abundance) + System.lineSeparator() + "\t" +  String.format("%.2f", Math.log10(abundance)) + "(log10)" + System.lineSeparator();
         if(modifications.size()==0){
-            rlt += "Modification: None\n";
+            rlt += "Modification: None" + System.lineSeparator();
         } else {
-            rlt += "Modification: \n";
+            rlt += "Modification: " + System.lineSeparator();
             for(Modification md : modifications){
                 rlt += "\t" + md.getModificationType() + ": ";
                 if(md.getPercent().get(0) <=0){
@@ -444,7 +444,7 @@ public class Peptide implements Serializable {
                     }
 
                 }
-                rlt += "\n";
+                rlt += System.lineSeparator();
             }
         }
 

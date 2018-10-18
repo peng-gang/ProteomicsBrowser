@@ -7,11 +7,11 @@
 <?import java.lang.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="350.0" prefWidth="500.0" spacing="20.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.filter.ProteinFilterController">
+<VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="350.0" prefWidth="550.0" spacing="20.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.filter.ProteinFilterController">
    <children>
       <TabPane fx:id="tabPane" prefHeight="200.0">
          <tabs>
-            <Tab closable="false" text="Modification Type">
+            <Tab closable="false" text="Types of Modification">
                <content>
                   <VBox prefHeight="200.0" prefWidth="100.0" spacing="10.0">
                      <children>
@@ -28,14 +28,14 @@
                <content>
                   <VBox prefHeight="200.0" prefWidth="100.0">
                      <children>
-                        <Label text="Show Proteins Containing At Least Following Number of Modification Types" />
+                        <Label text="Show Proteins Containing At Least The Following Number of Modification Types" />
                         <HBox alignment="CENTER" prefHeight="100.0" prefWidth="350.0" spacing="10.0">
                            <children>
                               <Label fx:id="lblMinNumModiType" text="0" />
                               <VBox alignment="CENTER" prefWidth="350.0" spacing="10.0">
                                  <children>
                                     <Slider fx:id="sliderNumModiType" blockIncrement="1.0" majorTickUnit="1.0" minorTickCount="0" snapToTicks="true" />
-                                    <Text fx:id="txtNumModiType" strokeType="OUTSIDE" strokeWidth="0.0" text="0" />
+                                    <TextField fx:id="txtNumModiType" alignment="CENTER_RIGHT" maxWidth="60.0" prefWidth="60.0" text="0" />
                                  </children>
                               </VBox>
                               <Label fx:id="lblMaxNumModiType" />
@@ -52,14 +52,14 @@
                <content>
                   <VBox prefHeight="200.0" prefWidth="100.0">
                      <children>
-                        <Label text="Show Proteins Containing At Least Following Number of Modification Positions" />
+                        <Label text="Show Proteins Containing At Least The Following Number of Modification Positions" />
                         <HBox alignment="CENTER" prefHeight="100.0" prefWidth="350.0" spacing="10.0">
                            <children>
                               <Label fx:id="lblMinNumModification" text="0" />
                               <VBox alignment="CENTER" prefWidth="350.0" spacing="10.0">
                                  <children>
                                     <Slider fx:id="sliderNumModification" blockIncrement="1.0" majorTickUnit="1.0" minorTickCount="0" snapToTicks="true" />
-                                    <Text fx:id="txtNumModification" strokeType="OUTSIDE" strokeWidth="0.0" text="0" />
+                                    <TextField fx:id="txtNumModification" alignment="CENTER_RIGHT" maxWidth="60.0" prefWidth="60.0" text="0" />
                                  </children>
                               </VBox>
                               <Label fx:id="lblMaxNumModification" />
@@ -81,14 +81,14 @@
       </Label>
       <VBox prefHeight="100.0" prefWidth="400.0" spacing="10.0">
          <children>
-            <Label text="Containing At Least Following Number of Peptides:" />
+            <Label text="Containing At Least The Following Number of Peptides:" />
             <HBox alignment="CENTER" spacing="10.0">
                <children>
                   <Label fx:id="lblMinNumPep" text="1" />
                   <VBox alignment="CENTER" prefWidth="350.0" spacing="10.0">
                      <children>
                         <Slider fx:id="sliderNumPep" blockIncrement="1.0" majorTickUnit="1.0" minorTickCount="0" snapToTicks="true" />
-                        <Text fx:id="txtNumPep" strokeType="OUTSIDE" strokeWidth="0.0" text="1" />
+                        <TextField fx:id="txtNumPep" alignment="CENTER_RIGHT" maxWidth="60.0" prefWidth="60.0" text="1" />
                      </children>
                   </VBox>
                   <Label fx:id="lblMaxNumPep" />

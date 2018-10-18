@@ -120,7 +120,7 @@ public class PepFilterController implements Initializable {
             }
         }
 
-        numPep.setText("Peptides Remain: " + protein.numPepShow());
+        numPep.setText("Peptides Remaining: " + protein.numPepShow());
         /*
         protein.setChargeCutHigh(protein.getChargeMax());
         protein.setChargeCutLow(protein.getChargeMin());
@@ -181,7 +181,7 @@ public class PepFilterController implements Initializable {
             @Override
             public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
                 protein.setAbundanceCutLow(newValue.doubleValue());
-                numPep.setText("Peptides Remain: " + protein.numPepShow());
+                numPep.setText("Peptides Remaining: " + protein.numPepShow());
                 lblValAbundanceLow.setText(String.format("%.2g",newValue.doubleValue()));
             }
         });
@@ -190,7 +190,7 @@ public class PepFilterController implements Initializable {
             @Override
             public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
                 protein.setAbundanceCutHigh(newValue.doubleValue());
-                numPep.setText("Peptides Remain: " + protein.numPepShow());
+                numPep.setText("Peptides Remaining: " + protein.numPepShow());
                 lblValAbundanceHigh.setText(String.format("%.2g",newValue.doubleValue()));
             }
         });
@@ -199,7 +199,7 @@ public class PepFilterController implements Initializable {
             @Override
             public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
                 protein.setAbundanceCutPerLow(newValue.doubleValue());
-                numPep.setText("Peptides Remain: " + protein.numPepShow());
+                numPep.setText("Peptides Remaining: " + protein.numPepShow());
                 lblPerAbundanceLow.setText(String.format("%.2f", newValue.doubleValue() * 100));
             }
         });
@@ -208,7 +208,7 @@ public class PepFilterController implements Initializable {
             @Override
             public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
                 protein.setAbundanceCutPerHigh(newValue.doubleValue());
-                numPep.setText("Peptides Remain: " + protein.numPepShow());
+                numPep.setText("Peptides Remaining: " + protein.numPepShow());
                 lblPerAbundanceHigh.setText(String.format("%.2f", newValue.doubleValue() * 100));
             }
         });
@@ -251,7 +251,7 @@ public class PepFilterController implements Initializable {
                 @Override
                 public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
                     protein.setDoubleInfoCutLow(dInfoIdx, newValue.doubleValue());
-                    numPep.setText("Peptides Remain: " + protein.numPepShow());
+                    numPep.setText("Peptides Remaining: " + protein.numPepShow());
                     lblValInfoLow.setText(String.format("%.2g",newValue.doubleValue()));
                 }
             });
@@ -260,7 +260,7 @@ public class PepFilterController implements Initializable {
                 @Override
                 public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
                     protein.setDoubleInfoCutHigh(dInfoIdx, newValue.doubleValue());
-                    numPep.setText("Peptides Remain: " + protein.numPepShow());
+                    numPep.setText("Peptides Remaining: " + protein.numPepShow());
                     lblValInfoHigh.setText(String.format("%.2g",newValue.doubleValue()));
                 }
             });
@@ -292,7 +292,7 @@ public class PepFilterController implements Initializable {
                 @Override
                 public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
                     protein.setDoubleInfoCutPerLow(dInfoIdx, newValue.doubleValue());
-                    numPep.setText("Peptides Remain: " + protein.numPepShow());
+                    numPep.setText("Peptides Remaining: " + protein.numPepShow());
                     lblPerInfoLow.setText(String.format("%.2f",newValue.doubleValue() * 100));
                 }
             });
@@ -301,7 +301,7 @@ public class PepFilterController implements Initializable {
                 @Override
                 public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
                     protein.setDoubleInfoCutPerHigh(dInfoIdx, newValue.doubleValue());
-                    numPep.setText("Peptides Remain: " + protein.numPepShow());
+                    numPep.setText("Peptides Remaining: " + protein.numPepShow());
                     lblPerInfoHigh.setText(String.format("%.2f",newValue.doubleValue() * 100));
                 }
             });
@@ -411,7 +411,7 @@ public class PepFilterController implements Initializable {
         lblPerAbundanceHigh.setText(String.format("%.2f",rsPerAbundance.getHighValue() * 100));
         */
 
-        numPep.setText("Peptides Remain: " + protein.numPepShow());
+        numPep.setText("Peptides Remaining: " + protein.numPepShow());
 
 
         /*
