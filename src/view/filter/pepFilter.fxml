@@ -31,7 +31,7 @@
       </TabPane>
       <HBox alignment="CENTER_LEFT" prefHeight="30.0" prefWidth="200.0" spacing="100.0">
          <children>
-            <Label fx:id="numPep" prefWidth="200.0" text="Peptides Remain: " />
+            <Label fx:id="numPep" prefWidth="200.0" text="Peptides Remaining: " />
             <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="20.0">
                <children>
                   <Button fx:id="btnReset" mnemonicParsing="false" onAction="#reset" text="Reset" />
