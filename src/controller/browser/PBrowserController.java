@@ -1,6 +1,7 @@
 package controller.browser;
 
 import controller.MainController;
+import controller.result.PepCombineAllController;
 import controller.result.PepCombineController;
 import data.PepPos;
 import data.*;
@@ -275,6 +276,44 @@ public class PBrowserController implements Initializable {
 
     @FXML private void combine(ActionEvent event){
         if(!cbSequence.isSelected()){
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert.setTitle("Peptide Combination");
+            alert.setHeaderText("Please choose the samples for combination:");
+            ButtonType allSample = new ButtonType("All Samples");
+            ButtonType selSample = new ButtonType("Sample(s) shown in the Browser");
+
+            alert.getButtonTypes().clear();
+            alert.getButtonTypes().addAll(allSample, selSample);
+
+            Optional<ButtonType> option = alert.showAndWait();
+            if(option.get()==null){
+                return;
+            } else if(option.get()==allSample){
+                int pos = combModiPos.getValue()-1;
+
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/result/PepCombineAll.fxml"));
+                try{
+                    Parent root = loader.load();
+
+                    Stage pepCombine = new Stage();
+                    pepCombine.setTitle("Peptide Combination");
+                    pepCombine.setScene(new Scene(root, 400, 500));
+                    pepCombine.initModality(Modality.WINDOW_MODAL);
+                    pepCombine.initOwner(canvas.getScene().getWindow());
+
+                    PepCombineAllController controller = loader.getController();
+                    controller.setData(sampleGroup, selectedProtein, pos);
+                    controller.combinePeptides();
+
+                    pepCombine.showAndWait();
+
+                } catch (IOException e){
+                    e.printStackTrace();
+                }
+
+                return;
+            }
+
             int pos = combModiPos.getValue()-1;
 
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/result/PepCombine.fxml"));
@@ -374,8 +413,14 @@ public class PBrowserController implements Initializable {
 
     @FXML private void selSequence(ActionEvent event){
         if(combModiPos.getValue() == null){
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Peptide Combination");
+            alert.setHeaderText(null);
+            alert.setContentText("Please select a position with modification from combobox above before peptide combination.");
+            alert.showAndWait();
             cbSequence.setSelected(true);
         }
+
         if(cbSequence.isSelected()){
             cbCharge.setDisable(false);
 
@@ -821,6 +866,7 @@ public class PBrowserController implements Initializable {
                 scaleX = newV;
                 double sbVal = sbarCanvas.getValue();
                 initSBar(sbVal * newV/oldV);
+                combModiPos.getSelectionModel().clearSelection();
                 draw();
             }
         });
