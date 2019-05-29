@@ -16,6 +16,7 @@ import javafx.scene.control.TableView;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Callback;
+import share.Util;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -32,6 +33,7 @@ import java.util.TreeMap;
 public class PepCombineAllController {
     private SampleGroup sampleGroup;
     private int pos;
+    private String proteinName;
     private ArrayList<Protein> proteins;
     private LinkedHashMap<String, ArrayList<String>> outputRlt;
 
@@ -41,12 +43,13 @@ public class PepCombineAllController {
 
     public void setData(SampleGroup sampleGroup, String proteinName, int pos){
         this.sampleGroup = sampleGroup;
+        this.proteinName = proteinName;
         this.pos = pos;
 
         proteins = new ArrayList<>();
         proteins = sampleGroup.getProtein(proteinName);
 
-        lblInfo.setText("Peptide Abundance after Combination for " + proteinName);
+        lblInfo.setText("Peptide Abundance after Combination for " + proteinName + " at " + (pos+1));
         outputRlt = new LinkedHashMap<String, ArrayList<String>>();
     }
 
@@ -213,23 +216,68 @@ public class PepCombineAllController {
         colTotal.setSortable(true);
         tbvRlt.getColumns().add(colTotal);
 
+        idxCol++;
+        if(flagNULL){
+            final  int idxNMP = idxCol;
+            TableColumn colNull = new TableColumn("NoModification(%)");
+            outputRlt.put("NoModification(%)", new ArrayList<String>());
+            colNull.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<ObservableList, String>, ObservableValue<String>>() {
+                @Override
+                public ObservableValue<String> call(TableColumn.CellDataFeatures<ObservableList, String> param) {
+                    return new SimpleStringProperty(param.getValue().get(idxNMP).toString());
+                }
+            });
+            colNull.setSortable(true);
+            tbvRlt.getColumns().add(colNull);
+            idxCol++;
+        }
+
+        if(abundance.size()>0){
+            for(Map.Entry<String, ArrayList<Double>> entry : abundance.entrySet()){
+                final  int idxMP = idxCol;
+                TableColumn colTmp = new TableColumn(entry.getKey()+"(%)");
+                outputRlt.put(entry.getKey()+"(%)", new ArrayList<String>());
+                colTmp.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<ObservableList, String>, ObservableValue<String>>() {
+                    @Override
+                    public ObservableValue<String> call(TableColumn.CellDataFeatures<ObservableList, String> param) {
+                        return new SimpleStringProperty(param.getValue().get(idxMP).toString());
+                    }
+                });
+                colTmp.setSortable(true);
+                tbvRlt.getColumns().add(colTmp);
+                idxCol++;
+            }
+        }
+
+
 
         for(int i=0; i<sampleId.size(); i++){
             ObservableList<String> row = FXCollections.observableArrayList();
             row.add(sampleId.get(i));
             outputRlt.get("ID").add(sampleId.get(i));
             if(flagNULL){
-                row.add(nullAbundance.get(i).toString());
+                row.add(Util.doubleFormat(nullAbundance.get(i)));
                 outputRlt.get("NoModification").add(nullAbundance.get(i).toString());
             }
             if(abundance.size()>0){
                 for(Map.Entry<String, ArrayList<Double>> entry : abundance.entrySet()){
-                    row.addAll(entry.getValue().get(i).toString());
+                    row.add(Util.doubleFormat(entry.getValue().get(i)));
                     outputRlt.get(entry.getKey()).add(entry.getValue().get(i).toString());
                 }
             }
-            row.add(totalAbundance.get(i).toString());
+            row.add(Util.doubleFormat(totalAbundance.get(i)));
             outputRlt.get("Total").add(totalAbundance.get(i).toString());
+
+            if(flagNULL){
+                row.add(Util.percentFormat(nullAbundance.get(i)/totalAbundance.get(i)));
+                outputRlt.get("NoModification(%)").add(Util.percentFormat(nullAbundance.get(i)/totalAbundance.get(i)));
+            }
+            if(abundance.size()>0){
+                for(Map.Entry<String, ArrayList<Double>> entry : abundance.entrySet()){
+                    row.add(Util.percentFormat(entry.getValue().get(i)/totalAbundance.get(i)));
+                    outputRlt.get(entry.getKey()+"(%)").add(Util.percentFormat(entry.getValue().get(i)/totalAbundance.get(i)));
+                }
+            }
             data.add(row);
         }
 
@@ -243,6 +291,7 @@ public class PepCombineAllController {
         fileChooser.getExtensionFilters().add(
                 new FileChooser.ExtensionFilter("Output Abundance", "*.csv")
         );
+        fileChooser.setInitialFileName(proteinName + "_" + (pos+1) + ".csv");
 
         Stage stage = (Stage) tbvRlt.getScene().getWindow();
         File outputFile = fileChooser.showSaveDialog(stage);

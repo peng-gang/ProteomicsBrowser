@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.ResourceBundle;
 import java.util.function.UnaryOperator;
 
@@ -27,7 +28,8 @@ public class ParaExportModificationInfoController implements Initializable{
 
     private File outputFile = null;
 
-    private Protein protein;
+    private ArrayList<Protein> proteins;
+    private ArrayList<String> sampleId;
 
     @FXML private void getOutputFile(ActionEvent event){
         Stage stage = (Stage) txtModiCutoff.getScene().getWindow();
@@ -85,11 +87,18 @@ public class ParaExportModificationInfoController implements Initializable{
             e.printStackTrace();
         }
         BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
-        String output = protein.getModiInfoAll(cutoff);
-        try {
-            bufferedWriter.write(output);
-        } catch (IOException e) {
-            e.printStackTrace();
+        int idx = 0;
+        for(Protein protein : proteins){
+            String output = protein.getModiInfoAll(cutoff);
+            try {
+                bufferedWriter.write(sampleId.get(idx));
+                bufferedWriter.newLine();
+                bufferedWriter.write(output);
+                bufferedWriter.newLine();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            idx++;
         }
 
         //System.out.println(output);
@@ -109,8 +118,9 @@ public class ParaExportModificationInfoController implements Initializable{
         stage.close();
     }
 
-    public void setProtein(Protein protein){
-        this.protein = protein;
+    public void setData(ArrayList<Protein> proteins, ArrayList<String> sampleId){
+        this.proteins = proteins;
+        this.sampleId = sampleId;
     }
 
     @Override

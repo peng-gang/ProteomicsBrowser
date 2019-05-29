@@ -8,12 +8,11 @@
 <?import java.lang.*?>
 <?import javafx.scene.layout.*?>
 
-
 <ScrollPane prefHeight="1100.0" prefWidth="1300.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.browser.PBrowserController">
    <content>
       <HBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="1100.0" prefWidth="1300.0">
          <children>
-            <VBox prefHeight="1100.0" prefWidth="350.0" spacing="30.0">
+            <VBox prefHeight="1100.0" prefWidth="350.0" spacing="5.0">
                <children>
                   <VBox prefHeight="331.0" prefWidth="350.0" spacing="5.0">
                      <children>
@@ -81,7 +80,7 @@
                         </VBox>
                      </children>
                   </VBox>
-                  <VBox prefHeight="108.0" prefWidth="350.0">
+                  <VBox prefHeight="180.0" prefWidth="400.0">
                      <children>
                         <Label text="Selection Options">
                            <font>
@@ -91,20 +90,16 @@
                               <Insets left="10.0" />
                            </VBox.margin>
                         </Label>
-                        <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0" spacing="5.0">
+                        <HBox prefHeight="100.0" prefWidth="200.0" spacing="5.0">
                            <children>
-                              <Label text="Sample">
-                                 <font>
-                                    <Font size="18.0" />
-                                 </font>
-                              </Label>
-                              <ComboBox fx:id="combSample" prefWidth="150.0" />
+                              <MenuButton fx:id="mbSamples" mnemonicParsing="false" text="Samples" />
+                              <ListView fx:id="lvSamples" prefHeight="100.0" prefWidth="200.0" />
                            </children>
                            <VBox.margin>
                               <Insets left="20.0" />
                            </VBox.margin>
                         </HBox>
-                        <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0" spacing="5.0">
+                        <HBox alignment="CENTER_LEFT" prefHeight="50.0" prefWidth="200.0" spacing="5.0">
                            <children>
                               <Label text="Protein">
                                  <font>
@@ -152,12 +147,12 @@
                               <Insets left="20.0" />
                            </VBox.margin>
                         </HBox>
-                        <VBox fx:id="vbCriteria" prefHeight="200.0" prefWidth="348.0" spacing="10.0">
+                        <VBox fx:id="vbCriteria" prefHeight="200.0" prefWidth="348.0" spacing="5.0">
                            <VBox.margin>
                               <Insets left="10.0" />
                            </VBox.margin>
                            <children>
-                              <VBox fx:id="vbPepInfo" prefWidth="100.0" spacing="10.0">
+                              <VBox fx:id="vbPepInfo" prefWidth="100.0" spacing="5.0">
                                  <children>
                                     <CheckBox fx:id="cbSequence" disable="true" mnemonicParsing="false" onAction="#selSequence" selected="true" text="Sequence" />
                                     <CheckBox fx:id="cbCharge" disable="true" mnemonicParsing="false" text="Charge" />
@@ -174,7 +169,7 @@
                               </VBox>
                            </children>
                         </VBox>
-                        <HBox alignment="CENTER" prefHeight="50.0" prefWidth="200.0">
+                        <HBox alignment="CENTER" prefHeight="30.0" prefWidth="200.0">
                            <children>
                               <Button fx:id="btnCombine" disable="true" mnemonicParsing="false" onAction="#combine" text="Show" />
                            </children>

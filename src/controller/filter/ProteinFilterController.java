@@ -17,6 +17,7 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -42,9 +43,14 @@ public class ProteinFilterController {
     @FXML private TextField txtNumPep;
     @FXML private Label lblMaxNumPep;
 
-    private Sample sample;
+    @FXML private RadioButton rbAny;
+    @FXML private RadioButton rbAll;
+
+    private SampleGroup sampleGroup;
+    private ArrayList<String> selectedSamples;
     private Set<String> modiSelected;
     private Set<String> modiRm;
+    private boolean anySample = true;
 
     private int maxNumModification = 0;
     private int maxNumPep = 0;
@@ -82,17 +88,26 @@ public class ProteinFilterController {
         return tabSelected;
     }
 
-    public void init(Sample sample){
-        this.sample = sample;
+    public boolean getAnySample() { return anySample; }
+
+    public void init(SampleGroup sampleGroup, ArrayList<String> selectedSamples){
+        this.sampleGroup = sampleGroup;
+        this.selectedSamples = selectedSamples;
 
         //Modification Type
         modiSelected = new TreeSet<>();
         modiRm = new TreeSet<>();
 
-        int numModiAll = sample.getModificationTypeAll().size();
+        //int numModiAll = sample.getModificationTypeAll().size();
+
+        Set<String> modiTypeAllSel = new HashSet<>();
+        for(String selectedSample : selectedSamples){
+            modiTypeAllSel.addAll(sampleGroup.getSample(selectedSample).getModificationTypeAll());
+        }
+
         int idx = 0;
         HBox hBox = null;
-        for(String modiType:sample.getModificationTypeAll()){
+        for(String modiType:modiTypeAllSel){
             if(idx==0){
                 hBox = new HBox();
                 hBox.setSpacing(20);
@@ -166,15 +181,27 @@ public class ProteinFilterController {
         }
 
 
-        for(Protein protein:sample.getProteins()){
-            if(protein.getModiPos().size() > maxNumModification){
-                maxNumModification = protein.getModiPos().size();
-            }
-            if(protein.getPeptides().size() > maxNumPep){
-                maxNumPep = protein.getPeptides().size();
+        maxNumModification = 0;
+        maxNumPep = 0;
+        for(String selectedSample : selectedSamples){
+            Sample sample = sampleGroup.getSample(selectedSample);
+            for(Protein protein:sample.getProteins()){
+                if(protein.getModiPos().size() > maxNumModification){
+                    maxNumModification = protein.getModiPos().size();
+                }
+                if(protein.getPeptides().size() > maxNumPep){
+                    maxNumPep = protein.getPeptides().size();
+                }
             }
         }
-        maxNumModiType = sample.getModificationTypeAll().size();
+
+        maxNumModiType = 0;
+        for(String selectedSample : selectedSamples){
+            if(maxNumModiType < sampleGroup.getSample(selectedSample).getModificationTypeAll().size()){
+                maxNumModiType = sampleGroup.getSample(selectedSample).getModificationTypeAll().size();
+            }
+        }
+        //maxNumModiType = sample.getModificationTypeAll().size();
 
 
         //Number of Modification Position
@@ -317,6 +344,14 @@ public class ProteinFilterController {
         submitted = false;
         Stage stage = (Stage) txtNumPep.getScene().getWindow();
         stage.close();
+    }
+
+    @FXML private void anySample(){
+        anySample =rbAny.isSelected();
+    }
+
+    @FXML private void allSamples(){
+        anySample = rbAny.isSelected();
     }
 
 }

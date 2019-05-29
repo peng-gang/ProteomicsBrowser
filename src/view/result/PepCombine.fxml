@@ -6,29 +6,31 @@
 <?import java.lang.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox alignment="TOP_CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="450.0" prefWidth="950.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.result.PepCombineController">
+<VBox alignment="TOP_CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="640.0" prefWidth="1050.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.result.PepCombineController">
    <children>
-      <HBox prefHeight="200.0" prefWidth="950.0" spacing="5.0">
+      <HBox prefHeight="430.0" prefWidth="1050.0" spacing="5.0">
          <children>
-            <VBox prefHeight="200.0" prefWidth="800.0">
+            <VBox prefHeight="430.0" prefWidth="800.0">
                <children>
-                  <Canvas fx:id="canvas" height="200.0" width="800.0" />
+                  <Canvas fx:id="canvas" height="400.0" width="800.0" />
+                  <HBox alignment="CENTER" maxWidth="800.0" prefHeight="30.0" prefWidth="800.0" spacing="600.0">
+                     <children>
+                        <Label fx:id="lblStart" prefWidth="95.0" textFill="#d55e00" />
+                        <Label fx:id="lblEnd" alignment="CENTER_RIGHT" contentDisplay="RIGHT" prefWidth="95.0" textFill="#d45c00" />
+                     </children>
+                     <opaqueInsets>
+                        <Insets />
+                     </opaqueInsets>
+                  </HBox>
                </children>
             </VBox>
-            <VBox fx:id="vbLegend" alignment="CENTER" prefHeight="200.0" prefWidth="145.0" />
+            <VBox fx:id="vbLegend" alignment="CENTER" prefHeight="430.0" prefWidth="245.0">
+               <padding>
+                  <Insets bottom="70.0" top="10.0" />
+               </padding></VBox>
          </children>
       </HBox>
-      <HBox alignment="CENTER" maxWidth="800.0" prefHeight="30.0" prefWidth="800.0" spacing="600.0">
-         <children>
-            <Label fx:id="lblStart" prefWidth="95.0" textFill="#d55e00" />
-            <Label fx:id="lblEnd" alignment="CENTER_RIGHT" contentDisplay="RIGHT" prefWidth="95.0" textFill="#d45c00" />
-         </children>
-         <opaqueInsets>
-            <Insets />
-         </opaqueInsets>
-      </HBox>
-      <Label fx:id="lblInfo" textAlignment="CENTER" />
-      <HBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="950.0" spacing="100.0">
+      <HBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="1050.0" spacing="100.0">
          <children>
             <ScrollPane prefViewportHeight="200.0" prefViewportWidth="350.0">
                <content>

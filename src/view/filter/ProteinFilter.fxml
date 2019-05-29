@@ -100,6 +100,16 @@
          </padding></VBox>
       <HBox alignment="CENTER_RIGHT" prefHeight="100.0" prefWidth="200.0" spacing="20.0">
          <children>
+            <RadioButton fx:id="rbAny" mnemonicParsing="false" onAction="#anySample" selected="true" text="Any Sample">
+               <toggleGroup>
+                  <ToggleGroup fx:id="groupSP" />
+               </toggleGroup>
+            </RadioButton>
+            <RadioButton fx:id="rbAll" mnemonicParsing="false" onAction="#allSamples" text="All Samples" toggleGroup="$groupSP">
+               <HBox.margin>
+                  <Insets right="120.0" />
+               </HBox.margin>
+            </RadioButton>
             <Button mnemonicParsing="false" onAction="#cancel" text="Cancel" />
             <Button mnemonicParsing="false" onAction="#submit" text="Submit" />
          </children>

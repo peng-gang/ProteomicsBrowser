@@ -900,8 +900,8 @@ public class MainController implements Initializable{
 
     @FXML private  void exportModificationInfo(ActionEvent event){
         System.out.println("Export Modification Information");
-        Protein protein = pBrowserController.getProtein();
-        if(protein==null){
+        ArrayList<Protein> proteins = pBrowserController.getProteins();
+        if(proteins.size()==0){
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setTitle("Modification Export");
             alert.setHeaderText(null);
@@ -921,7 +921,7 @@ public class MainController implements Initializable{
             exportModiStage.initOwner(menuBar.getScene().getWindow());
 
             ParaExportModificationInfoController controller = loader.getController();
-            controller.setProtein(protein);
+            controller.setData(proteins, pBrowserController.getSelectedSamples());
 
             exportModiStage.showAndWait();
         } catch (IOException e) {
@@ -946,8 +946,9 @@ public class MainController implements Initializable{
     }
 
 
+    //TODO
     @FXML private void exportProteinFilter(ActionEvent event){
-        if(pBrowserController.getSelectedSample()==null){
+        if(pBrowserController.getSelectedSamples().size()==0){
             Alert alert = new Alert(Alert.AlertType.WARNING);
             alert.setTitle("Export Proteins after Filtering");
             alert.setHeaderText(null);
@@ -967,7 +968,12 @@ public class MainController implements Initializable{
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Output Proteins after Filtering");
 
-        String initName = "ProteinsAfterFilter_" + pBrowserController.getSelectedSample() + ".txt";
+        String initName = "ProteinsAfterFilter";
+        for(String selectedSample : pBrowserController.getSelectedSamples()){
+            initName += "_" + selectedSample;
+        }
+        initName += ".txt";
+        //String initName = "ProteinsAfterFilter_" + pBrowserController.getSelectedSamples().get(0) + ".txt";
         fileChooser.setInitialFileName(initName);
 
         fileChooser.getExtensionFilters().add(
@@ -983,8 +989,9 @@ public class MainController implements Initializable{
         pBrowserController.saveProteinFilter(txtFile);
     }
 
+    //TODO
     @FXML private void exportPeptideFilter(ActionEvent event){
-        if(pBrowserController.getSelectedSample()==null){
+        if(pBrowserController.getSelectedSamples().size()==0){
             Alert alert = new Alert(Alert.AlertType.WARNING);
             alert.setTitle("Export Peptides after Filtering");
             alert.setHeaderText(null);
@@ -1004,7 +1011,7 @@ public class MainController implements Initializable{
 
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Output Peptide after Filtering");
-        String initName = "PeptidesAfterFilter_" + pBrowserController.getCombProtein().getValue() + "_" + pBrowserController.getSelectedSample() + ".txt";
+        String initName = "PeptidesAfterFilter_" + pBrowserController.getCombProtein().getValue() + "_" + pBrowserController.getSelectedSamples().get(0) + ".txt";
         fileChooser.setInitialFileName(initName);
 
         fileChooser.getExtensionFilters().add(
@@ -1154,12 +1161,13 @@ public class MainController implements Initializable{
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("ProteomicsBrowser");
         alert.setHeaderText(null);
-        alert.setContentText("ProteomicsBrowser: Version 1.0.1 " + System.lineSeparator() + "Yale University " + System.lineSeparator() + "All Rights Reserved. " + System.lineSeparator());
+        alert.setContentText("ProteomicsBrowser: Version 1.1.1 " + System.lineSeparator() + "Yale University " + System.lineSeparator() + "All Rights Reserved. " + System.lineSeparator());
         alert.showAndWait();
         return;
     }
 
     @FXML private void pepFilter(ActionEvent event){
+        //TODO
         if(!pBrowserController.getInitialized()){
             Alert alert = new Alert(Alert.AlertType.WARNING);
             alert.setTitle("Peptide Filter");
@@ -1185,28 +1193,28 @@ public class MainController implements Initializable{
         pepFilterStage.initOwner(menuBar.getScene().getWindow());
 
         PepFilterController controller = loader.getController();
-        controller.init(pBrowserController.getProtein());
+        controller.init(pBrowserController.getProteins().get(0));
 
         pepFilterStage.showAndWait();
 
         if(!controller.getSubmitted()){
-            pBrowserController.getProtein().setAbundanceCutPerHigh(1.0);
-            pBrowserController.getProtein().setAbundanceCutPerLow(0.0);
-            for(int i=0; i<pBrowserController.getProtein().getDoubleInfoName().size();i++){
-                pBrowserController.getProtein().setDoubleInfoCutPerHigh(i, 1.0);
-                pBrowserController.getProtein().setDoubleInfoCutPerLow(i, 0.0);
+            pBrowserController.getProteins().get(0).setAbundanceCutPerHigh(1.0);
+            pBrowserController.getProteins().get(0).setAbundanceCutPerLow(0.0);
+            for(int i=0; i<pBrowserController.getProteins().get(0).getDoubleInfoName().size();i++){
+                pBrowserController.getProteins().get(0).setDoubleInfoCutPerHigh(i, 1.0);
+                pBrowserController.getProteins().get(0).setDoubleInfoCutPerLow(i, 0.0);
             }
         }
 
-        pBrowserController.getProtein().updateShow();
+        pBrowserController.getProteins().get(0).updateShow();
         pBrowserController.updatePep();
         pBrowserController.updateCombModiPos();
     }
 
     @FXML private void proteinFilter(ActionEvent event){
-        String selectedSample = pBrowserController.getSelectedSample();
+        ArrayList<String> selectedSamples = pBrowserController.getSelectedSamples();
 
-        if(selectedSample==null){
+        if(selectedSamples.size()==0){
             Alert alert = new Alert(Alert.AlertType.WARNING);
             alert.setTitle("Protein Filter");
             alert.setHeaderText(null);
@@ -1233,7 +1241,7 @@ public class MainController implements Initializable{
         proteinFilterStage.initOwner(menuBar.getScene().getWindow());
 
         ProteinFilterController controller = loader.getController();
-        controller.init(sampleGroup.getSample(selectedSample));
+        controller.init(sampleGroup, selectedSamples);
 
         proteinFilterStage.showAndWait();
 
@@ -1250,15 +1258,15 @@ public class MainController implements Initializable{
             switch (tabSel){
                 case "Types of Modification":
                     //System.out.println("MT");
-                    pBrowserController.proteinFilter(controller.getModiSelected(), controller.getModiRm(), controller.getNumPep());
+                    pBrowserController.proteinFilter(controller.getModiSelected(), controller.getModiRm(), controller.getNumPep(), controller.getAnySample());
                     break;
                 case "Number of Modification Types":
                     //System.out.println("NMT");
-                    pBrowserController.proteinFilterType(controller.getNumModiType(), controller.getNumPep());
+                    pBrowserController.proteinFilterType(controller.getNumModiType(), controller.getNumPep(), controller.getAnySample());
                     break;
                 case "Modification Positions":
                     //System.out.println("MP");
-                    pBrowserController.proteinFilter(controller.getNumModiPos(), controller.getNumPep());
+                    pBrowserController.proteinFilter(controller.getNumModiPos(), controller.getNumPep(), controller.getAnySample());
                     break;
             }
 

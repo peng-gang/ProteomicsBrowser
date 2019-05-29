@@ -5,8 +5,11 @@ import controller.result.PepCombineAllController;
 import controller.result.PepCombineController;
 import data.PepPos;
 import data.*;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.ListChangeListener;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -24,7 +27,7 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
-import javafx.scene.input.MouseEvent;
+import javafx.scene.input.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
@@ -34,6 +37,7 @@ import javafx.scene.text.Font;
 import javafx.scene.transform.Transform;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.util.Callback;
 
 import javax.imageio.ImageIO;
 import java.io.BufferedWriter;
@@ -55,7 +59,7 @@ public class PBrowserController implements Initializable {
     @FXML private Slider sliderZoom;
     @FXML private Label lblPep;
     @FXML private Label lblPos;
-    @FXML private ComboBox<String> combSample;
+    //@FXML private ComboBox<String> combSample;
     @FXML private ComboBox<String> combProtein;
     @FXML private ScrollBar sbarCanvas;
     @FXML private VBox vbLegend;
@@ -73,31 +77,13 @@ public class PBrowserController implements Initializable {
     @FXML private CheckBox cbCharge;
     @FXML private CheckBox cbSequence;
     @FXML private HBox hBoxView;
+    @FXML private MenuButton mbSamples;
+    @FXML private ListView<String> lvSamples;
+
 
     private boolean initialized = false;
 
     private boolean pepCombined = false;
-
-    //private boolean combinePosSel = false;
-
-    /*
-    //Legend 1
-    private HBox hbAcetylation;
-    private Label lbAcetylation1;
-    private Label lbAcetylation2;
-
-    private HBox hbCarbamidomethylation;
-    private Label lbCarbamidomethylation1;
-    private Label lbCarbamidomethylation2;
-
-    private HBox hbPhosphorylation;
-    private Label lbPhosphorylation1;
-    private Label lbPhosphorylation2;
-
-    private HBox hbOxidation;
-    private Label lbOxidation1;
-    private Label lbOxidation2;
-    */
 
 
     //Legend 2
@@ -138,13 +124,18 @@ public class PBrowserController implements Initializable {
     //private ArrayList<String> modiTypeCombined;
 
 
-    private String selectedSample = null;
+    //private String selectedSample = null;
     private String selectedProtein = null;
-    private Protein protein = null;
+    //private Protein protein = null;
+    private ArrayList<Protein> proteins;
+
     private ArrayList<String> modificationTypeAll;
+    private ArrayList<String> selectedSamples;
 
     private double scaleX = 1;
     private double scaleY = 1;
+    private double scaleYCombined = 1;
+    private  double pixPerSample;
 
     private final double canvasWidth = 800;
     private final double canvasHeight = 600;
@@ -156,22 +147,30 @@ public class PBrowserController implements Initializable {
     private final double pixPepGap = 1;
     private final double leftPix =10;
     private final double rightPix = 10;
-    //private final double topPix = 10;
+    private final double topPix = 10;
     private final double bottomPix = 10;
     private final double pixXLabel = 30;
+    private final double sampleGapPix = 20;
 
-    private int maxY;
-    private int maxYCombined;
-    private ArrayList<PepPos> arrangePep;
-    private ArrayList<PepPos> arrangePepCombined;
+    private ArrayList<Integer> maxYs;
+    private ArrayList<Integer> maxYsCombined;
+    //private ArrayList<PepPos> arrangePep;
+    //private ArrayList<PepPos> arrangePepCombined;
+
+    private ArrayList<ArrayList<PepPos>> arrangePeps;
+    private ArrayList<ArrayList<PepPos>> arrangePepsCombined;
 
     //selected modifications to show
     private ArrayList<String> modiSelected;
 
-    public Protein getProtein() { return  protein; }
+    public ArrayList<Protein> getProteins() { return  proteins; }
+    public ArrayList<Protein> getProteinsAllSamples() {
+        return sampleGroup.getProtein(selectedProtein);
+    }
+
     public boolean getInitialized() { return initialized; }
 
-    public String getSelectedSample() { return  selectedSample; }
+    public ArrayList<String> getSelectedSamples() { return  selectedSamples; }
 
 
     public ComboBox<String> getCombProtein(){
@@ -229,7 +228,11 @@ public class PBrowserController implements Initializable {
 
     private void unCombined(){
         modiSelected.clear();
-        modiSelected.addAll(protein.getModiTypeAll());
+        Set<String> modiSelectedTmp = new TreeSet<>();
+        for(Protein protein : proteins){
+            modiSelectedTmp.addAll(protein.getModiTypeAll());
+        }
+        modiSelected.addAll(modiSelectedTmp);
         for(Node node : vBoxModification.getChildren()){
             for(Node node1 :((HBox) node).getChildren()){
                 ((CheckBox) node1).setSelected(true);
@@ -239,20 +242,21 @@ public class PBrowserController implements Initializable {
 
         combModiPos.getSelectionModel().clearSelection();
         combModiPos.getItems().clear();
-        combModiPos.getItems().addAll(protein.getModiPosSel1(modiSelected));
+        Set<Integer> modiPosTmp = new TreeSet<>();
+        for(Protein protein : proteins){
+            modiPosTmp.addAll(protein.getModiPosSel1(modiSelected));
+        }
+        combModiPos.getItems().addAll(modiPosTmp);
         combModiPos.setDisable(false);
+
         //combinePosSel = false;
-        //scaleX = 1;
-        scaleY = 1;
-        double sc = (canvasWidth - leftPix - rightPix)/(protein.getLength() * pixPerLocus);
+        double sc = (canvasWidth - leftPix - rightPix)/(proteins.get(0).getLength() * pixPerLocus);
         sliderZoom.setMin(Math.log(sc) /Math.log(2.0));
         sliderZoom.setValue(sliderZoom.getMin());
         scaleX = Math.pow(2.0, sliderZoom.getValue());
         orderPep();
         //too many modification to show in a canvas
-        if(maxY * (pixPerPep + 2*pixPepGap) > (canvasHeight-bottomPix-pixXLabel)){
-            scaleY = (canvasHeight-bottomPix-pixXLabel)/((pixPerPep + 2*pixPepGap)*maxY);
-        }
+        calScaleY();
         //initSBar(0);
         draw();
         mainController.pepFilterSetDisable(false);
@@ -322,12 +326,12 @@ public class PBrowserController implements Initializable {
 
                 Stage pepCombine = new Stage();
                 pepCombine.setTitle("Peptide Combination");
-                pepCombine.setScene(new Scene(root, 950, 450));
+                pepCombine.setScene(new Scene(root, 1050, 650));
                 pepCombine.initModality(Modality.WINDOW_MODAL);
                 pepCombine.initOwner(canvas.getScene().getWindow());
 
                 PepCombineController controller = loader.getController();
-                controller.setData(sampleGroup, protein, pos);
+                controller.setData(sampleGroup, proteins, selectedSamples, pos);
 
                 pepCombine.showAndWait();
             } catch (IOException e) {
@@ -339,23 +343,8 @@ public class PBrowserController implements Initializable {
 
 
         pepCombined = true;
-        //ArrayList<String> doubleInfoCriteria = new ArrayList<>();
-        //ArrayList<String> strInfoCriteria = new ArrayList<>();
         ArrayList<String> modiCriteria = new ArrayList<>();
 
-        /*
-        for(Node node : vbPepDoubleInfo.getChildren()){
-            if(((CheckBox) node).isSelected()){
-                doubleInfoCriteria.add(node.getUserData().toString());
-            }
-        }
-
-        for(Node node : vbPepStrInfo.getChildren()){
-            if(((CheckBox) node).isSelected()){
-                strInfoCriteria.add(node.getUserData().toString());
-            }
-        }
-        */
 
         for(Node node : vbModification.getChildren()){
             if(((CheckBox) node).isSelected()){
@@ -363,13 +352,11 @@ public class PBrowserController implements Initializable {
             }
         }
 
-        //System.out.println(doubleInfoCriteria);
-        //System.out.println(strInfoCriteria);
-        //System.out.println(modiCriteria);
+        for(Protein protein : proteins){
+            protein.combinePep(cbCharge.isSelected(), modiCriteria);
+            protein.setAbundanceCombinedRange();
+        }
 
-        //.combinePep(doubleInfoCriteria, strInfoCriteria, modiCriteria);
-        protein.combinePep(cbCharge.isSelected(), modiCriteria);
-        protein.setAbundanceCombinedRange();
         modiSelected.clear();
         modiSelected.addAll(modiCriteria);
         for(Node node : vBoxModification.getChildren()){
@@ -387,20 +374,26 @@ public class PBrowserController implements Initializable {
 
         combModiPos.getSelectionModel().clearSelection();
         combModiPos.getItems().clear();
-        combModiPos.getItems().addAll(protein.getModiCombinedPos1(modiSelected));
+        Set<Integer> modiPosTmp = new TreeSet<>();
+        for(Protein protein : proteins){
+            modiPosTmp.addAll(protein.getModiCombinedPos1(modiSelected));
+        }
+        combModiPos.getItems().addAll(modiPosTmp);
         combModiPos.setDisable(false);
+
         //combinePosSel = false;
         //scaleX = 1;
-        scaleY = 1;
-        double sc = (canvasWidth - leftPix - rightPix)/(protein.getLength() * pixPerLocus);
+        //scaleY = 1;
+        double sc = (canvasWidth - leftPix - rightPix)/(proteins.get(0).getLength() * pixPerLocus);
         sliderZoom.setMin(Math.log(sc) /Math.log(2.0));
         sliderZoom.setValue(sliderZoom.getMin());
         scaleX = Math.pow(2.0, sliderZoom.getValue());
         orderPep();
         //too many modification to show in a canvas
-        if(maxYCombined * (pixPerPep + 2*pixPepGap) > (canvasHeight-bottomPix-pixXLabel)){
-            scaleY = (canvasHeight-bottomPix-pixXLabel)/((pixPerPep + 2*pixPepGap)*maxYCombined);
-        }
+        //if(maxYCombined * (pixPerPep + 2*pixPepGap) > (canvasHeight-bottomPix-pixXLabel)){
+        //    scaleY = (canvasHeight-bottomPix-pixXLabel)/((pixPerPep + 2*pixPepGap)*maxYCombined);
+        //}
+        calScaleYCombined();
         //initSBar(0);
         draw();
 
@@ -440,38 +433,87 @@ public class PBrowserController implements Initializable {
         return;
     }
 
-    public void proteinFilter(Set<String> modiSel, Set<String> modiRm, int numPep){
-        ArrayList<String> ptSort = new ArrayList<> ();
+    public void proteinFilter(Set<String> modiSel, Set<String> modiRm, int numPep,  boolean anySample){
+        Set<String> ptSort = new TreeSet<>();
+        if(anySample){
+            for(String pid : proteinId){
+                for(String selectedSample : selectedSamples){
+                    boolean include = true;
 
-        for(String pid : proteinId){
-            boolean include = true;
+                    if(modiRm.size()!=0) {
+                        for(String mType: sampleGroup.getProtein(selectedSample, pid).getModiTypeAll()){
+                            if(modiRm.contains(mType)){
+                                include = false;
+                                break;
+                            }
+                        }
+                        if(!include){
+                            continue;
+                        }
+                    }
 
-            if(modiRm.size()!=0) {
-                for(String mType: sampleGroup.getProtein(selectedSample, pid).getModiTypeAll()){
-                    if(modiRm.contains(mType)){
-                        include = false;
-                        break;
+                    if(modiSel.size()!=0){
+                        int numInclude = 0;
+                        for(String mType: sampleGroup.getProtein(selectedSample, pid).getModiTypeAll()){
+                            if(modiSel.contains(mType)){
+                                numInclude++;
+                            }
+                        }
+                        if(numInclude!=modiSel.size()){
+                            continue;
+                        }
+                    }
+
+                    if(include){
+                        if(sampleGroup.getProtein(selectedSample, pid).getPeptides().size() >= numPep){
+                            ptSort.add(pid);
+                            break;
+                        } else {
+                            continue;
+                        }
                     }
                 }
-                if(!include){
-                    continue;
-                }
             }
+        } else {
+            for(String pid : proteinId){
+                int numMeet = 0;
+                for(String selectedSample : selectedSamples){
+                    boolean include = true;
 
-            if(modiSel.size()!=0){
-                int numInclude = 0;
-                for(String mType: sampleGroup.getProtein(selectedSample, pid).getModiTypeAll()){
-                    if(modiSel.contains(mType)){
-                        numInclude++;
+                    if(modiRm.size()!=0) {
+                        for(String mType: sampleGroup.getProtein(selectedSample, pid).getModiTypeAll()){
+                            if(modiRm.contains(mType)){
+                                include = false;
+                                break;
+                            }
+                        }
+                        if(!include){
+                            break;
+                        }
+                    }
+
+                    if(modiSel.size()!=0){
+                        int numInclude = 0;
+                        for(String mType: sampleGroup.getProtein(selectedSample, pid).getModiTypeAll()){
+                            if(modiSel.contains(mType)){
+                                numInclude++;
+                            }
+                        }
+                        if(numInclude!=modiSel.size()){
+                            break;
+                        }
+                    }
+
+                    if(include){
+                        if(sampleGroup.getProtein(selectedSample, pid).getPeptides().size() >= numPep){
+                            numMeet++;
+                            continue;
+                        } else {
+                            break;
+                        }
                     }
                 }
-                if(numInclude!=modiSel.size()){
-                    continue;
-                }
-            }
-
-            if(include){
-                if(sampleGroup.getProtein(selectedSample, pid).getPeptides().size() >= numPep){
+                if(numMeet == selectedSamples.size()){
                     ptSort.add(pid);
                 }
             }
@@ -484,19 +526,38 @@ public class PBrowserController implements Initializable {
             return;
         }
 
-        Collections.sort(ptSort);
         combProtein.getItems().clear();
         combProtein.getItems().addAll(ptSort);
         combProtein.getSelectionModel().select(0);
         selectedProtein = combProtein.getValue();
     }
 
-    public void proteinFilter(int numModiPos, int numPep){
-        ArrayList<String> ptSort = new ArrayList<> ();
-        for(String pid : proteinId){
-            if(sampleGroup.getProtein(selectedSample, pid).getModiPos().size() >= numModiPos &&
-                    sampleGroup.getProtein(selectedSample, pid).getPeptides().size() >= numPep){
-                ptSort.add(pid);
+    public void proteinFilter(int numModiPos, int numPep,  boolean anySample){
+        Set<String> ptSort = new TreeSet<>();
+        if(anySample){
+            for(String pid : proteinId){
+                for(String selectedSample : selectedSamples){
+                    if(sampleGroup.getProtein(selectedSample, pid).getModiPos().size() >= numModiPos &&
+                            sampleGroup.getProtein(selectedSample, pid).getPeptides().size() >= numPep){
+                        ptSort.add(pid);
+                        break;
+                    }
+                }
+            }
+        } else {
+            for(String pid : proteinId){
+                int numMeet = 0;
+                for(String selectedSample : selectedSamples){
+                    if(sampleGroup.getProtein(selectedSample, pid).getModiPos().size() >= numModiPos &&
+                            sampleGroup.getProtein(selectedSample, pid).getPeptides().size() >= numPep){
+                        numMeet++;
+                    } else {
+                        break;
+                    }
+                }
+                if(numMeet == selectedSamples.size()){
+                    ptSort.add(pid);
+                }
             }
         }
 
@@ -507,19 +568,38 @@ public class PBrowserController implements Initializable {
             return;
         }
 
-        Collections.sort(ptSort);
         combProtein.getItems().clear();
         combProtein.getItems().addAll(ptSort);
         combProtein.getSelectionModel().select(0);
         selectedProtein = combProtein.getValue();
     }
 
-    public void proteinFilterType(int numModiType, int numPep){
-        ArrayList<String> ptSort = new ArrayList<> ();
-        for(String pid : proteinId){
-            if(sampleGroup.getProtein(selectedSample, pid).getModiTypeAll().size() >= numModiType &&
-                    sampleGroup.getProtein(selectedSample, pid).getPeptides().size() >= numPep){
-                ptSort.add(pid);
+    public void proteinFilterType(int numModiType, int numPep, boolean anySample){
+        Set<String> ptSort = new TreeSet<>();
+        if(anySample){
+            for(String pid : proteinId){
+                for(String selectedSample : selectedSamples){
+                    if(sampleGroup.getProtein(selectedSample, pid).getModiTypeAll().size() >= numModiType &&
+                            sampleGroup.getProtein(selectedSample, pid).getPeptides().size() >= numPep){
+                        ptSort.add(pid);
+                        break;
+                    }
+                }
+            }
+        } else {
+            for(String pid : proteinId){
+                int numMeet = 0;
+                for(String selectedSample : selectedSamples){
+                    if(sampleGroup.getProtein(selectedSample, pid).getModiTypeAll().size() >= numModiType &&
+                            sampleGroup.getProtein(selectedSample, pid).getPeptides().size() >= numPep){
+                        numMeet++;
+                    } else {
+                        break;
+                    }
+                }
+                if(numMeet==selectedSamples.size()){
+                    ptSort.add(pid);
+                }
             }
         }
 
@@ -530,7 +610,6 @@ public class PBrowserController implements Initializable {
             return;
         }
 
-        Collections.sort(ptSort);
         combProtein.getItems().clear();
         combProtein.getItems().addAll(ptSort);
         combProtein.getSelectionModel().select(0);
@@ -577,6 +656,7 @@ public class PBrowserController implements Initializable {
     }
 
     public void savePeptideFilter(File txtFile){
+        ArrayList<PepPos> arrangePep = arrangePeps.get(0);
         if(selectedProtein==null){
             Alert alert = new Alert(Alert.AlertType.WARNING);
             alert.setTitle("Export Peptides after Filtering");
@@ -620,41 +700,217 @@ public class PBrowserController implements Initializable {
         this.mainController = mainController;
         sampleId = new ArrayList<>(sampleGroup.getSampleId());
         proteinId = new ArrayList<>(sampleGroup.getProteinId());
+        selectedSamples = new ArrayList<>();
 
-        //pepStrInfo = new ArrayList<>(sampleGroup.getPepStrInfo());
-        //pepDoubleInfo = new ArrayList<>(sampleGroup.getPepDoubleInfo());
-
-        /*
-        for(String info : pepDoubleInfo){
-            CheckBox checkBox = new CheckBox(info);
-            checkBox.setSelected(false);
-            checkBox.setDisable(true);
-            checkBox.setUserData(info);
-            vbPepDoubleInfo.getChildren().add(checkBox);
+        for(String id : sampleId){
+            CheckMenuItem tmp = new CheckMenuItem(id);
+            tmp.selectedProperty().addListener(((observableValue, oldValue, newValue) -> {
+                if(newValue){
+                    if(lvSamples.getItems().size()>3){
+                        System.out.println("NO MORE!");
+                    }
+                    lvSamples.getItems().add(tmp.getText());
+                    if(lvSamples.getItems().size()!=1){
+                        mainController.pepFilterSetDisable(true);
+                    }
+                } else {
+                    lvSamples.getItems().remove(tmp.getText());
+                    if(lvSamples.getItems().size()==1){
+                        mainController.pepFilterSetDisable(false);
+                    }
+                }
+            }));
+            mbSamples.getItems().add(tmp);
         }
 
-        for(String info : pepStrInfo){
-            CheckBox checkBox = new CheckBox(info);
-            checkBox.setSelected(false);
-            checkBox.setDisable(true);
-            checkBox.setUserData(info);
-            vbPepStrInfo.getChildren().addAll(checkBox);
-        }
-        */
+        final IntegerProperty dragFromIndex = new SimpleIntegerProperty(-1);
+        lvSamples.setCellFactory(new Callback<ListView<String>, ListCell<String>>() {
+            @Override
+            public ListCell<String> call(ListView<String> param) {
+                final ListCell<String> cell = new ListCell<String>() {
+                    @Override
+                    public void updateItem(String item, boolean empty) {
+                        super.updateItem(item,  empty);
+                        if (empty) {
+                            setText(null);
+                        } else {
+                            setText(item);
+                        }
+                    }
+                };
+
+                cell.setOnDragDetected(new EventHandler<MouseEvent>() {
+                    @Override
+                    public void handle(MouseEvent event) {
+                        if (! cell.isEmpty()) {
+                            dragFromIndex.set(cell.getIndex());
+                            Dragboard db = cell.startDragAndDrop(TransferMode.MOVE);
+                            ClipboardContent cc = new ClipboardContent();
+                            cc.putString(cell.getItem());
+                            db.setContent(cc);
+                            db.setDragView(cell.snapshot(null, null));
+                            // Java 8 only:
+//                          db.setDragView(cell.snapshot(null, null));
+                        }
+                    }
+                });
+
+                cell.setOnDragOver(new EventHandler<DragEvent>() {
+                    @Override
+                    public void handle(DragEvent event) {
+                        if (dragFromIndex.get() >= 0 && dragFromIndex.get() != cell.getIndex()) {
+                            event.acceptTransferModes(TransferMode.MOVE);
+                        }
+                    }
+                });
+
+
+                // highlight drop target by changing background color:
+                cell.setOnDragEntered(new EventHandler<DragEvent>() {
+                    @Override
+                    public void handle(DragEvent event) {
+                        if (dragFromIndex.get() >= 0 && dragFromIndex.get() != cell.getIndex()) {
+                            // should really set a style class and use an external style sheet,
+                            // but this works for demo purposes:
+                            cell.setStyle("-fx-background-color: gold;");
+                        }
+                    }
+                });
+
+                // remove highlight:
+                cell.setOnDragExited(new EventHandler<DragEvent>() {
+                    @Override
+                    public void handle(DragEvent event) {
+                        cell.setStyle("");
+                    }
+                });
+
+                cell.setOnDragDropped(new EventHandler<DragEvent>() {
+                    @Override
+                    public void handle(DragEvent event) {
+
+                        int dragItemsStartIndex ;
+                        int dragItemsEndIndex ;
+                        int direction ;
+                        if (cell.isEmpty()) {
+                            dragItemsStartIndex = dragFromIndex.get();
+                            dragItemsEndIndex = lvSamples.getItems().size();
+                            direction = -1;
+                        } else {
+                            if (cell.getIndex() < dragFromIndex.get()) {
+                                dragItemsStartIndex = cell.getIndex();
+                                dragItemsEndIndex = dragFromIndex.get() + 1 ;
+                                direction = 1 ;
+                            } else {
+                                dragItemsStartIndex = dragFromIndex.get();
+                                dragItemsEndIndex = cell.getIndex() + 1 ;
+                                direction = -1 ;
+                            }
+                        }
+
+                        List<String> rotatingItems = lvSamples.getItems().subList(dragItemsStartIndex, dragItemsEndIndex);
+                        List<String> rotatingItemsCopy = new ArrayList<>(rotatingItems);
+                        Collections.rotate(rotatingItemsCopy, direction);
+                        rotatingItems.clear();
+                        rotatingItems.addAll(rotatingItemsCopy);
+                        dragFromIndex.set(-1);
+                    }
+                });
+
+                cell.setOnDragDone(new EventHandler<DragEvent>() {
+                    @Override
+                    public void handle(DragEvent event) {
+                        dragFromIndex.set(-1);
+                        lvSamples.getSelectionModel().select(event.getDragboard().getString());
+                    }
+                });
+
+                return cell ;
+            }
+        });
+
+
+        ArrayList<String> ptSort = new ArrayList<>(proteinId);
+        Collections.sort(ptSort);
+        combProtein.getItems().clear();
+        combProtein.getItems().addAll(ptSort);
+        combProtein.getSelectionModel().select(0);
+
+        lvSamples.getItems().addListener(new ListChangeListener<String>() {
+            @Override
+            public void onChanged(Change<? extends String> c) {
+                if(lvSamples.getItems().size()==0){
+                    selectedSamples.clear();
+                    return;
+                }
+
+                selectedSamples.clear();
+                selectedSamples.addAll(lvSamples.getItems());
+                selectedProtein = combProtein.getValue();
+                if(selectedProtein != null && selectedSamples.size() > 0){
+                    proteins.clear();
+                    modificationTypeAll.clear();
+                    Set<String> modiTypeTmp = new TreeSet<>();
+                    for(String selectedSample : selectedSamples){
+                        Protein protein = sampleGroup.getProtein(selectedSample, selectedProtein);
+                        proteins.add(protein);
+                        modiTypeTmp.addAll(protein.getModiTypeAll());
+                    }
+                    //remove duplicates
+                    modificationTypeAll.addAll(modiTypeTmp);
+
+                    //init modification selection
+                    rbYes.setDisable(false);
+                    rbNo.setDisable(false);
+
+                    vBoxModification.getChildren().clear();
+                    initModification();
+
+                    pepCombined = false;
+                    rbNo.setSelected(true);
+                    updateCombineNodes();
+                    initModiCombine();
+
+                    //clear combModiPos first
+                    combModiPos.getSelectionModel().clearSelection();
+                    combModiPos.getItems().clear();
+                    Set<Integer> modiPosTmp = new TreeSet<>();
+                    for(Protein protein : proteins){
+                        modiPosTmp.addAll(protein.getModiPosSel1(modiSelected));
+                    }
+                    combModiPos.getItems().addAll(modiPosTmp);
+                    combModiPos.setDisable(false);
+                    //combinePosSel = false;
+                    //scaleX = 1;
+                    //scaleY = 1;
+                    double sc = (canvasWidth - leftPix - rightPix)/(proteins.get(0).getLength() * pixPerLocus);
+                    sliderZoom.setMin(Math.log(sc) /Math.log(2.0));
+                    sliderZoom.setValue(sliderZoom.getMin());
+                    scaleX = Math.pow(2.0, sliderZoom.getValue());
+                    orderPep();
+                    //too many modification to show in a canvas
+                    //if(maxY * (pixPerPep + 2*pixPepGap) > (canvasHeight-bottomPix-pixXLabel)){
+                    //    scaleY = (canvasHeight-bottomPix-pixXLabel)/((pixPerPep + 2*pixPepGap)*maxY);
+                    //}
+                    calScaleY();
+                    initSBar(0);
+                    draw();
+                }
+            }
+        });
     }
 
     public void updatePep(){
-        //scaleX = 1;
-        scaleY = 1;
-        double sc = (canvasWidth - leftPix - rightPix)/(protein.getLength() * pixPerLocus);
+        double sc = (canvasWidth - leftPix - rightPix)/(proteins.get(0).getLength() * pixPerLocus);
         sliderZoom.setMin(Math.log(sc) /Math.log(2.0));
         sliderZoom.setValue(sliderZoom.getMin());
         scaleX = Math.pow(2.0, sliderZoom.getValue());
         orderPep();
         //too many modification to show in a canvas
-        if(maxY * (pixPerPep + 2*pixPepGap) > (canvasHeight-bottomPix-pixXLabel)){
-            scaleY = (canvasHeight-bottomPix-pixXLabel)/((pixPerPep + 2*pixPepGap)*maxY);
-        }
+        //if(maxY * (pixPerPep + 2*pixPepGap) > (canvasHeight-bottomPix-pixXLabel)){
+        //    scaleY = (canvasHeight-bottomPix-pixXLabel)/((pixPerPep + 2*pixPepGap)*maxY);
+        //}
+        calScaleY();
         initSBar(0);
         draw();
     }
@@ -756,68 +1012,25 @@ public class PBrowserController implements Initializable {
     }
 
     public void show(){
-        combSample.getItems().addAll(sampleId);
         ArrayList<String> ptSort = new ArrayList<>(proteinId);
         Collections.sort(ptSort);
         combProtein.getItems().addAll(ptSort);
-
-        combSample.valueProperty().addListener(new ChangeListener<String>() {
-            @Override
-            public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
-                selectedSample = newValue;
-                ArrayList<String> ptSort = new ArrayList<>(proteinId);
-                Collections.sort(ptSort);
-                combProtein.getItems().clear();
-                combProtein.getItems().addAll(ptSort);
-                combProtein.getSelectionModel().select(0);
-                selectedProtein = combProtein.getValue();
-
-                if(selectedProtein != null && selectedSample !=null){
-                    protein = sampleGroup.getProtein(selectedSample, selectedProtein);
-                    //init modification selection
-                    modificationTypeAll = new ArrayList<>(protein.getModiTypeAll());
-
-                    rbYes.setDisable(false);
-                    rbNo.setDisable(false);
-
-                    vBoxModification.getChildren().clear();
-                    initModification();
-
-                    pepCombined = false;
-                    rbNo.setSelected(true);
-                    updateCombineNodes();
-                    initModiCombine();
-
-                    //clear combModiPos first
-                    combModiPos.getSelectionModel().clearSelection();
-                    combModiPos.getItems().clear();
-                    combModiPos.getItems().addAll(protein.getModiPosSel1(modiSelected));
-                    combModiPos.setDisable(false);
-                    //combinePosSel = false;
-                    //scaleX = 1;
-                    scaleY = 1;
-                    double sc = (canvasWidth - leftPix - rightPix)/(protein.getLength() * pixPerLocus);
-                    sliderZoom.setMin(Math.log(sc) /Math.log(2.0));
-                    sliderZoom.setValue(sliderZoom.getMin());
-                    scaleX = Math.pow(2.0, sliderZoom.getValue());
-                    orderPep();
-                    //too many modification to show in a canvas
-                    if(maxY * (pixPerPep + 2*pixPepGap) > (canvasHeight-bottomPix-pixXLabel)){
-                        scaleY = (canvasHeight-bottomPix-pixXLabel)/((pixPerPep + 2*pixPepGap)*maxY);
-                    }
-                    initSBar(0);
-                    draw();
-                }
-            }
-        });
 
         combProtein.valueProperty().addListener(new ChangeListener<String>() {
             @Override
             public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
                 selectedProtein = newValue;
-                if(selectedProtein != null && selectedSample !=null){
-                    protein = sampleGroup.getProtein(selectedSample, selectedProtein);
-                    modificationTypeAll = new ArrayList<String>(protein.getModiTypeAll());
+                if(selectedProtein != null && selectedSamples.size() > 0){
+                    proteins.clear();
+                    modificationTypeAll.clear();
+                    Set<String> modiTypeTmp = new TreeSet<>();
+                    for(String selectedSample : selectedSamples){
+                        Protein protein = sampleGroup.getProtein(selectedSample, selectedProtein);
+                        proteins.add(protein);
+                        modiTypeTmp.addAll(protein.getModiTypeAll());
+                    }
+
+                    modificationTypeAll.addAll(modiTypeTmp);
 
                     rbYes.setDisable(false);
                     rbNo.setDisable(false);
@@ -832,19 +1045,24 @@ public class PBrowserController implements Initializable {
 
                     combModiPos.getSelectionModel().clearSelection();
                     combModiPos.getItems().clear();
-                    combModiPos.getItems().addAll(protein.getModiPosSel1(modiSelected));
+                    Set<Integer> modiPosTmp = new TreeSet<>();
+                    for(Protein protein : proteins){
+                        modiPosTmp.addAll(protein.getModiPosSel1(modiSelected));
+                    }
+                    combModiPos.getItems().addAll(modiPosTmp);
                     combModiPos.setDisable(false);
                     //combinePosSel = false;
                     //scaleX = 1;
-                    scaleY = 1;
-                    double sc = (canvasWidth - leftPix - rightPix)/(protein.getLength() * pixPerLocus);
+                    //scaleY = 1;
+                    double sc = (canvasWidth - leftPix - rightPix)/(proteins.get(0).getLength() * pixPerLocus);
                     sliderZoom.setMin(Math.log(sc) / Math.log(2.0));
                     sliderZoom.setValue(sliderZoom.getMin());
                     scaleX = Math.pow(2.0, sliderZoom.getValue());
                     orderPep();
-                    if(maxY * (pixPerPep + 2*pixPepGap) > (canvasHeight-bottomPix-pixXLabel)){
-                        scaleY = (canvasHeight-bottomPix-pixXLabel)/((pixPerPep + 2*pixPepGap)*maxY);
-                    }
+                    //if(maxY * (pixPerPep + 2*pixPepGap) > (canvasHeight-bottomPix-pixXLabel)){
+                    //    scaleY = (canvasHeight-bottomPix-pixXLabel)/((pixPerPep + 2*pixPepGap)*maxY);
+                    //}
+                    calScaleY();
                     initSBar(0);
                     draw();
                 }
@@ -870,77 +1088,6 @@ public class PBrowserController implements Initializable {
                 draw();
             }
         });
-
-
-        /*
-        cbAcetylation.selectedProperty().addListener(new ChangeListener<Boolean>() {
-            @Override
-            public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-                if(modiSelected.contains(Modification.ModificationType.Acetylation)){
-                    if(!cbAcetylation.isSelected()){
-                        modiSelected.remove(Modification.ModificationType.Acetylation);
-                    }
-                } else {
-                    if(cbAcetylation.isSelected()){
-                        modiSelected.add(Modification.ModificationType.Acetylation);
-                    }
-                }
-                updateCombModiPos();
-                draw();
-            }
-        });
-
-        cbCarbamidomethylation.selectedProperty().addListener(new ChangeListener<Boolean>() {
-            @Override
-            public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-                if(modiSelected.contains(Modification.ModificationType.Carbamidomethylation)){
-                    if(!cbCarbamidomethylation.isSelected()){
-                        modiSelected.remove(Modification.ModificationType.Carbamidomethylation);
-                    }
-                } else {
-                    if(cbCarbamidomethylation.isSelected()){
-                        modiSelected.add(Modification.ModificationType.Carbamidomethylation);
-                    }
-                }
-                updateCombModiPos();
-                draw();
-            }
-        });
-
-        cbOxidation.selectedProperty().addListener(new ChangeListener<Boolean>() {
-            @Override
-            public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-                if(modiSelected.contains(Modification.ModificationType.Oxidation)){
-                    if(!cbOxidation.isSelected()){
-                        modiSelected.remove(Modification.ModificationType.Oxidation);
-                    }
-                } else {
-                    if(cbOxidation.isSelected()){
-                        modiSelected.add(Modification.ModificationType.Oxidation);
-                    }
-                }
-                updateCombModiPos();
-                draw();
-            }
-        });
-
-        cbPhosphorylation.selectedProperty().addListener(new ChangeListener<Boolean>() {
-            @Override
-            public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-                if(modiSelected.contains(Modification.ModificationType.Phosphorylation)){
-                    if(!cbPhosphorylation.isSelected()){
-                        modiSelected.remove(Modification.ModificationType.Phosphorylation);
-                    }
-                } else {
-                    if(cbPhosphorylation.isSelected()){
-                        modiSelected.add(Modification.ModificationType.Phosphorylation);
-                    }
-                }
-                updateCombModiPos();
-                draw();
-            }
-        });
-        */
 
 
         combModiPos.valueProperty().addListener(new ChangeListener<Integer>() {
@@ -969,7 +1116,12 @@ public class PBrowserController implements Initializable {
         combModiPos.getItems().clear();
         //combinePosSel = false;
 
-        combModiPos.getItems().addAll(protein.getModiPosSel1(modiSelected));
+        Set<Integer> modiPosTmp = new TreeSet<>();
+        for(Protein protein : proteins){
+            modiPosTmp.addAll(protein.getModiPosSel1(modiSelected));
+        }
+        //combModiPos.getItems().addAll(protein.getModiPosSel1(modiSelected));
+        combModiPos.getItems().addAll(modiPosTmp);
         if(combModiPos.getItems().size() > 0){
             combModiPos.setDisable(false);
         } else {
@@ -1006,28 +1158,28 @@ public class PBrowserController implements Initializable {
             hbLegend.getChildren().addAll(l1, l2);
             vbLegend.getChildren().add(hbLegend);
         }
-        /*
-        if(cbAcetylation.isSelected()){
-            vbLegend.getChildren().add(hbAcetylation);
-        }
-        if(cbCarbamidomethylation.isSelected()){
-            vbLegend.getChildren().add(hbCarbamidomethylation);
-        }
-        if(cbOxidation.isSelected()){
-            vbLegend.getChildren().add(hbOxidation);
-        }
-        if(cbPhosphorylation.isSelected()){
-            vbLegend.getChildren().add(hbPhosphorylation);
-        }*/
 
         vbLegend.getChildren().add(hbAbundance1);
         vbLegend.getChildren().add(hbAbundance2);
         vbLegend.getChildren().add(hbAbundance3);
         vbLegend.getChildren().add(hbAbundance4);
+
         if(pepCombined){
-            lbAbundanceTag2.setText(String.format("%9.3g",protein.getAbundanceMaxCombined()));
+            double maxAb = 0.0;
+            for(Protein protein : proteins){
+                if(maxAb < protein.getAbundanceMaxCombined()){
+                    maxAb = protein.getAbundanceMaxCombined();
+                }
+            }
+            lbAbundanceTag2.setText(String.format("%9.3g",maxAb));
         } else {
-            lbAbundanceTag2.setText(String.format("%9.3g",protein.getAbundanceMax()));
+            double maxAb = 0.0;
+            for(Protein protein : proteins){
+                if(maxAb < protein.getAbundanceMax()){
+                    maxAb = protein.getAbundanceMax();
+                }
+            }
+            lbAbundanceTag2.setText(String.format("%9.3g",maxAb));
         }
 
         vbLegend.getChildren().addAll(vbAbundanceTag);
@@ -1035,7 +1187,7 @@ public class PBrowserController implements Initializable {
     }
 
     private void initSBar(double val){
-        double plotWidth = protein.getLength() * pixPerLocus * scaleX + leftPix + rightPix;
+        double plotWidth = proteins.get(0).getLength() * pixPerLocus * scaleX + leftPix + rightPix;
         if(plotWidth > canvasWidth){
             sbarCanvas.setVisible(true);
             sbarCanvas.setMax(plotWidth-canvasWidth);
@@ -1079,16 +1231,6 @@ public class PBrowserController implements Initializable {
     }
 
     public void draw(){
-        /*
-        int canvasHeight = (pixPepGap*2 + pixPerPep) * maxY + pixXLabel + topPix + bottomPix;
-        if(canvasHeight > 500){
-            scaleY = 500.0 / canvasHeight;
-        } else {
-            scaleY = 1;
-        }
-        */
-        //start 0, end 0
-
         initialized = true;
         double st = sbarCanvas.getValue();
 
@@ -1100,9 +1242,145 @@ public class PBrowserController implements Initializable {
         }
 
         if(pepCombined){
-            for(PepPos pp : arrangePepCombined){
+            int idxSample = 0;
+            double maxAbundanceCombined = 0;
+            for(Protein protein : proteins){
+                if(maxAbundanceCombined < protein.getAbundanceMaxCombined()){
+                    maxAbundanceCombined = protein.getAbundanceMaxCombined();
+                }
+            }
+
+
+            for(ArrayList<PepPos> arrangePepCombined : arrangePepsCombined){
+                double bottomSampleY = topPix + (idxSample + 1) * pixPerSample + idxSample * sampleGapPix;
+                for(PepPos pp : arrangePepCombined){
+                    double tlX = leftPix + pp.getStart()*pixPerLocus*scaleX + 1;
+                    //double tlY = canvasHeight - pixXLabel - bottomPix - (pp.getY() + 1) * (pixPerPep  + pixPepGap * 2) * scaleY + 1;
+                    double tlY = bottomSampleY - (pixPerPep * scaleYCombined + pixPepGap) * (pp.getY() + 1);
+                    double w = pixPerLocus * pp.getPep().getLength()*scaleX - 2;
+                    double h = pixPerPep * scaleYCombined;
+
+                    tlX = tlX - st;
+                    double rX = tlX + w;
+
+
+                    if(tlX < canvasWidth && rX > 0){
+                        //int range = pp.getPep().getAbundanceRange();
+                        int range = calRange(pp.getPep().getAbundance(), maxAbundanceCombined);
+                        gc.setFill(Color.rgb(220-15*range, 220-15*range, 220-15*range));
+                        tlX = Math.max(tlX, 0);
+                        rX = Math.min(rX, canvasWidth);
+                        gc.fillRect(tlX, tlY, (rX-tlX), h);
+                    }
+
+                    if(pp.getPep().isModified()){
+                        ArrayList<Modification> modifications = pp.getPep().getModifications();
+                        for(String modiType:modiSelected){
+                            gc.setFill(sampleGroup.getModificationColor(modiType));
+                            for(Modification modi : modifications){
+                                if(modi.getModificationType().equals(modiType)){
+                                    for(int i=0; i<modi.getPos().size(); i++){
+
+
+                                        if(modi.getPercent().get(i) < 0){
+                                            double leftX = leftPix + (modi.getPos().get(i) + pp.getStart()) * pixPerLocus * scaleX + 0.5;
+                                            double topY = tlY;
+                                            double width = pixPerLocus * scaleX - 0.5;
+                                            double height = scaleYCombined * pixPerPep;
+
+                                            leftX = leftX - st;
+                                            double rightX = leftX + width;
+                                            if(leftX < canvasWidth && rightX > 0){
+                                                leftX = Math.max(leftX, 0);
+                                                rightX = Math.min(rightX, canvasWidth);
+
+                                                //
+                                                Stop[] stops = new Stop[] {new Stop(0, Color.WHITE), new Stop(1, sampleGroup.getModificationColor(modiType))};
+                                                LinearGradient lg = new LinearGradient(0, 0, 0.1, 0.1, true, CycleMethod.REPEAT, stops);
+                                                gc.setFill(lg);
+                                                gc.fillRect(leftX, topY, (rightX-leftX), height);
+                                            }
+                                        } else {
+                                            double leftX = leftPix + (modi.getPos().get(i) + pp.getStart()) * pixPerLocus * scaleX + 0.5;
+                                            double topY = tlY + (1.0-modi.getPercent().get(i)/100.0) * pixPerPep * scaleYCombined;
+                                            double width = pixPerLocus * scaleX - 0.5;
+                                            double height = scaleYCombined * pixPerPep * modi.getPercent().get(i)/100.0;
+
+                                            leftX = leftX - st;
+                                            double rightX = leftX + width;
+                                            if(leftX < canvasWidth && rightX > 0){
+                                                leftX = Math.max(leftX, 0);
+                                                rightX = Math.min(rightX, canvasWidth);
+                                                gc.setFill(sampleGroup.getModificationColor(modiType));
+                                                gc.fillRect(leftX, topY, (rightX-leftX), height);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                idxSample++;
+            }
+
+            /*
+            if(proteins.size()>1){
+                gc.setStroke(Color.rgb(255, 255, 255));
+                for(int i=1;i<proteins.size();i++){
+                    double posY = topPix + (pixPerSample + sampleGapPix)*i - sampleGapPix/2;
+                    gc.strokeLine(0,posY,canvasWidth,posY);
+                }
+            }
+             */
+
+
+            double fontSize = pixPerLocus * scaleX / 2.0 + 3.5;
+            String proteinSeq = proteins.get(0).getSequence();
+            //ArrayList<Integer> modiPos = proteins.get(0).getModiCombinedPos(modiSelected);
+            ArrayList<Integer> modiPos = new ArrayList<>(combModiPos.getItems());
+            int xAxisStart = (int)(st / (pixPerLocus * scaleX));
+            int xAxisEnd = (int)(0.5 + (st + canvasWidth)/(pixPerLocus * scaleX));
+
+            for(int i = xAxisStart; i <= xAxisEnd ;i++){
+                gc.setFont(new Font("Courier New", fontSize));
+                if(i>=proteinSeq.length()){
+                    break;
+                }
+                double leftX = leftPix + (i + 0.3) * pixPerLocus * scaleX - st;
+                double topY =  canvasHeight - pixXLabel - bottomPix + pixPerLocus * 2;
+                if(modiPos.contains(i+1)){
+                    gc.setFill(Color.CRIMSON);
+                } else {
+                    gc.setFill(Color.BLACK);
+                }
+                gc.fillText(Character.toString(proteinSeq.charAt(i)), leftX, topY);
+            }
+
+            lblStart.setText("Start:" + (xAxisStart + 1));
+            //Warning: check whether need to + 1 here
+            lblEnd.setText("End:" + (xAxisEnd-1));
+
+            legend();
+
+            return;
+        }
+
+        int idxSample = 0;
+        double maxAbundance = 0;
+        for(Protein protein : proteins){
+            if(maxAbundance < protein.getAbundanceMax()){
+                maxAbundance = protein.getAbundanceMax();
+            }
+        }
+        for(ArrayList<PepPos> arrangePep : arrangePeps){
+            double bottomSampleY = topPix + (idxSample + 1) * pixPerSample + idxSample * sampleGapPix;
+            for(PepPos pp : arrangePep){
+                //top left coordinate
                 double tlX = leftPix + pp.getStart()*pixPerLocus*scaleX + 1;
-                double tlY = canvasHeight - pixXLabel - bottomPix - (pp.getY() + 1) * (pixPerPep  + pixPepGap * 2) * scaleY + 1;
+                //double tlY = canvasHeight - pixXLabel - bottomPix - (pp.getY() + 1) * (pixPerPep  + pixPepGap * 2) * scaleY + 1;
+                double tlY = bottomSampleY - (pixPerPep * scaleY + pixPepGap) * (pp.getY() + 1);
                 double w = pixPerLocus * pp.getPep().getLength()*scaleX - 2;
                 double h = pixPerPep * scaleY;
 
@@ -1111,22 +1389,46 @@ public class PBrowserController implements Initializable {
 
 
                 if(tlX < canvasWidth && rX > 0){
-                    int range = pp.getPep().getAbundanceRange();
-                    gc.setFill(Color.rgb(220-15*range, 220-15*range, 220-15*range));
-                    tlX = Math.max(tlX, 0);
-                    rX = Math.min(rX, canvasWidth);
-                    gc.fillRect(tlX, tlY, (rX-tlX), h);
+                    //int range = pp.getPep().getAbundanceRange();
+                    int range = calRange(pp.getPep().getAbundance(), maxAbundance);
+                    if(pp.getPep().getMultiMatch() > 0){
+                        //Image hatch = createHatch(220-15*range, 220-15*range, 220-15*range);
+
+                        Stop[] stops = new Stop[] {new Stop(0, Color.WHITE), new Stop(1, Color.rgb(220-15*range, 220-15*range, 220-15*range))};
+                        LinearGradient lg = new LinearGradient(0, 0, 0, 0.2, true, CycleMethod.REPEAT, stops);
+                        gc.setFill(lg);
+                        tlX = Math.max(tlX, 0);
+                        rX = Math.min(rX, canvasWidth);
+
+                        //ImagePattern pattern = new ImagePattern(hatch, 0, 0, 20, 20, false);
+                        //gc.setFill(pattern);
+
+                        gc.fillRect(tlX, tlY, (rX-tlX), h);
+
+                        if(pp.getPep().isOtherProtein()){
+                            gc.setStroke(Color.BLACK);
+                            gc.strokeRect(tlX, tlY, (rX-tlX), h);
+                        }
+                    } else {
+                        gc.setFill(Color.rgb(220-15*range, 220-15*range, 220-15*range));
+                        tlX = Math.max(tlX, 0);
+                        rX = Math.min(rX, canvasWidth);
+                        gc.fillRect(tlX, tlY, (rX-tlX), h);
+
+                        if(pp.getPep().isOtherProtein()){
+                            gc.setStroke(Color.BLACK);
+                            gc.strokeRect(tlX, tlY, (rX-tlX), h);
+                        }
+                    }
                 }
 
                 if(pp.getPep().isModified()){
                     ArrayList<Modification> modifications = pp.getPep().getModifications();
                     for(String modiType:modiSelected){
-                        gc.setFill(sampleGroup.getModificationColor(modiType));
+
                         for(Modification modi : modifications){
                             if(modi.getModificationType().equals(modiType)){
                                 for(int i=0; i<modi.getPos().size(); i++){
-
-
                                     if(modi.getPercent().get(i) < 0){
                                         double leftX = leftPix + (modi.getPos().get(i) + pp.getStart()) * pixPerLocus * scaleX + 0.5;
                                         double topY = tlY;
@@ -1160,225 +1462,17 @@ public class PBrowserController implements Initializable {
                                             gc.fillRect(leftX, topY, (rightX-leftX), height);
                                         }
                                     }
+
                                 }
                             }
                         }
                     }
                 }
             }
-
-            double fontSize = pixPerLocus * scaleX / 2.0 + 3.5;
-            String proteinSeq = protein.getSequence();
-            ArrayList<Integer> modiPos = protein.getModiCombinedPos(modiSelected);
-            int xAxisStart = (int)(st / (pixPerLocus * scaleX));
-            int xAxisEnd = (int)(0.5 + (st + canvasWidth)/(pixPerLocus * scaleX));
-
-            for(int i = xAxisStart; i <= xAxisEnd ;i++){
-                gc.setFont(new Font("Courier New", fontSize));
-                if(i>=proteinSeq.length()){
-                    break;
-                }
-                double leftX = leftPix + (i + 0.3) * pixPerLocus * scaleX - st;
-                double topY =  canvasHeight - pixXLabel - bottomPix + pixPerLocus * 2;
-                if(modiPos.contains(i)){
-                    gc.setFill(Color.CRIMSON);
-                } else {
-                    gc.setFill(Color.BLACK);
-                }
-                gc.fillText(Character.toString(proteinSeq.charAt(i)), leftX, topY);
-            }
-
-            lblStart.setText("Start:" + (xAxisStart + 1));
-            //Warning: check whether need to + 1 here
-            lblEnd.setText("End:" + (xAxisEnd-1));
-
-            legend();
-
-            return;
+            idxSample++;
         }
 
 
-        for(PepPos pp : arrangePep){
-            //top left coordinate
-            double tlX = leftPix + pp.getStart()*pixPerLocus*scaleX + 1;
-            double tlY = canvasHeight - pixXLabel - bottomPix - (pp.getY() + 1) * (pixPerPep  + pixPepGap * 2) * scaleY + 1;
-            double w = pixPerLocus * pp.getPep().getLength()*scaleX - 2;
-            double h = pixPerPep * scaleY;
-
-            tlX = tlX - st;
-            double rX = tlX + w;
-
-
-            if(tlX < canvasWidth && rX > 0){
-                int range = pp.getPep().getAbundanceRange();
-                if(pp.getPep().getMultiMatch() > 0){
-                    //Image hatch = createHatch(220-15*range, 220-15*range, 220-15*range);
-
-                    Stop[] stops = new Stop[] {new Stop(0, Color.WHITE), new Stop(1, Color.rgb(220-15*range, 220-15*range, 220-15*range))};
-                    LinearGradient lg = new LinearGradient(0, 0, 0, 0.2, true, CycleMethod.REPEAT, stops);
-                    gc.setFill(lg);
-                    tlX = Math.max(tlX, 0);
-                    rX = Math.min(rX, canvasWidth);
-
-                    //ImagePattern pattern = new ImagePattern(hatch, 0, 0, 20, 20, false);
-                    //gc.setFill(pattern);
-
-                    gc.fillRect(tlX, tlY, (rX-tlX), h);
-
-                    if(pp.getPep().isOtherProtein()){
-                        gc.setStroke(Color.BLACK);
-                        gc.strokeRect(tlX, tlY, (rX-tlX), h);
-                    }
-                } else {
-                    gc.setFill(Color.rgb(220-15*range, 220-15*range, 220-15*range));
-                    tlX = Math.max(tlX, 0);
-                    rX = Math.min(rX, canvasWidth);
-                    gc.fillRect(tlX, tlY, (rX-tlX), h);
-
-                    if(pp.getPep().isOtherProtein()){
-                        gc.setStroke(Color.BLACK);
-                        gc.strokeRect(tlX, tlY, (rX-tlX), h);
-                    }
-                }
-            }
-
-            if(pp.getPep().isModified()){
-                ArrayList<Modification> modifications = pp.getPep().getModifications();
-                for(String modiType:modiSelected){
-
-                    for(Modification modi : modifications){
-                        if(modi.getModificationType().equals(modiType)){
-                            for(int i=0; i<modi.getPos().size(); i++){
-                                if(modi.getPercent().get(i) < 0){
-                                    double leftX = leftPix + (modi.getPos().get(i) + pp.getStart()) * pixPerLocus * scaleX + 0.5;
-                                    double topY = tlY;
-                                    double width = pixPerLocus * scaleX - 0.5;
-                                    double height = scaleY * pixPerPep;
-
-                                    leftX = leftX - st;
-                                    double rightX = leftX + width;
-                                    if(leftX < canvasWidth && rightX > 0){
-                                        leftX = Math.max(leftX, 0);
-                                        rightX = Math.min(rightX, canvasWidth);
-
-                                        //
-                                        Stop[] stops = new Stop[] {new Stop(0, Color.WHITE), new Stop(1, sampleGroup.getModificationColor(modiType))};
-                                        LinearGradient lg = new LinearGradient(0, 0, 0.1, 0.1, true, CycleMethod.REPEAT, stops);
-                                        gc.setFill(lg);
-                                        gc.fillRect(leftX, topY, (rightX-leftX), height);
-                                    }
-                                } else {
-                                    double leftX = leftPix + (modi.getPos().get(i) + pp.getStart()) * pixPerLocus * scaleX + 0.5;
-                                    double topY = tlY + (1.0-modi.getPercent().get(i)/100.0) * pixPerPep * scaleY;
-                                    double width = pixPerLocus * scaleX - 0.5;
-                                    double height = scaleY * pixPerPep * modi.getPercent().get(i)/100.0;
-
-                                    leftX = leftX - st;
-                                    double rightX = leftX + width;
-                                    if(leftX < canvasWidth && rightX > 0){
-                                        leftX = Math.max(leftX, 0);
-                                        rightX = Math.min(rightX, canvasWidth);
-                                        gc.setFill(sampleGroup.getModificationColor(modiType));
-                                        gc.fillRect(leftX, topY, (rightX-leftX), height);
-                                    }
-                                }
-
-                            }
-                        }
-                    }
-                }
-
-                /*
-                if(cbAcetylation.isSelected()){
-                    gc.setFill(Color.MAGENTA);
-                    for(Modification modi : modifications){
-                        if(modi.getType() == Modification.ModificationType.Acetylation){
-                            for(int i=0; i<modi.getPos().size(); i++){
-                                double leftX = leftPix + (modi.getPos().get(i) + pp.getStart()) * pixPerLocus * scaleX + 0.5;
-                                double topY = tlY + (1.0-modi.getPercent().get(i)/100.0) * pixPerPep * scaleY;
-                                double width = pixPerLocus * scaleX - 0.5;
-                                double height = scaleY * pixPerPep * modi.getPercent().get(i)/100.0;
-
-                                leftX = leftX - st;
-                                double rightX = leftX + width;
-                                if(leftX < canvasWidth && rightX > 0){
-                                    leftX = Math.max(leftX, 0);
-                                    rightX = Math.min(rightX, canvasWidth);
-                                    gc.fillRect(leftX, topY, (rightX-leftX), height);
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if(cbCarbamidomethylation.isSelected()){
-                    gc.setFill(Color.FORESTGREEN);
-                    for(Modification modi : modifications){
-                        if(modi.getType() == Modification.ModificationType.Carbamidomethylation){
-                            for(int i=0; i<modi.getPos().size(); i++){
-                                double leftX = leftPix + (modi.getPos().get(i) + pp.getStart()) * pixPerLocus * scaleX + 0.5;
-                                double topY = tlY + (1.0-modi.getPercent().get(i)/100.0) * pixPerPep * scaleY;
-                                double width = pixPerLocus * scaleX - 0.5;
-                                double height = scaleY * pixPerPep * modi.getPercent().get(i)/100.0;
-
-                                leftX = leftX - st;
-                                double rightX = leftX + width;
-                                if(leftX < canvasWidth && rightX > 0){
-                                    leftX = Math.max(leftX, 0);
-                                    rightX = Math.min(rightX, canvasWidth);
-                                    gc.fillRect(leftX, topY, (rightX-leftX), height);
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if(cbPhosphorylation.isSelected()){
-                    gc.setFill(Color.CYAN);
-                    for(Modification modi : modifications){
-                        if(modi.getType() == Modification.ModificationType.Phosphorylation){
-                            for(int i=0; i<modi.getPos().size(); i++){
-                                double leftX = leftPix + (modi.getPos().get(i) + pp.getStart()) * pixPerLocus * scaleX + 0.5;
-                                double topY = tlY + (1.0-modi.getPercent().get(i)/100.0) * pixPerPep * scaleY;
-                                double width = pixPerLocus * scaleX - 0.5;
-                                double height = scaleY * pixPerPep * modi.getPercent().get(i)/100.0;
-
-                                leftX = leftX - st;
-                                double rightX = leftX + width;
-                                if(leftX < canvasWidth && rightX > 0){
-                                    leftX = Math.max(leftX, 0);
-                                    rightX = Math.min(rightX, canvasWidth);
-                                    gc.fillRect(leftX, topY, (rightX-leftX), height);
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if(cbOxidation.isSelected()){
-                    gc.setFill(Color.GOLD);
-                    for(Modification modi : modifications){
-                        if(modi.getType() == Modification.ModificationType.Oxidation){
-                            for(int i=0; i<modi.getPos().size(); i++){
-                                double leftX = leftPix + (modi.getPos().get(i) + pp.getStart()) * pixPerLocus * scaleX + 0.5;
-                                double topY = tlY + (1.0-modi.getPercent().get(i)/100.0) * pixPerPep * scaleY;
-                                double width = pixPerLocus * scaleX - 0.5;
-                                double height = scaleY * pixPerPep * modi.getPercent().get(i)/100.0;
-
-                                leftX = leftX - st;
-                                double rightX = leftX + width;
-                                if(leftX < canvasWidth && rightX > 0){
-                                    leftX = Math.max(leftX, 0);
-                                    rightX = Math.min(rightX, canvasWidth);
-                                    gc.fillRect(leftX, topY, (rightX-leftX), height);
-                                }
-                            }
-                        }
-                    }
-                }
-                */
-            }
-        }
 
         //X Axis
         double fontSize = pixPerLocus * scaleX /2.0  + 3.5;
@@ -1387,8 +1481,8 @@ public class PBrowserController implements Initializable {
         //    fontsize = 16;
         //}
 
-        String proteinSeq = protein.getSequence();
-        ArrayList<Integer> modiPos = protein.getModiPosSel(modiSelected);
+        String proteinSeq = proteins.get(0).getSequence();
+        ArrayList<Integer> modiPos = new ArrayList<>(combModiPos.getItems());// proteins.get(0).getModiPosSel(modiSelected);
         int xAxisStart = (int)(st / (pixPerLocus * scaleX));
         int xAxisEnd = (int)(0.5 + (st + canvasWidth)/(pixPerLocus * scaleX));
 
@@ -1399,7 +1493,7 @@ public class PBrowserController implements Initializable {
             }
             double leftX = leftPix + (i + 0.3) * pixPerLocus * scaleX - st;
             double topY =  canvasHeight - pixXLabel - bottomPix + pixPerLocus * 2;
-            if(modiPos.contains(i)){
+            if(modiPos.contains(i+1)){
                 gc.setFill(Color.CRIMSON);
             } else {
                 gc.setFill(Color.BLACK);
@@ -1424,102 +1518,122 @@ public class PBrowserController implements Initializable {
 
     private void orderPep(){
         if(pepCombined){
-            arrangePepCombined.clear();
-            ArrayList<Integer> startCombined = protein.getPepStartCombined();
-            ArrayList<Integer> endCombined = protein.getPepEndCombined();
-            ArrayList<Peptide> pepCombined = protein.getPeptidesCombined();
-            if(startCombined.size()==0){
-                return;
-            }
+            arrangePepsCombined.clear();
+            maxYsCombined.clear();
+            for(Protein protein : proteins){
+                ArrayList<Integer> startCombined = protein.getPepStartCombined();
+                ArrayList<Integer> endCombined = protein.getPepEndCombined();
+                ArrayList<Peptide> pepCombined = protein.getPeptidesCombined();
+                ArrayList<PepPos> arrangePepCombined = new ArrayList<>();
+                if(startCombined.size()==0){
+                    arrangePepsCombined.add(arrangePepCombined);
+                    maxYsCombined.add(0);
+                    continue;
+                }
 
-            for(int i=0; i<startCombined.size(); i++){
-                PepPos tmp = new PepPos(startCombined.get(i), endCombined.get(i), pepCombined.get(i));
-                arrangePepCombined.add(tmp);
-            }
+                for(int i=0; i<startCombined.size(); i++){
+                    PepPos tmp = new PepPos(startCombined.get(i), endCombined.get(i), pepCombined.get(i));
+                    arrangePepCombined.add(tmp);
+                }
 
-            if(arrangePepCombined.size() == 0){
-                return;
-            }
+                if(arrangePepCombined.size() == 0){
+                    arrangePepsCombined.add(arrangePepCombined);
+                    maxYsCombined.add(0);
+                    continue;
+                }
 
-            Collections.sort(arrangePepCombined);
+                Collections.sort(arrangePepCombined);
 
-            maxYCombined = 0;
-            if(arrangePepCombined.size() == 1){
-                arrangePepCombined.get(0).setY(0);
-                maxYCombined = 1;
-            } else {
-                arrangePepCombined.get(0).setY(0);
-                ArrayList<Integer> plotQueue = new ArrayList<>();
-                plotQueue.add(arrangePepCombined.get(0).getEnd());
-                for(int i=1; i<arrangePepCombined.size(); i++){
-                    boolean find = false;
-                    for(int j=0; j<plotQueue.size(); j++){
-                        if(arrangePepCombined.get(i).getStart() > plotQueue.get(j)){
-                            arrangePepCombined.get(i).setY(j);
-                            plotQueue.set(j, arrangePepCombined.get(i).getEnd());
-                            find = true;
-                            break;
+                int maxYCombined = 0;
+                if(arrangePepCombined.size() == 1){
+                    arrangePepCombined.get(0).setY(0);
+                    maxYCombined = 1;
+                } else {
+                    arrangePepCombined.get(0).setY(0);
+                    ArrayList<Integer> plotQueue = new ArrayList<>();
+                    plotQueue.add(arrangePepCombined.get(0).getEnd());
+                    for(int i=1; i<arrangePepCombined.size(); i++){
+                        boolean find = false;
+                        for(int j=0; j<plotQueue.size(); j++){
+                            if(arrangePepCombined.get(i).getStart() > plotQueue.get(j)){
+                                arrangePepCombined.get(i).setY(j);
+                                plotQueue.set(j, arrangePepCombined.get(i).getEnd());
+                                find = true;
+                                break;
+                            }
+                        }
+
+                        if(!find){
+                            arrangePepCombined.get(i).setY(plotQueue.size());
+                            plotQueue.add(arrangePepCombined.get(i).getEnd());
                         }
                     }
-
-                    if(!find){
-                        arrangePepCombined.get(i).setY(plotQueue.size());
-                        plotQueue.add(arrangePepCombined.get(i).getEnd());
-                    }
+                    maxYCombined = plotQueue.size();
                 }
-                maxYCombined = plotQueue.size();
+                arrangePepsCombined.add(arrangePepCombined);
+                maxYsCombined.add(maxYCombined);
             }
             return;
         }
 
         //Arrange the position
-        arrangePep.clear();
-        ArrayList<Integer> start = protein.getPepStart();
-        ArrayList<Integer> end = protein.getPepEnd();
-        ArrayList<Peptide> peps = protein.getPeptides();
-        if(start.size()==0){
-            return;
-        }
-
-        for(int i =0;i<start.size();i++){
-            // decide what kind of data to show
-            if(protein.getPepShow(i) > 0){
-                PepPos tmp = new PepPos(start.get(i), end.get(i), peps.get(i));
-                arrangePep.add(tmp);
+        arrangePeps.clear();
+        maxYs.clear();
+        for(Protein protein : proteins){
+            ArrayList<Integer> start = protein.getPepStart();
+            ArrayList<Integer> end = protein.getPepEnd();
+            ArrayList<Peptide> peps = protein.getPeptides();
+            ArrayList<PepPos> arrangePep = new ArrayList<>();
+            if(start.size()==0){
+                arrangePeps.add(arrangePep);
+                maxYs.add(0);
+                continue;
             }
 
-        }
+            for(int i =0;i<start.size();i++){
+                // decide what kind of data to show
+                if(protein.getPepShow(i) > 0){
+                    PepPos tmp = new PepPos(start.get(i), end.get(i), peps.get(i));
+                    arrangePep.add(tmp);
+                }
 
-        if(arrangePep.size()==0){
-            return;
-        }
+            }
 
-        Collections.sort(arrangePep);
+            if(arrangePep.size()==0){
+                arrangePeps.add(arrangePep);
+                maxYs.add(0);
+                continue;
+            }
 
-        maxY = 0;
-        if(arrangePep.size()==1){
-            arrangePep.get(0).setY(0);
-            maxY = 1;
-        } else {
-            arrangePep.get(0).setY(0);
-            ArrayList<Integer> plotQueue = new ArrayList<>();
-            plotQueue.add(arrangePep.get(0).getEnd());
-            for(int i=1;i<arrangePep.size();i++){
-                boolean find = false;
-                for(int j=0; j<plotQueue.size();j++){
-                    if(arrangePep.get(i).getStart() > plotQueue.get(j)){
-                        arrangePep.get(i).setY(j);
-                        plotQueue.set(j, arrangePep.get(i).getEnd());
-                        find = true;
-                        break;
+            Collections.sort(arrangePep);
+
+            int maxY = 0;
+            if(arrangePep.size()==1){
+                arrangePep.get(0).setY(0);
+                maxY = 1;
+            } else {
+                arrangePep.get(0).setY(0);
+                ArrayList<Integer> plotQueue = new ArrayList<>();
+                plotQueue.add(arrangePep.get(0).getEnd());
+                for(int i=1;i<arrangePep.size();i++){
+                    boolean find = false;
+                    for(int j=0; j<plotQueue.size();j++){
+                        if(arrangePep.get(i).getStart() > plotQueue.get(j)){
+                            arrangePep.get(i).setY(j);
+                            plotQueue.set(j, arrangePep.get(i).getEnd());
+                            find = true;
+                            break;
+                        }
+                    }
+                    if(!find){
+                        arrangePep.get(i).setY(plotQueue.size());
+                        plotQueue.add(arrangePep.get(i).getEnd());
                     }
                 }
-                if(!find){
-                    arrangePep.get(i).setY(plotQueue.size());
-                    plotQueue.add(arrangePep.get(i).getEnd());
-                }
+                maxY = plotQueue.size();
             }
-            maxY = plotQueue.size();
+            arrangePeps.add(arrangePep);
+            maxYs.add(maxY);
         }
     }
 
@@ -1542,75 +1656,23 @@ public class PBrowserController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
         System.out.println("Init Browser");
 
-        arrangePep = new ArrayList();
-        arrangePepCombined = new ArrayList<>();
+        arrangePeps = new ArrayList<>();
+        arrangePepsCombined = new ArrayList<>();
+        proteins = new ArrayList<>();
         modiSelected = new ArrayList<>();
+        modificationTypeAll = new ArrayList<>();
+        maxYs = new ArrayList<>();
+        maxYsCombined = new ArrayList<>();
 
-        //cbAcetylation.setSelected(true);
-        //cbCarbamidomethylation.setSelected(true);
-        //cbOxidation.setSelected(true);
-        //cbPhosphorylation.setSelected(true);
         sbarCanvas.setVisible(false);
         combModiPos.setDisable(true);
 
         gc = canvas.getGraphicsContext2D();
 
-        //sliderZoom.setMax(4);
-        //sliderZoom.setMin(0.25);
-        //sliderZoom.setValue(1);
-        //sliderZoom.setShowTickLabels(true);
-        //sliderZoom.setShowTickMarks(true);
-        //sliderZoom.setMajorTickUnit(0.25);
-        //sliderZoom.setMin(0.1);
         sliderZoom.setMax(2);
         sliderZoom.setMin(-2);
         sliderZoom.setValue(-2);
         sliderZoom.setMajorTickUnit(0.25);
-
-
-        /*
-        hbAcetylation = new HBox();
-        hbAcetylation.setAlignment(Pos.CENTER_LEFT);
-        hbAcetylation.setSpacing(5);
-        lbAcetylation1 = new Label("");
-        lbAcetylation1.setStyle("-fx-background-color: magenta;");
-        lbAcetylation1.setPrefHeight(10);
-        lbAcetylation1.setPrefWidth(10);
-        lbAcetylation2 = new Label("Acetylation");
-        hbAcetylation.getChildren().addAll(lbAcetylation1, lbAcetylation2);
-
-        hbCarbamidomethylation = new HBox();
-        hbCarbamidomethylation.setAlignment(Pos.CENTER_LEFT);
-        hbCarbamidomethylation.setSpacing(5);
-        lbCarbamidomethylation1 = new Label("");
-        lbCarbamidomethylation1.setStyle("-fx-background-color: forestgreen");
-        lbCarbamidomethylation1.setPrefWidth(10);
-        lbCarbamidomethylation1.setPrefHeight(10);
-        //lbCarbamidomethylation2 = new Label("Carbamidomethylation");
-        lbCarbamidomethylation2 = new Label("Carbamidom");
-        hbCarbamidomethylation.getChildren().addAll(lbCarbamidomethylation1, lbCarbamidomethylation2);
-
-        hbPhosphorylation = new HBox();
-        hbPhosphorylation.setAlignment(Pos.CENTER_LEFT);
-        hbPhosphorylation.setSpacing(5);
-        lbPhosphorylation1 = new Label("");
-        lbPhosphorylation1.setStyle("-fx-background-color: cyan");
-        lbPhosphorylation1.setPrefHeight(10);
-        lbPhosphorylation1.setPrefWidth(10);
-        lbPhosphorylation2 = new Label("Phosphorylation");
-        hbPhosphorylation.getChildren().addAll(lbPhosphorylation1, lbPhosphorylation2);
-
-        hbOxidation = new HBox();
-        hbOxidation.setAlignment(Pos.CENTER_LEFT);
-        hbOxidation.setSpacing(5);
-        lbOxidation1 = new Label("");
-        lbOxidation1.setStyle("-fx-background-color: gold");
-        lbOxidation1.setPrefHeight(10);
-        lbOxidation1.setPrefWidth(10);
-        lbOxidation2 = new Label("Oxidation");
-        hbOxidation.getChildren().addAll(lbOxidation1, lbOxidation2);
-        */
-
 
 
         hbAbundance1 = new HBox();
@@ -1682,10 +1744,23 @@ public class PBrowserController implements Initializable {
                 if(idxX < 0){
                     return;
                 }
-                int idxY = (int) ((canvasHeight - pixXLabel - bottomPix - y - 1) / ((pixPerPep + pixPepGap * 2) * scaleY));
+                // get sample and peptide
+                int idxSample;
+                int idxY;
+                //int idxY = (int) ((canvasHeight - pixXLabel - bottomPix - y - 1) / ((pixPerPep + pixPepGap * 2) * scaleY));
+                if(y<topPix || y > (canvasHeight-bottomPix - pixXLabel)){
+                    return;
+                }
+
+                double yAdj = y-topPix;
+                //Start from 0
+                idxSample = (int)(yAdj / (pixPerSample + sampleGapPix));
+                yAdj = yAdj - idxSample * (pixPerSample + sampleGapPix);
+
 
                 if(pepCombined){
-                    for(PepPos tmp : arrangePepCombined){
+                    idxY = (int)((pixPerSample-yAdj)/(pixPerPep*scaleYCombined + pixPepGap));
+                    for(PepPos tmp : arrangePepsCombined.get(idxSample)){
                         if(tmp.contains(idxX, idxY)) {
                             String info = tmp.getPep().toString(tmp.getStart());
                             info = info + "Start: " + (tmp.getStart() + 1) + System.lineSeparator();
@@ -1703,7 +1778,8 @@ public class PBrowserController implements Initializable {
                     return;
                 }
 
-                for(PepPos tmp : arrangePep){
+                for(PepPos tmp : arrangePeps.get(idxSample)){
+                    idxY = (int)((pixPerSample-yAdj)/(pixPerPep*scaleY + pixPepGap));
                     if(tmp.contains(idxX, idxY)) {
                         String info = tmp.getPep().toString(tmp.getStart());
                         info = info + "Start: " + (tmp.getStart() + 1) + System.lineSeparator();
@@ -1744,28 +1820,136 @@ public class PBrowserController implements Initializable {
                 if(idxX < 0){
                     return;
                 }
-                int idxY = (int) ((canvasHeight - pixXLabel - bottomPix - y - 1) / ((pixPerPep + pixPepGap * 2) * scaleY));
+
+                int idxSample;
+                int idxY;
+                //int idxY = (int) ((canvasHeight - pixXLabel - bottomPix - y - 1) / ((pixPerPep + pixPepGap * 2) * scaleY));
+
+                if(y<topPix || y > (canvasHeight-bottomPix - pixXLabel)){
+                    return;
+                }
+
+                double yAdj = y-topPix;
+                //Start from 0
+                idxSample = (int)(yAdj / (pixPerSample + sampleGapPix));
+                yAdj = yAdj - idxSample * (pixPerSample + sampleGapPix);
+
 
                 if(pepCombined){
-                    for(PepPos tmp : arrangePepCombined){
+                    idxY = (int)((pixPerSample-yAdj)/(pixPerPep*scaleYCombined + pixPepGap));
+                    lblPep.setText("No Peptide");
+                    for(PepPos tmp : arrangePepsCombined.get(idxSample)){
                         if(tmp.contains(idxX, idxY)) {
                             String info = tmp.getPep().toString(tmp.getStart());
                             info = info + "Start: " + (tmp.getStart() + 1) + System.lineSeparator();
                             info = info + "End: " + (tmp.getEnd() + 1);
                             lblPep.setText(info);
                             break;
-                        } else {
-                            lblPep.setText("No Peptide");
                         }
                     }
 
 
-                    PosModiInfo posModiInfo = protein.getModiInfoCombined().get(idxX);
+                    if(proteins.size()==1){
+                        PosModiInfo posModiInfo = proteins.get(0).getModiInfoCombined().get(idxX);
+                        if(posModiInfo == null){
+                            lblPos.setText("No Modification at position: " + (idxX + 1));
+                        } else {
+                            int numTotal = 0;
+                            for(PepPos tmp : arrangePepsCombined.get(0)){
+                                if(tmp.contains(idxX)){
+                                    numTotal++;
+                                }
+                            }
+
+                            String txtShow = "Modifications at position: " + (idxX +1) + System.lineSeparator() + "Total peptides: " + numTotal + System.lineSeparator();
+
+                            TreeMap<String, ArrayList<Double>> modis =  posModiInfo.getModifications();
+                            Set set = modis.entrySet();
+                            Iterator it = set.iterator();
+                            while(it.hasNext()){
+                                Map.Entry me = (Map.Entry) it.next();
+                                String mt = (String) me.getKey();
+                                ArrayList<Double> pc = (ArrayList<Double>) me.getValue();
+                                txtShow += mt + ": " + pc.size() + System.lineSeparator();
+                                if(pc.get(0) < 0){
+                                    txtShow += "NA";
+                                } else {
+                                    txtShow += pc.get(0);
+                                }
+
+                                for(int i = 1; i < pc.size(); i++){
+                                    if(pc.get(i) < 0){
+                                        txtShow += ";NA";
+                                    } else {
+                                        txtShow += ";" + pc.get(i);
+                                    }
+
+                                }
+                                txtShow += System.lineSeparator();
+                            }
+
+                            lblPos.setText(txtShow);
+
+                        }
+                    } else if(proteins.size()>1) {
+                        String textShow = "Modifications at position: " + (idxX+1) + System.lineSeparator();
+                        int idx = 0;
+                        for(Protein protein:proteins){
+                            textShow += selectedSamples.get(idx) + System.lineSeparator();
+
+                            PosModiInfo posModiInfo = protein.getModiInfoCombined().get(idxX);
+                            if(posModiInfo == null){
+                                textShow += "No Modification" + System.lineSeparator();
+                            } else {
+                                int numTotal = 0;
+                                for(PepPos tmp : arrangePepsCombined.get(idx)){
+                                    if(tmp.contains(idxX)){
+                                        numTotal++;
+                                    }
+                                }
+                                textShow += "Total peptides: " + numTotal + System.lineSeparator();
+
+                                TreeMap<String, ArrayList<Double>> modis =  posModiInfo.getModifications();
+                                Set set = modis.entrySet();
+                                Iterator it = set.iterator();
+                                while(it.hasNext()){
+                                    Map.Entry me = (Map.Entry) it.next();
+                                    String mt = (String) me.getKey();
+                                    ArrayList<Double> pc = (ArrayList<Double>) me.getValue();
+                                    textShow += mt + ": " + pc.size() + System.lineSeparator();
+                                    textShow += System.lineSeparator();
+                                }
+
+                            }
+
+                            idx++;
+                        }
+                        lblPos.setText(textShow);
+                    }
+
+
+                    return;
+                }
+
+                idxY = (int)((pixPerSample-yAdj)/(pixPerPep*scaleY + pixPepGap));
+                lblPep.setText("No Peptide");
+                for(PepPos tmp : arrangePeps.get(idxSample)){
+                    if(tmp.contains(idxX, idxY)) {
+                        String info = tmp.getPep().toString(tmp.getStart());
+                        info = info + "Start: " + (tmp.getStart() + 1) + System.lineSeparator();
+                        info = info + "End: " + (tmp.getEnd() + 1);
+                        lblPep.setText(info);
+                        break;
+                    }
+                }
+
+                if(proteins.size()==1){
+                    PosModiInfo posModiInfo = proteins.get(0).getModiInfoSel().get(idxX);
                     if(posModiInfo == null){
                         lblPos.setText("No Modification at position: " + (idxX + 1));
                     } else {
                         int numTotal = 0;
-                        for(PepPos tmp : arrangePepCombined){
+                        for(PepPos tmp : arrangePeps.get(0)){
                             if(tmp.contains(idxX)){
                                 numTotal++;
                             }
@@ -1786,7 +1970,6 @@ public class PBrowserController implements Initializable {
                             } else {
                                 txtShow += pc.get(0);
                             }
-
                             for(int i = 1; i < pc.size(); i++){
                                 if(pc.get(i) < 0){
                                     txtShow += ";NA";
@@ -1801,125 +1984,74 @@ public class PBrowserController implements Initializable {
                         lblPos.setText(txtShow);
 
                     }
+                } else if(proteins.size()>1){
+                    String textShow = "Modifications at position: " + (idxX+1) + System.lineSeparator();
+                    int idx = 0;
+                    for(Protein protein:proteins){
+                        textShow += selectedSamples.get(idx) + System.lineSeparator();
 
-                    return;
-                }
-
-                for(PepPos tmp : arrangePep){
-                    if(tmp.contains(idxX, idxY)) {
-                        String info = tmp.getPep().toString(tmp.getStart());
-                        info = info + "Start: " + (tmp.getStart() + 1) + System.lineSeparator();
-                        info = info + "End: " + (tmp.getEnd() + 1);
-                        lblPep.setText(info);
-                        break;
-                    } else {
-                        lblPep.setText("No Peptide");
-                    }
-                }
-
-                //PosModiInfo posModiInfo = protein.getModiInfo().get(idxX);
-                //if(idxX < 0 || idxX >= protein.getModiInfoSel().size()){
-                //    return;
-                //}
-                PosModiInfo posModiInfo = protein.getModiInfoSel().get(idxX);
-                if(posModiInfo == null){
-                    lblPos.setText("No Modification at position: " + (idxX + 1));
-                } else {
-                    int numTotal = 0;
-                    for(PepPos tmp : arrangePep){
-                        if(tmp.contains(idxX)){
-                            numTotal++;
-                        }
-                    }
-
-                    String txtShow = "Modifications at position: " + (idxX +1) + System.lineSeparator() + "Total peptides: " + numTotal + System.lineSeparator();
-
-                    TreeMap<String, ArrayList<Double>> modis =  posModiInfo.getModifications();
-                    Set set = modis.entrySet();
-                    Iterator it = set.iterator();
-                    while(it.hasNext()){
-                        Map.Entry me = (Map.Entry) it.next();
-                        String mt = (String) me.getKey();
-                        ArrayList<Double> pc = (ArrayList<Double>) me.getValue();
-                        txtShow += mt + ": " + pc.size() + System.lineSeparator();
-                        if(pc.get(0) < 0){
-                            txtShow += "NA";
+                        PosModiInfo posModiInfo = protein.getModiInfo().get(idxX);
+                        if(posModiInfo == null){
+                            textShow += "No Modification" + System.lineSeparator();
                         } else {
-                            txtShow += pc.get(0);
-                        }
-                        for(int i = 1; i < pc.size(); i++){
-                            if(pc.get(i) < 0){
-                                txtShow += ";NA";
-                            } else {
-                                txtShow += ";" + pc.get(i);
+                            int numTotal = 0;
+                            for(PepPos tmp : arrangePeps.get(idx)){
+                                if(tmp.contains(idxX)){
+                                    numTotal++;
+                                }
+                            }
+                            textShow += "Total peptides: " + numTotal + System.lineSeparator();
+
+                            TreeMap<String, ArrayList<Double>> modis =  posModiInfo.getModifications();
+                            Set set = modis.entrySet();
+                            Iterator it = set.iterator();
+                            while(it.hasNext()){
+                                Map.Entry me = (Map.Entry) it.next();
+                                String mt = (String) me.getKey();
+                                ArrayList<Double> pc = (ArrayList<Double>) me.getValue();
+                                textShow += mt + ": " + pc.size() + System.lineSeparator();
+                                textShow += System.lineSeparator();
                             }
 
                         }
-                        txtShow += System.lineSeparator();
+
+                        idx++;
                     }
-
-                    lblPos.setText(txtShow);
-
+                    lblPos.setText(textShow);
                 }
 
-                //txtPep.setText("Pos x " + x + ": " + idxX);
-                //txtPos.setText("Pos y " + y + ": " + idxY);
+
             }
         });
     }
 
-    /*
-    public class PepPos implements Comparable<PepPos>{
-        // start, end, and y are all from 0
-        private int start;
-        private int end;
-        private int y;
-        private Peptide pep;
+    private void calScaleY(){
+        int numSample = proteins.size();
+        pixPerSample = (canvasHeight - bottomPix - pixXLabel - topPix - sampleGapPix * (numSample-1))/numSample;
+        int maxY = Collections.max(maxYs);
 
-        public PepPos(int start, int end, Peptide pep){
-            this.start = start;
-            this.end = end;
-            this.pep = pep;
-            this.y = 0;
-        }
-
-        public void setY(int y) {this.y = y;}
-        public int getY() {return y;}
-
-        public int getStart() {return start;}
-        public int getEnd() {return end;}
-        public Peptide getPep() {return pep;}
-
-        public boolean contains(int x){
-            if(start <= x && end >= x){
-                return true;
-            }
-            return  false;
-        }
-
-        public boolean contains(int x, int y){
-            if(this.y == y && start <= x && end >= x){
-                return true;
-            }
-            return  false;
-        }
-
-        @Override
-        public int compareTo(PepPos o) {
-            if(this.start < o.getStart()){
-                return -1;
-            } else if(this.start > o.getStart()){
-                return 1;
-            } else {
-                if(this.end > o.getEnd()){
-                    return -1;
-                } else if(this.end < o.getEnd()){
-                    return 1;
-                } else{
-                    return 0;
-                }
-            }
+        scaleY = (pixPerSample/maxY - pixPepGap)/pixPerPep;
+        if(scaleY > 1){
+            scaleY = 1;
         }
     }
-    */
+
+    private void calScaleYCombined(){
+        int numSample = proteins.size();
+        pixPerSample = (canvasHeight - bottomPix - pixXLabel - topPix - sampleGapPix * (numSample-1))/numSample;
+        int maxYCombined = Collections.max(maxYsCombined);
+
+        scaleYCombined = (pixPerSample/maxYCombined - pixPepGap)/pixPerPep;
+        if(scaleYCombined > 1){
+            scaleYCombined = 1;
+        }
+    }
+
+    private int calRange(double abundance, double maxAbundance){
+        int rlt = (int) (4.0 * abundance/maxAbundance);
+        if(rlt>4){
+            rlt=4;
+        }
+        return rlt;
+    }
 }
