@@ -513,6 +513,7 @@ public class MainController implements Initializable{
 
         ArrayList<String> testId = new ArrayList<>();
         ArrayList<Double> pv = new ArrayList<>();
+        ArrayList<Double> ratio = new ArrayList<>();
         if(dataId.equals("ALL")){
             double[] t1 = new double[g1.size()];
             double[] t2 = new double[g2.size()];
@@ -529,6 +530,8 @@ public class MainController implements Initializable{
                     }
 
                     double pvalue = TestUtils.tTest(t1, t2);
+                    double r = Arrays.stream(t1).average().getAsDouble()/Arrays.stream(t2).average().getAsDouble();
+                    ratio.add(r);
                     pv.add(pvalue);
                 }
             } else {
@@ -543,6 +546,8 @@ public class MainController implements Initializable{
                     }
 
                     double pvalue = TestUtils.tTest(t1, t2);
+                    double r = Arrays.stream(t1).average().getAsDouble()/Arrays.stream(t2).average().getAsDouble();
+                    ratio.add(r);
                     pv.add(pvalue);
                 }
             }
@@ -572,6 +577,8 @@ public class MainController implements Initializable{
             }
 
             double pvalue = TestUtils.tTest(t1, t2);
+            double r = Arrays.stream(t1).average().getAsDouble()/Arrays.stream(t2).average().getAsDouble();
+            ratio.add(r);
             pv.add(pvalue);
         }
 
@@ -592,7 +599,7 @@ public class MainController implements Initializable{
         pvStage.initOwner(menuBar.getScene().getWindow());
 
         PValueTableController controller2 = loader2.getController();
-        controller2.set(testId, pv);
+        controller2.set(testId, pv, ratio);
         controller2.init();
         pvStage.showAndWait();
     }
